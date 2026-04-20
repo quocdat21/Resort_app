@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // Lưu ý: Thay đổi đường dẫn import bên dưới cho đúng với tên project của bạn
 import 'package:resort_app/core/constants/app_colors.dart';
-import 'package:resort_app/features/auth/pages/login_page.dart';
+//import 'package:resort_app/features/auth/pages/login_page.dart';
 //import 'package:resort_app/features/auth/pages/login_page.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
 
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
           seedColor: AppColors.primary,
           primary: AppColors.primary,
           surface: AppColors.surface,
-          background: AppColors.background,
+          //background: AppColors.background,
         ),
 
         // 3. Cấu hình mặc định cho các thành phần khác (tùy chọn)
