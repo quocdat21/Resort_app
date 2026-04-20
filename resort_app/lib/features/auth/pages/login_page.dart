@@ -4,6 +4,7 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/loading.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
+import 'package:resort_app/features/auth/pages/register_page.dart';
 
 // --- MÀN HÌNH ĐĂNG NHẬP ---
 class LoginScreen extends StatefulWidget {
@@ -270,7 +271,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
-                    // xử lý chuyển màn
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterPage(),
+                      ),
+                    );
                   },
               ),
             ],

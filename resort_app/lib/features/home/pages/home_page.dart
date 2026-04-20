@@ -60,10 +60,10 @@ class HomeScreen extends StatelessWidget {
               )
             ],
           ),
-          Row(
+          const Row(
             children: [
               Stack(
-                children: const [
+                children: [
                   Icon(Icons.notifications),
                   Positioned(
                     right: 0,
@@ -75,8 +75,8 @@ class HomeScreen extends StatelessWidget {
                   )
                 ],
               ),
-              const SizedBox(width: 12),
-              const CircleAvatar(
+              SizedBox(width: 12),
+              CircleAvatar(
                 backgroundImage: NetworkImage(
                   "https://i.pravatar.cc/100",
                 ),
@@ -192,7 +192,7 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Room Categories", style: AppTextStyles.h3),
+        const Text("Room Categories", style: AppTextStyles.h3),
         const SizedBox(height: 12),
         SizedBox(
           height: 90,
@@ -232,7 +232,7 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Popular Stays", style: AppTextStyles.h3),
+        const Text("Popular Stays", style: AppTextStyles.h3),
         const SizedBox(height: 12),
         _roomCard(
           "Bamboo Forest Suite",
@@ -274,8 +274,8 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Text(title, style: AppTextStyles.h3),
                   const SizedBox(height: 4),
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(Icons.star, size: 14, color: Colors.orange),
                       SizedBox(width: 4),
                       Text("4.9 · MOC CHAU")

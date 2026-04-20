@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // Lưu ý: Thay đổi đường dẫn import bên dưới cho đúng với tên project của bạn
 import 'package:resort_app/core/constants/app_colors.dart';
+import 'package:resort_app/features/auth/pages/login_page.dart';
+import 'package:resort_app/features/auth/pages/register_step1_page.dart';
 //import 'package:resort_app/features/auth/pages/login_page.dart';
 //import 'package:resort_app/features/auth/pages/login_page.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
@@ -42,7 +44,7 @@ class MyApp extends StatelessWidget {
       ),
 
       // 4. Trang sẽ hiển thị đầu tiên khi mở App
-      home: const HomeScreen(),
+      home: const RegisterStep1Page(),
     );
   }
 }
