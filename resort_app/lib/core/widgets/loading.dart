@@ -48,7 +48,7 @@ class Loading extends StatelessWidget {
                   ),
                 ),
                 Image.asset(
-                  'assets/images/logo_login.png',
+                  'assets/icons/logo_login.png',
                   height: 25,
                   color: AppColors.primary,
                 ),

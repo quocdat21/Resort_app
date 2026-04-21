@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/features/auth/pages/login_page.dart';
 import 'package:resort_app/features/auth/pages/verify_page.dart';
+import 'package:resort_app/features/onboarding/pages/onboarding_page.dart';
 
 void main() {
   // Đảm bảo các dịch vụ của Flutter đã được khởi tạo
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
       ),
 
       // 4. Trang sẽ hiển thị đầu tiên khi mở App
-      home: const LoginScreen(),
+      home: const OnboardingPage(),
     );
   }
 }

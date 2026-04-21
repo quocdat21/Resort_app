@@ -94,6 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           _buildBackgroundDecor(),
@@ -222,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: _buildBlurCircle(AppColors.secondary.withOpacity(0.05), 350))
       ]);
   Widget _buildLeftImageSection() => Stack(children: [
-        Image.asset('assets/images/logo_login.png',
+        Image.asset('assets/icons/logo_login.png',
             height: 800, width: double.infinity, fit: BoxFit.cover),
         Container(
             height: 800,
@@ -251,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ]);
   Widget _buildLogo() =>
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Image.asset('assets/images/logo_login.png'),
+        Image.asset('assets/icons/logo_login.png'),
         const SizedBox(width: 12),
         Text("THAO NGUYEN",
             style: AppTextStyles.h2.copyWith(
@@ -286,7 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/logo_login_google.png',
+                'assets/icons/logo_login_google.png',
                 height: 20,
                 errorBuilder: (context, error, stackTrace) =>
                     const Icon(Icons.account_circle, size: 20),
