@@ -4,6 +4,7 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/loading.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
+import 'package:resort_app/features/auth/pages/forgot_password_page.dart';
 import 'package:resort_app/features/auth/pages/register_page.dart';
 
 // --- MÀN HÌNH ĐĂNG NHẬP ---
@@ -21,6 +22,47 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isObscure = true;
   bool _showPasswordIcon = false;
   bool _isGlobalLoading = false;
+
+  // Validation errors
+  String? _emailError;
+  String? _passwordError;
+
+  final RegExp _emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+  final RegExp _phoneRegex = RegExp(r'^(0|\+84)[0-9]{9}$');
+
+  bool _validate() {
+    bool isValid = true;
+    setState(() {
+      final email = _emailController.text.trim();
+      if (email.isEmpty) {
+        _emailError = 'Vui lòng nhập email hoặc số điện thoại.';
+        isValid = false;
+      } else if (!_emailRegex.hasMatch(email) && !_phoneRegex.hasMatch(email)) {
+        _emailError = 'Email hoặc số điện thoại không đúng định dạng.';
+        isValid = false;
+      } else {
+        _emailError = null;
+      }
+
+      final password = _passwordController.text;
+      if (password.isEmpty) {
+        _passwordError = 'Vui lòng nhập mật khẩu.';
+        isValid = false;
+      } else if (password.length < 8) {
+        _passwordError = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        isValid = false;
+      } else {
+        _passwordError = null;
+      }
+    });
+    return isValid;
+  }
+
+  void _handleLogin() {
+    if (_validate()) {
+      // TODO: Call login API
+    }
+  }
 
   @override
   void initState() {
@@ -113,7 +155,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: AppTextStyles.bodyMedium
                           .copyWith(color: AppColors.onSurface),
                       decoration: _inputStyle("e.g., Example@email.com",
-                          suffixIcon: const Icon(Icons.person, size: 20)),
+                          suffixIcon: const Icon(Icons.person, size: 20),
+                          errorText: _emailError),
+                      onChanged: (_) {
+                        if (_emailError != null) {
+                          setState(() => _emailError = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 24),
                     _buildPasswordLabel(),
@@ -135,7 +183,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     setState(() => _isObscure = !_isObscure),
                               )
                             : null,
+                        errorText: _passwordError,
                       ),
+                      onChanged: (_) {
+                        if (_passwordError != null) {
+                          setState(() => _passwordError = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 32),
                     _buildLoginButton(),
@@ -214,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(16)),
               elevation: 10,
               shadowColor: AppColors.primary.withOpacity(0.2)),
-          onPressed: () {},
+          onPressed: _handleLogin,
           child: Text("Login",
               style: AppTextStyles.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold, color: Colors.white))));
@@ -284,7 +338,8 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  InputDecoration _inputStyle(String hint, {Widget? suffixIcon}) =>
+  InputDecoration _inputStyle(String hint,
+          {Widget? suffixIcon, String? errorText}) =>
       InputDecoration(
         hintText: hint,
         hintStyle:
@@ -295,9 +350,24 @@ class _LoginScreenState extends State<LoginScreen> {
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: errorText != null
+                ? const BorderSide(color: AppColors.error, width: 1.0)
+                : BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+                color: errorText != null ? AppColors.error : AppColors.primary,
+                width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 18,
           horizontal: 16,
+        ),
+        errorText: errorText,
+        errorStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.error,
+          fontSize: 12,
         ),
       );
   Widget _buildPasswordLabel() => Row(
@@ -305,7 +375,14 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           const AppLabel(text: "PASSWORD"),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ForgotPasswordPage(),
+                ),
+              );
+            },
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(

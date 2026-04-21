@@ -21,6 +21,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -28,6 +31,8 @@ class _RegisterPageState extends State<RegisterPage> {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -105,6 +110,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     onLoginTap: () => Navigator.pop(context),
                   ),
                   Step2Form(
+                    passwordController: _passwordController,
+                    confirmPasswordController: _confirmPasswordController,
                     onNext: _nextStep,
                   ),
                   Step3Form(

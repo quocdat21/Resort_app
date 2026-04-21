@@ -4,10 +4,14 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
 
 class Step2Form extends StatefulWidget {
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
   final VoidCallback onNext;
 
   const Step2Form({
     super.key,
+    required this.passwordController,
+    required this.confirmPasswordController,
     required this.onNext,
   });
 
@@ -19,7 +23,71 @@ class _Step2FormState extends State<Step2Form> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  InputDecoration _inputStyle(String hint) {
+  String? _passwordError;
+  String? _confirmError;
+
+  // Điều kiện mật khẩu
+  bool get _has8Chars => widget.passwordController.text.length >= 8;
+  bool get _hasSpecialSymbol =>
+      RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(widget.passwordController.text);
+  bool get _passwordsMatch =>
+      widget.passwordController.text.isNotEmpty &&
+      widget.passwordController.text == widget.confirmPasswordController.text;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.passwordController.addListener(_onPasswordChanged);
+    widget.confirmPasswordController.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    setState(() {
+      // Xoá lỗi khi người dùng đang sửa
+      if (_passwordError != null) _passwordError = null;
+      if (_confirmError != null) _confirmError = null;
+    });
+  }
+
+  bool _validate() {
+    bool isValid = true;
+    setState(() {
+      final password = widget.passwordController.text;
+      final confirm = widget.confirmPasswordController.text;
+
+      if (password.isEmpty) {
+        _passwordError = 'Vui lòng nhập mật khẩu.';
+        isValid = false;
+      } else if (!_has8Chars) {
+        _passwordError = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        isValid = false;
+      } else if (!_hasSpecialSymbol) {
+        _passwordError = 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.';
+        isValid = false;
+      } else {
+        _passwordError = null;
+      }
+
+      if (confirm.isEmpty) {
+        _confirmError = 'Vui lòng xác nhận mật khẩu.';
+        isValid = false;
+      } else if (!_passwordsMatch) {
+        _confirmError = 'Mật khẩu xác nhận không khớp.';
+        isValid = false;
+      } else {
+        _confirmError = null;
+      }
+    });
+    return isValid;
+  }
+
+  void _handleNext() {
+    if (_validate()) {
+      widget.onNext();
+    }
+  }
+
+  InputDecoration _inputStyle(String hint, {String? errorText}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -32,9 +100,27 @@ class _Step2FormState extends State<Step2Form> {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: errorText != null
+            ? const BorderSide(color: AppColors.error, width: 1.0)
+            : BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: errorText != null ? AppColors.error : AppColors.primary,
+          width: 1.5,
+        ),
+      ),
       contentPadding: const EdgeInsets.symmetric(
         vertical: 20,
         horizontal: 16,
+      ),
+      errorText: errorText,
+      errorStyle: AppTextStyles.bodyMedium.copyWith(
+        color: AppColors.error,
+        fontSize: 12,
       ),
     );
   }
@@ -66,12 +152,21 @@ class _Step2FormState extends State<Step2Form> {
           // PASSWORD
           const AppLabel(text: "PASSWORD"),
           TextField(
+            controller: widget.passwordController,
             obscureText: _obscurePassword,
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurface, fontSize: 16),
-            decoration: _inputStyle("........").copyWith(
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.onSurface, fontSize: 16),
+            decoration:
+                _inputStyle("........", errorText: _passwordError).copyWith(
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: AppColors.outline),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: AppColors.outline,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
           ),
@@ -80,56 +175,38 @@ class _Step2FormState extends State<Step2Form> {
           // CONFIRM PASSWORD
           const AppLabel(text: "CONFIRM PASSWORD"),
           TextField(
+            controller: widget.confirmPasswordController,
             obscureText: _obscureConfirmPassword,
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurface, fontSize: 16),
-            decoration: _inputStyle("Re-enter password").copyWith(
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.onSurface, fontSize: 16),
+            decoration: _inputStyle("Re-enter password",
+                    errorText: _confirmError)
+                .copyWith(
               suffixIcon: IconButton(
-                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: AppColors.outline),
-                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                icon: Icon(
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: AppColors.outline,
+                ),
+                onPressed: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword),
               ),
             ),
           ),
           const SizedBox(height: 24),
 
-          // Chips
+          // Chips — reactive to password content
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDF0E1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle_outline, size: 16, color: AppColors.secondary),
-                    const SizedBox(width: 6),
-                    Text(
-                      "8+ Characters",
-                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.secondary, letterSpacing: 0),
-                    ),
-                  ],
-                ),
+              _buildValidationChip(
+                label: "8+ Characters",
+                isValid: _has8Chars,
               ),
               const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.radio_button_unchecked, size: 16, color: AppColors.outline),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Special symbol",
-                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant, letterSpacing: 0),
-                    ),
-                  ],
-                ),
+              _buildValidationChip(
+                label: "Special symbol",
+                isValid: _hasSpecialSymbol,
               ),
             ],
           ),
@@ -148,7 +225,7 @@ class _Step2FormState extends State<Step2Form> {
                 ),
                 elevation: 0,
               ),
-              onPressed: widget.onNext,
+              onPressed: _handleNext,
               child: Text(
                 "Next",
                 style: AppTextStyles.bodyLarge.copyWith(
@@ -174,6 +251,41 @@ class _Step2FormState extends State<Step2Form> {
             ),
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  /// Chip hiển thị trạng thái: vàng khi đạt, xám khi chưa đạt
+  Widget _buildValidationChip({
+    required String label,
+    required bool isValid,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isValid
+            ? const Color(0xFFFDF0E1) // vàng nhạt
+            : AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isValid ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+            size: 16,
+            color: isValid ? AppColors.secondary : AppColors.outline,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: isValid ? AppColors.secondary : AppColors.onSurfaceVariant,
+              letterSpacing: 0,
+            ),
+          ),
         ],
       ),
     );

@@ -1,22 +1,4 @@
---SET FOREIGN_KEY_CHECKS = 0;
---
---DROP TABLE IF EXISTS Notifications;
---DROP TABLE IF EXISTS Service_Reviews;
---DROP TABLE IF EXISTS Reviews;
---DROP TABLE IF EXISTS Payments;
---DROP TABLE IF EXISTS Service_Bookings;
---DROP TABLE IF EXISTS Booking_Services;
---DROP TABLE IF EXISTS Bookings;
---DROP TABLE IF EXISTS Services;
---DROP TABLE IF EXISTS Room_Amenities;
---DROP TABLE IF EXISTS Amenities;
---DROP TABLE IF EXISTS Room_Images;
---DROP TABLE IF EXISTS Rooms;
---DROP TABLE IF EXISTS Categories;
---DROP TABLE IF EXISTS Users;
---
---SET FOREIGN_KEY_CHECKS = 1;
---
+
 -- USERS
 CREATE TABLE Users (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -25,6 +7,7 @@ CREATE TABLE Users (
   phone_number VARCHAR(20) UNIQUE,
   password VARCHAR(255) NOT NULL,
   role ENUM('admin','customer','staff') DEFAULT 'customer',
+  is_verified TINYINT(1) DEFAULT 0,
   language_preference ENUM('vi','en') DEFAULT 'vi',
   date_of_birth DATE,
   gender ENUM('Male','Female','Other'),
@@ -34,6 +17,21 @@ CREATE TABLE Users (
   total_stays INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE OTP_Verifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  email VARCHAR(100) NOT NULL,
+  otp_hash VARCHAR(255) NOT NULL,
+  type ENUM('register','login','reset_password') DEFAULT 'register',
+  expired_at DATETIME NOT NULL,
+  is_used TINYINT(1) DEFAULT 0,
+  attempts INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (email),
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
 
 -- CATEGORIES
 CREATE TABLE Categories (
@@ -168,7 +166,7 @@ CREATE TABLE Reviews (
   booking_id INT,
   user_id INT,
   room_id INT,
-  rating INT,
+  rating INT CHECK (rating BETWEEN 1 AND 5),
   comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
@@ -188,6 +186,39 @@ CREATE TABLE Service_Reviews (
   FOREIGN KEY (service_booking_id) REFERENCES Service_Bookings(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
   FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
+);
+
+-- VOUCHERS
+CREATE TABLE Vouchers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  discount_type ENUM('percentage','fixed') NOT NULL,
+  discount_value DECIMAL(10,2) NOT NULL,
+  max_discount DECIMAL(15,0) DEFAULT NULL,
+  min_order_value DECIMAL(15,0) DEFAULT 0,
+  usage_limit INT DEFAULT NULL,
+  used_count INT DEFAULT 0,
+  start_date DATETIME,
+  end_date DATETIME,
+  is_active TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ADD VOUCHER TO BOOKINGS
+ALTER TABLE Bookings
+ADD voucher_id INT NULL,
+ADD discount_amount DECIMAL(15,0) DEFAULT 0,
+ADD FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE SET NULL;
+
+-- USER VOUCHERS (OPTIONAL - giới hạn user dùng)
+CREATE TABLE User_Vouchers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  voucher_id INT,
+  used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, voucher_id),
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE CASCADE
 );
 
 -- NOTIFICATIONS

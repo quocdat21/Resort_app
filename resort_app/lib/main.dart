@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 // Lưu ý: Thay đổi đường dẫn import bên dưới cho đúng với tên project của bạn
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/features/auth/pages/login_page.dart';
-import 'package:resort_app/features/auth/pages/register_page.dart';
-//import 'package:resort_app/features/auth/pages/login_page.dart';
-//import 'package:resort_app/features/auth/pages/login_page.dart';
+import 'package:resort_app/features/auth/pages/verify_page.dart';
 
 void main() {
   // Đảm bảo các dịch vụ của Flutter đã được khởi tạo
