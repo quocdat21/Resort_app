@@ -99,6 +99,35 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
+  // ==================== PROFILE ====================
+
+  /// GET /api/auth/me
+  static Future<Map<String, dynamic>> fetchMe() async {
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// PUT /api/auth/me
+  static Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+    final token = await getToken();
+    final response = await http.put(
+      Uri.parse('$baseUrl/auth/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(data),
+    );
+    return jsonDecode(response.body);
+  }
+
   // ==================== TOKEN / USER STORAGE ====================
 
   /// Lưu token + thông tin user sau khi login thành công

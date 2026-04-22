@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/features/home/pages/side_menu_drawer_page.dart';
+import 'package:resort_app/features/navigation/bottomNav.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String userName;
 
   const HomeScreen({super.key, this.userName = 'Traveler'});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      drawer: const SideMenuDrawerPage(),
       body: SafeArea(
         child: Column(
           children: [
@@ -39,7 +47,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const BottomNav(currentIndex: 0),
     );
   }
 
@@ -52,7 +60,12 @@ class HomeScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.menu),
+              Builder(
+                builder: (context) => InkWell(
+                  onTap: () => Scaffold.of(context).openDrawer(),
+                  child: const Icon(Icons.menu),
+                ),
+              ),
               const SizedBox(width: 8),
               Text(
                 "Thao Nguyen Resort",
@@ -104,7 +117,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          "Hello, $userName",
+          "Hello, ${widget.userName}",
           style: AppTextStyles.h2.copyWith(
             color: AppColors.primary,
           ),
@@ -297,23 +310,6 @@ class HomeScreen extends StatelessWidget {
           )
         ],
       ),
-    );
-  }
-
-  // ================= BOTTOM NAV =================
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.secondary,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined), label: "Booking"),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.spa_outlined), label: "Services"),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline), label: "Profile"),
-      ],
     );
   }
 }

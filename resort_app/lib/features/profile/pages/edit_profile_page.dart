@@ -1,0 +1,447 @@
+import 'package:flutter/material.dart';
+import 'package:resort_app/core/constants/app_colors.dart';
+import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/services/api_service.dart';
+
+class EditProfilePage extends StatefulWidget {
+  final Map<String, dynamic> userData;
+
+  const EditProfilePage({super.key, required this.userData});
+
+  @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends State<EditProfilePage> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _dobController;
+  late TextEditingController _addressController;
+
+  String? _selectedGender;
+  final List<String> _genders = ['Male', 'Female', 'Other'];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.userData['full_name']);
+    _emailController = TextEditingController(text: widget.userData['email']);
+    _phoneController = TextEditingController(text: widget.userData['phone_number']);
+    
+    // Formatting date
+    String dob = widget.userData['date_of_birth'] ?? '';
+    if (dob.isNotEmpty && dob.length >= 10) {
+      dob = dob.substring(0, 10); // Simple formatting for YYYY-MM-DD
+    }
+    _dobController = TextEditingController(text: dob);
+    
+    _addressController = TextEditingController(text: widget.userData['address']);
+    
+    String? gender = widget.userData['gender'];
+    if (gender != null && gender.isNotEmpty && _genders.contains(gender)) {
+      _selectedGender = gender;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _dobController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    DateTime initialDate = DateTime.now().subtract(const Duration(days: 365 * 20));
+    if (_dobController.text.isNotEmpty) {
+      try {
+        initialDate = DateTime.parse(_dobController.text);
+      } catch (e) {
+        // invalid date format
+      }
+    }
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        // format as YYYY-MM-DD
+        _dobController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      });
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final Map<String, dynamic> data = {
+        'full_name': _nameController.text.trim(),
+        'phone_number': _phoneController.text.trim(),
+        'date_of_birth': _dobController.text.trim(),
+        'gender': _selectedGender,
+        'address': _addressController.text.trim(),
+      };
+
+      final response = await ApiService.updateProfile(data);
+
+      if (!mounted) return;
+
+      if (response['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+        Navigator.pop(context, true); // return true to refresh
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Update failed')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String avatarUrl = widget.userData['avatar_url'] ?? '';
+
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Edit Profile",
+          style: AppTextStyles.h3.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.onBackground,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                // Avatar
+                Center(
+                  child: Column(
+                    children: [
+                      Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: avatarUrl.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(avatarUrl),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const DecorationImage(
+                                      image: AssetImage("assets/icons/profile.png"),
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          ),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.surface, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "CHANGE PHOTO",
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: const Color(0xFF7D6444),
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Form Fields
+                _buildLabel("FULL NAME"),
+                _buildTextField(
+                  controller: _nameController,
+                  icon: Icons.person_outline,
+                  validator: (v) => v!.isEmpty ? "Required" : null,
+                ),
+                const SizedBox(height: 20),
+
+                _buildLabel("EMAIL ADDRESS"),
+                _buildTextField(
+                  controller: _emailController,
+                  icon: Icons.mail_outline,
+                  readOnly: true,
+                  hintText: "thao.nguyen@sanctuary.com",
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      "Contact support to change verified email.",
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.outline,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                _buildLabel("PHONE NUMBER"),
+                _buildTextField(
+                  controller: _phoneController,
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel("DATE OF BIRTH"),
+                          GestureDetector(
+                            onTap: _selectDate,
+                            child: AbsorbPointer(
+                              child: _buildTextField(
+                                controller: _dobController,
+                                icon: Icons.calendar_today_outlined,
+                                hintText: "12 May 1992",
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel("GENDER"),
+                          Container(
+                            height: 56,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.people_outline, color: AppColors.outline),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedGender,
+                                      hint: const Text("Select"),
+                                      isExpanded: true,
+                                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.outline),
+                                      items: _genders.map((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(
+                                            value,
+                                            style: AppTextStyles.bodyLarge.copyWith(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          _selectedGender = newValue;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                _buildLabel("ADDRESS"),
+                _buildTextField(
+                  controller: _addressController,
+                  icon: Icons.location_on_outlined,
+                ),
+
+                const SizedBox(height: 48),
+
+                // Buttons
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: _isLoading ? null : _saveChanges,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : Text(
+                            "Save Changes",
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF7D6444),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      "Cancel",
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF7D6444),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.outline,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required IconData icon,
+    bool readOnly = false,
+    String? hintText,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: AppTextStyles.bodyLarge.copyWith(
+        fontWeight: FontWeight.w500,
+        color: readOnly ? AppColors.outline : AppColors.onSurface,
+      ),
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: AppColors.outline),
+        filled: true,
+        fillColor: readOnly ? AppColors.surfaceContainerHighest : AppColors.surfaceContainerLowest,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+    );
+  }
+}

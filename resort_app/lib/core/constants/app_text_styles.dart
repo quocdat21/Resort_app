@@ -40,6 +40,12 @@ class AppTextStyles {
     fontWeight: FontWeight.normal,
     color: AppColors.onSurfaceVariant,
   );
+  static const TextStyle bodySmall = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    color: AppColors.onSurfaceVariant,
+  );
 
   // --- LABEL ---
   // static const TextStyle labelMedium = TextStyle(
