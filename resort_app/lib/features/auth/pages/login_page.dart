@@ -4,8 +4,10 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/loading.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
+import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/auth/pages/forgot_password_page.dart';
 import 'package:resort_app/features/auth/pages/register_page.dart';
+import 'package:resort_app/features/home/pages/home_page.dart';
 
 // --- MÀN HÌNH ĐĂNG NHẬP ---
 class LoginScreen extends StatefulWidget {
@@ -58,9 +60,56 @@ class _LoginScreenState extends State<LoginScreen> {
     return isValid;
   }
 
-  void _handleLogin() {
-    if (_validate()) {
-      // TODO: Call login API
+  Future<void> _handleLogin() async {
+    if (!_validate()) return;
+
+    setState(() => _isGlobalLoading = true);
+
+    try {
+      final result = await ApiService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      setState(() => _isGlobalLoading = false);
+
+      if (result['success'] == true) {
+        final userData = result['data']['user'];
+        final token = result['data']['token'];
+
+        // Lưu session
+        await ApiService.saveSession(token: token, user: userData);
+
+        if (!mounted) return;
+        // Chuyển đến Home
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              userName: userData['full_name'] ?? 'Traveler',
+            ),
+          ),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Đăng nhập thất bại.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      print("LOGIN ERROR: $e");
+      if (!mounted) return;
+      setState(() => _isGlobalLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể kết nối đến server. Vui lòng thử lại.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 

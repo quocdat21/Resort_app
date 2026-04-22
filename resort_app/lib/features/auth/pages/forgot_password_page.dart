@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
+import 'package:resort_app/core/services/api_service.dart';
+import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/features/auth/pages/verify_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -13,11 +16,66 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
+  String? _emailError;
+
+  final RegExp _emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSendOTP() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() => _emailError = 'Vui lòng nhập email.');
+      return;
+    }
+    if (!_emailRegex.hasMatch(email)) {
+      setState(() => _emailError = 'Email không đúng định dạng.');
+      return;
+    }
+    setState(() {
+      _emailError = null;
+      _isLoading = true;
+    });
+
+    try {
+      final result = await ApiService.forgotPassword(email: email);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifyEmailPage(
+              email: email,
+              type: 'reset_password',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Có lỗi xảy ra.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể kết nối đến server.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -40,13 +98,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
                 "Forgot\nPassword",
                 style: AppTextStyles.h1.copyWith(
                   fontSize: 40,
@@ -78,11 +138,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: _emailError != null
+                        ? const BorderSide(color: AppColors.error, width: 1.0)
+                        : BorderSide.none,
+                  ),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 18,
                     horizontal: 16,
                   ),
+                  errorText: _emailError,
                 ),
+                onChanged: (_) {
+                  if (_emailError != null) {
+                    setState(() => _emailError = null);
+                  }
+                },
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -97,9 +169,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    // Navigate to verify page
-                  },
+                  onPressed: _handleSendOTP,
                   child: Text(
                     "SEND OTP",
                     style: AppTextStyles.bodyLarge.copyWith(
@@ -173,6 +243,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ],
           ),
         ),
+      ),
+          if (_isLoading) const Loading(),
+        ],
       ),
     );
   }

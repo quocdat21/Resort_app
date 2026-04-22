@@ -3,7 +3,9 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final String userName;
+
+  const HomeScreen({super.key, this.userName = 'Traveler'});
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +79,9 @@ class HomeScreen extends StatelessWidget {
               ),
               SizedBox(width: 12),
               CircleAvatar(
-                backgroundImage: NetworkImage(
-                  "https://i.pravatar.cc/100",
+                radius: 18,
+                backgroundImage: AssetImage(
+                  "assets/icons/profile.png",
                 ),
               )
             ],
@@ -101,8 +104,8 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          "Hello, Traveler",
-          style: AppTextStyles.h1.copyWith(
+          "Hello, $userName",
+          style: AppTextStyles.h2.copyWith(
             color: AppColors.primary,
           ),
         ),
@@ -303,11 +306,13 @@ class HomeScreen extends StatelessWidget {
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.secondary,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
         BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month), label: "Booking"),
-        BottomNavigationBarItem(icon: Icon(Icons.spa), label: "Services"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+            icon: Icon(Icons.calendar_month_outlined), label: "Booking"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.spa_outlined), label: "Services"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline), label: "Profile"),
       ],
     );
   }

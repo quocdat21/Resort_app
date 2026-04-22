@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 // Lưu ý: Thay đổi đường dẫn import bên dưới cho đúng với tên project của bạn
 import 'package:resort_app/core/constants/app_colors.dart';
-import 'package:resort_app/features/auth/pages/login_page.dart';
-import 'package:resort_app/features/auth/pages/verify_page.dart';
+import 'package:resort_app/features/home/pages/home_page.dart';
 import 'package:resort_app/features/onboarding/pages/onboarding_page.dart';
 
 void main() {
@@ -17,9 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Thao Nguyen Resort',
-
-      // Tắt cái biểu tượng "Debug" ở góc phải màn hình cho đẹp
+      title: 'LeafStay',
       debugShowCheckedModeBanner: false,
 
       // Cấu hình Theme (Giao diện tổng thể)

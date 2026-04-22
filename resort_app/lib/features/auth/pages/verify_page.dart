@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/services/api_service.dart';
+import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/features/auth/pages/reset_password_page.dart';
+import 'package:resort_app/features/home/pages/home_page.dart';
 
 class VerifyEmailPage extends StatefulWidget {
-  const VerifyEmailPage({super.key});
+  final String email;
+  final String type; // 'register' or 'reset_password'
+
+  const VerifyEmailPage({
+    super.key,
+    required this.email,
+    this.type = 'register',
+  });
 
   @override
   State<VerifyEmailPage> createState() => _VerifyEmailPageState();
@@ -13,6 +24,33 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   final List<TextEditingController> _otpControllers =
       List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+
+  bool _isLoading = false;
+  bool _canResend = false;
+  int _resendCountdown = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    _startResendTimer();
+  }
+
+  void _startResendTimer() {
+    setState(() {
+      _canResend = false;
+      _resendCountdown = 60;
+    });
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _resendCountdown--);
+      if (_resendCountdown <= 0) {
+        setState(() => _canResend = true);
+        return false;
+      }
+      return true;
+    });
+  }
 
   @override
   void dispose() {
@@ -35,6 +73,123 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     setState(() {});
   }
 
+  String get _otpCode =>
+      _otpControllers.map((c) => c.text).join();
+
+  String get _maskedEmail {
+    final parts = widget.email.split('@');
+    if (parts.length != 2) return widget.email;
+    final name = parts[0];
+    final masked = name.length > 3
+        ? '${name.substring(0, 3)}***'
+        : '${name[0]}***';
+    return '$masked@${parts[1]}';
+  }
+
+  Future<void> _handleVerify() async {
+    final otp = _otpCode;
+    if (otp.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập đủ 6 số OTP.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ApiService.verifyOTP(
+        email: widget.email,
+        otp: otp,
+        type: widget.type,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        if (widget.type == 'register') {
+          // Đăng ký thành công → lưu session → vào Home
+          final userData = result['data']['user'];
+          final token = result['data']['token'];
+          await ApiService.saveSession(token: token, user: userData);
+
+          if (!mounted) return;
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(
+                userName: userData['full_name'] ?? 'Traveler',
+              ),
+            ),
+            (route) => false,
+          );
+        } else if (widget.type == 'reset_password') {
+          // Forgot password → chuyển đến ResetPasswordPage
+          final resetToken = result['data']['reset_token'];
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResetPasswordPage(
+                resetToken: resetToken,
+              ),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Xác thực thất bại.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể kết nối đến server.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleResend() async {
+    if (!_canResend) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ApiService.resendOTP(
+        email: widget.email,
+        type: widget.type,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'OTP đã được gửi lại.'),
+          backgroundColor:
+              result['success'] == true ? AppColors.primary : AppColors.error,
+        ),
+      );
+
+      if (result['success'] == true) {
+        _startResendTimer();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,99 +210,113 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "Verify Your\nEmail",
-                textAlign: TextAlign.center,
-                style: AppTextStyles.h1.copyWith(
-                  fontSize: 40,
-                  height: 1.1,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                    height: 1.5,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    "Verify Your\nEmail",
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.h1.copyWith(
+                      fontSize: 40,
+                      height: 1.1,
+                      color: AppColors.primary,
+                    ),
                   ),
-                  children: [
-                    const TextSpan(
-                        text: "Enter the 6-digit code sent to your email\n"),
-                    TextSpan(
-                      text: "tha***@resort.vn",
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                  const SizedBox(height: 16),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                      children: [
+                        const TextSpan(
+                            text:
+                                "Enter the 6-digit code sent to your email\n"),
+                        TextSpan(
+                          text: _maskedEmail,
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children:
+                        List.generate(6, (index) => _buildOtpBox(index)),
+                  ),
+                  const SizedBox(height: 48),
+
+                  // Resend timer / button
+                  if (!_canResend)
+                    Text(
+                      "RESEND CODE IN ${_resendCountdown}S",
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.onBackground,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 48),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _buildOtpBox(index)),
-              ),
-              const SizedBox(height: 48),
-              Text(
-                "RESEND CODE IN 60S",
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.onBackground,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "RESEND CODE",
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.outlineVariant,
-                ),
-              ),
-              const SizedBox(height: 48),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                  if (_canResend)
+                    GestureDetector(
+                      onTap: _handleResend,
+                      child: Text(
+                        "RESEND CODE",
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    // Navigate to reset password
-                  },
-                  child: Text(
-                    "VERIFY",
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 1.0,
+
+                  const SizedBox(height: 48),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: _handleVerify,
+                      child: Text(
+                        "VERIFY",
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 48),
+                  Text(
+                    "Didn't receive a code? Please check your spam\nfolder or contact our concierge.",
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 48),
-              Text(
-                "Didn't receive a code? Please check your spam\nfolder or contact our concierge.",
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading) const Loading(),
+        ],
       ),
     );
   }
@@ -163,7 +332,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
         color: AppColors.surfaceContainerHigh.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (hasFocus || hasText) ? Colors.blueAccent : Colors.transparent,
+          color:
+              (hasFocus || hasText) ? AppColors.primary : Colors.transparent,
           width: 1.5,
         ),
       ),

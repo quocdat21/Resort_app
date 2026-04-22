@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/services/api_service.dart';
+import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/features/auth/pages/verify_page.dart';
 
 import '../widgets/register_step1.dart';
 import '../widgets/register_step2.dart';
@@ -16,6 +19,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   int _currentStep = 1;
   final PageController _pageController = PageController();
+  bool _isLoading = false;
 
   // Shared State Controllers
   final TextEditingController _fullNameController = TextEditingController();
@@ -89,46 +93,93 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-              child: _buildProgressBar(_currentStep),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: _buildProgressBar(_currentStep),
+                ),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      Step1Form(
+                        fullNameController: _fullNameController,
+                        emailController: _emailController,
+                        phoneController: _phoneController,
+                        onNext: _nextStep,
+                        onLoginTap: () => Navigator.pop(context),
+                      ),
+                      Step2Form(
+                        passwordController: _passwordController,
+                        confirmPasswordController: _confirmPasswordController,
+                        onNext: _nextStep,
+                      ),
+                      Step3Form(
+                        fullName: _fullNameController.text,
+                        email: _emailController.text,
+                        onEdit: () => _goToStep(1),
+                        onSubmit: _handleRegister,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  Step1Form(
-                    fullNameController: _fullNameController,
-                    emailController: _emailController,
-                    phoneController: _phoneController,
-                    onNext: _nextStep,
-                    onLoginTap: () => Navigator.pop(context),
-                  ),
-                  Step2Form(
-                    passwordController: _passwordController,
-                    confirmPasswordController: _confirmPasswordController,
-                    onNext: _nextStep,
-                  ),
-                  Step3Form(
-                    fullName: _fullNameController.text,
-                    email: _emailController.text,
-                    onEdit: () => _goToStep(1),
-                    onSubmit: () {
-                      // Handle final submission here
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+          if (_isLoading) const Loading(),
+        ],
       ),
     );
+  }
+
+  Future<void> _handleRegister() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ApiService.register(
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phoneNumber: _phoneController.text.trim(),
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifyEmailPage(
+              email: _emailController.text.trim(),
+              type: 'register',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Đăng ký thất bại.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể kết nối đến server.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   Widget _buildProgressBar(int currentStep) {
