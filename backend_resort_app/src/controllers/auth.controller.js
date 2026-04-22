@@ -605,6 +605,82 @@ const getMe = async (req, res) => {
   }
 };
 
+// ============================================
+// PUT /api/auth/me (Protected)
+// ============================================
+const updateMe = async (req, res) => {
+  try {
+    const { full_name, phone_number, date_of_birth, gender, address, avatar_url } = req.body;
+
+    const updates = [];
+    const values = [];
+
+    if (full_name !== undefined) {
+      updates.push('full_name = ?');
+      values.push(full_name);
+    }
+    if (phone_number !== undefined) {
+      if (phone_number && !isValidPhone(phone_number)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid phone number format.',
+        });
+      }
+      updates.push('phone_number = ?');
+      values.push(phone_number || null);
+    }
+    if (date_of_birth !== undefined) {
+      updates.push('date_of_birth = ?');
+      values.push(date_of_birth || null);
+    }
+    if (gender !== undefined) {
+      updates.push('gender = ?');
+      values.push(gender || null);
+    }
+    if (address !== undefined) {
+      updates.push('address = ?');
+      values.push(address || null);
+    }
+    if (avatar_url !== undefined) {
+      updates.push('avatar_url = ?');
+      values.push(avatar_url || null);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields provided to update.',
+      });
+    }
+
+    values.push(req.user.id);
+
+    const query = `UPDATE Users SET ${updates.join(', ')} WHERE id = ?`;
+    await pool.execute(query, values);
+
+    // Fetch updated user
+    const [users] = await pool.execute(
+      `SELECT id, full_name, email, phone_number, role, language_preference,
+              date_of_birth, gender, address, avatar_url, loyalty_points,
+              total_stays, created_at
+       FROM Users WHERE id = ?`,
+      [req.user.id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully.',
+      data: users[0],
+    });
+  } catch (err) {
+    console.error('Update me error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+    });
+  }
+};
+
 module.exports = {
   register,
   verifyOTP,
@@ -613,4 +689,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getMe,
+  updateMe,
 };
