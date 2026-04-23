@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/home/pages/side_menu_drawer_page.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 
@@ -14,6 +15,42 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _userName = widget.userName;
+    _fetchUserName();
+  }
+
+  Future<void> _fetchUserName() async {
+    // Attempt to load from local storage first
+    if (_userName == 'Traveler') {
+      final user = await ApiService.getUser();
+      if (user != null && user['full_name'] != null && mounted) {
+        setState(() {
+          _userName = user['full_name'];
+        });
+      }
+    }
+
+    // Fetch the latest from API to ensure it's up to date after edits
+    try {
+      final response = await ApiService.fetchMe();
+      if (response['success'] == true && mounted) {
+        final data = response['data'];
+        if (data != null && data['full_name'] != null) {
+          setState(() {
+            _userName = data['full_name'];
+          });
+        }
+      }
+    } catch (e) {
+      // Keep existing name if fetch fails
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          "Hello, ${widget.userName}",
+          "Hello, $_userName",
           style: AppTextStyles.h2.copyWith(
             color: AppColors.primary,
           ),

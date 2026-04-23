@@ -30,17 +30,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     _nameController = TextEditingController(text: widget.userData['full_name']);
     _emailController = TextEditingController(text: widget.userData['email']);
-    _phoneController = TextEditingController(text: widget.userData['phone_number']);
-    
+    _phoneController =
+        TextEditingController(text: widget.userData['phone_number']);
+
     // Formatting date
     String dob = widget.userData['date_of_birth'] ?? '';
-    if (dob.isNotEmpty && dob.length >= 10) {
-      dob = dob.substring(0, 10); // Simple formatting for YYYY-MM-DD
+
+    if (dob.isNotEmpty) {
+      try {
+        final date = DateTime.parse(dob).toLocal();
+        dob =
+            "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+      } catch (e) {
+        dob = '';
+      }
     }
     _dobController = TextEditingController(text: dob);
-    
-    _addressController = TextEditingController(text: widget.userData['address']);
-    
+
+    _addressController =
+        TextEditingController(text: widget.userData['address']);
+
     String? gender = widget.userData['gender'];
     if (gender != null && gender.isNotEmpty && _genders.contains(gender)) {
       _selectedGender = gender;
@@ -58,14 +67,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _selectDate() async {
-    DateTime initialDate = DateTime.now().subtract(const Duration(days: 365 * 20));
+    DateTime initialDate = DateTime.now();
+
     if (_dobController.text.isNotEmpty) {
       try {
-        initialDate = DateTime.parse(_dobController.text);
+        final parts = _dobController.text.split('/');
+        initialDate = DateTime(
+          int.parse(parts[2]), // year
+          int.parse(parts[1]), // month
+          int.parse(parts[0]), // day
+        );
       } catch (e) {
-        // invalid date format
+        initialDate = DateTime.now();
       }
     }
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -82,10 +98,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       },
     );
+
     if (picked != null) {
       setState(() {
-        // format as YYYY-MM-DD
-        _dobController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+        _dobController.text =
+            "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
       });
     }
   }
@@ -96,10 +113,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _isLoading = true);
 
     try {
+      String dob = _dobController.text.trim();
+      String formattedDob = '';
+
+      if (dob.isNotEmpty) {
+        try {
+          final parts = dob.split('/');
+          formattedDob = "${parts[2]}-${parts[1]}-${parts[0]}";
+        } catch (e) {
+          formattedDob = '';
+        }
+      }
+
       final Map<String, dynamic> data = {
         'full_name': _nameController.text.trim(),
         'phone_number': _phoneController.text.trim(),
-        'date_of_birth': _dobController.text.trim(),
+        'date_of_birth': formattedDob,
         'gender': _selectedGender,
         'address': _addressController.text.trim(),
       };
@@ -176,7 +205,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       fit: BoxFit.cover,
                                     )
                                   : const DecorationImage(
-                                      image: AssetImage("assets/icons/profile.png"),
+                                      image: AssetImage(
+                                          "assets/icons/profile.png"),
                                       fit: BoxFit.cover,
                                     ),
                             ),
@@ -187,7 +217,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.surface, width: 2),
+                              border: Border.all(
+                                  color: AppColors.surface, width: 2),
                             ),
                             child: const Icon(
                               Icons.edit,
@@ -225,7 +256,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   controller: _emailController,
                   icon: Icons.mail_outline,
                   readOnly: true,
-                  hintText: "thao.nguyen@sanctuary.com",
                 ),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -263,7 +293,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               child: _buildTextField(
                                 controller: _dobController,
                                 icon: Icons.calendar_today_outlined,
-                                hintText: "12 May 1992",
+                                hintText: "YYYY-MM-DD",
                               ),
                             ),
                           ),
@@ -285,7 +315,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.people_outline, color: AppColors.outline),
+                                const Icon(Icons.people_outline,
+                                    color: AppColors.outline),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: DropdownButtonHideUnderline(
@@ -293,13 +324,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       value: _selectedGender,
                                       hint: const Text("Select"),
                                       isExpanded: true,
-                                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.outline),
+                                      icon: const Icon(
+                                          Icons.keyboard_arrow_down,
+                                          color: AppColors.outline),
                                       items: _genders.map((String value) {
                                         return DropdownMenuItem<String>(
                                           value: value,
                                           child: Text(
                                             value,
-                                            style: AppTextStyles.bodyLarge.copyWith(
+                                            style: AppTextStyles.bodyLarge
+                                                .copyWith(
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -349,7 +383,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
                           )
                         : Text(
                             "Save Changes",
@@ -427,7 +462,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         hintText: hintText,
         prefixIcon: Icon(icon, color: AppColors.outline),
         filled: true,
-        fillColor: readOnly ? AppColors.surfaceContainerHighest : AppColors.surfaceContainerLowest,
+        fillColor: readOnly
+            ? AppColors.surfaceContainerHighest
+            : AppColors.surfaceContainerLowest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
