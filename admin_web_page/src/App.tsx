@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/dashboard/dashboard';
 import UsersPage from './pages/users/users';
@@ -11,15 +11,27 @@ import PaymentsPage from './pages/payments/payments';
 import VouchersPage from './pages/vouchers/vouchers';
 import ReviewsPage from './pages/user_reviews/reviews';
 import NotificationsPage from './pages/notifications/notifications';
+import AdminLogin from './pages/admin_login/admin_login';
+import type { JSX } from 'react';
+
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const token = localStorage.getItem('admin_token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Route */}
+        <Route path="/login" element={<AdminLogin />} />
+
         {/* Admin Routes Wrapper */}
-        <Route element={<AdminLayout />}>
+        <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route path="/" element={<Dashboard />} />
-          {/* You can add more admin routes here */}
           <Route path="/users" element={<UsersPage />} />
           <Route path="/rooms" element={<RoomsPage />} />
           <Route path="/categories" element={<CategoriesPage />} />

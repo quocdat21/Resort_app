@@ -1,13 +1,34 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Sun, 
   Bell, 
-  MoreVertical
+  MoreVertical,
+  LogOut
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [adminUser, setAdminUser] = useState<{full_name?: string, role?: string, avatar_url?: string} | null>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('admin_user');
+    if (userStr) {
+      try {
+        setAdminUser(JSON.parse(userStr));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    navigate('/login');
+  };
 
   const getPageTitle = (pathname: string) => {
     switch (pathname) {
@@ -18,7 +39,6 @@ const Header: React.FC = () => {
       case '/amenities': return 'Amenities';
       case '/services': return 'Services';
       case '/bookings': return 'Bookings';
-      case '/service-bookings': return 'Service Bookings';
       case '/payments': return 'Payments';
       case '/vouchers': return 'Vouchers';
       case '/reviews': return 'Reviews';
@@ -38,7 +58,7 @@ const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-6">
-        <div className="relative w-80">
+        <div className="relative w-80 hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
@@ -52,14 +72,22 @@ const Header: React.FC = () => {
           <div className="h-8 w-[1px] bg-slate-200 mx-2" />
           <div className="flex items-center gap-3 cursor-pointer group">
             <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" 
+              src={adminUser?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} 
               alt="Admin" 
-              className="w-9 h-9 rounded-full border border-slate-200 group-hover:border-green-500 transition-colors"
+              className="w-9 h-9 rounded-full border border-slate-200 group-hover:border-green-500 transition-colors object-cover"
             />
             <div className="hidden sm:block">
-              <p className="text-sm font-bold text-slate-900">Admin User</p>
-              <p className="text-[10px] text-slate-500 font-medium">Administrator</p>
+              <p className="text-sm font-bold text-slate-900">{adminUser?.full_name || 'Admin User'}</p>
+              <p className="text-[10px] text-slate-500 font-medium capitalize">{adminUser?.role || 'Administrator'}</p>
             </div>
+            
+            <button 
+              onClick={handleLogout}
+              className="ml-2 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </div>
