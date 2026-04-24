@@ -192,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildLogo(),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 10),
                     const Text("Welcome Back", style: AppTextStyles.h2),
                     const Text(
                       "Enter your credentials to access your sanctuary.",
@@ -299,14 +299,62 @@ class _LoginScreenState extends State<LoginScreen> {
                       .copyWith(color: Colors.white, fontSize: 32))
             ]))
       ]);
-  Widget _buildLogo() =>
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Image.asset('assets/icons/logo_login.png'),
-        const SizedBox(width: 12),
-        Text("THAO NGUYEN",
-            style: AppTextStyles.h2.copyWith(
-                fontWeight: FontWeight.w900, color: AppColors.primary))
-      ]);
+  Widget _buildLogo() => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/icons/icon_resort_login.png',
+            height: 60,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "THAO NGUYEN",
+                style: AppTextStyles.h2.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF1A8A3D),
+                  height: 1.0,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    "HOTEL & RESORT",
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: const Color(0xFF1A8A3D),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      4,
+                      (index) => const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 1.0),
+                        child: Icon(
+                          Icons.star,
+                          color: Color(0xFF1A8A3D),
+                          size: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+
   Widget _buildLoginButton() => SizedBox(
       width: double.infinity,
       height: 56,
