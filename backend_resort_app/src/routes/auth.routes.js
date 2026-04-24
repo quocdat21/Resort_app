@@ -7,6 +7,7 @@ const { verifyToken } = require('../middlewares/auth.middleware');
 // Public routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.post('/admin-login', authController.adminLogin);
 router.post('/verify-otp', authController.verifyOTP);
 router.post('/resend-otp', authController.resendOTP);
 router.post('/forgot-password', authController.forgotPassword);
@@ -15,5 +16,6 @@ router.post('/reset-password', authController.resetPassword);
 // Protected routes
 router.get('/me', verifyToken, authController.getMe);
 router.put('/me', verifyToken, authController.updateMe);
+router.get('/admin/me', verifyToken, authController.authorizeAdmin, authController.getMe);
 
 module.exports = router;
