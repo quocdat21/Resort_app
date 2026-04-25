@@ -9,6 +9,17 @@ require('dotenv').config();
 
 const SALT_ROUNDS = 12;
 
+const formatUser = (user) => {
+  if (!user) return null;
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  return {
+    ...user,
+    avatar_url: user.avatar_url 
+      ? (user.avatar_url.startsWith('http') ? user.avatar_url : `${baseUrl}${user.avatar_url}`)
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.email)}&background=random`
+  };
+};
+
 // ============================================
 // POST /api/auth/register
 // ============================================
@@ -374,11 +385,20 @@ const login = async (req, res) => {
 
     const user = users[0];
 
+    // --- Check status ---
+    if (user.status === 'banned') {
+      return res.status(403).json({
+        success: false,
+        message: 'Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên để hỗ trợ.',
+      });
+    }
+
     // --- Check verified ---
     if (user.is_verified === 0) {
       return res.status(403).json({
         success: false,
         message: 'Please verify your email before logging in.',
+        unverified: true
       });
     }
 
@@ -407,7 +427,7 @@ const login = async (req, res) => {
       success: true,
       message: 'Login successful.',
       data: {
-        user: {
+        user: formatUser({
           id: user.id,
           full_name: user.full_name,
           email: user.email,
@@ -416,7 +436,7 @@ const login = async (req, res) => {
           avatar_url: user.avatar_url,
           loyalty_points: user.loyalty_points,
           total_stays: user.total_stays,
-        },
+        }),
         token,
       },
     });
@@ -594,7 +614,7 @@ const getMe = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: users[0],
+      data: formatUser(users[0]),
     });
   } catch (err) {
     console.error('Get me error:', err);
@@ -646,6 +666,11 @@ const updateMe = async (req, res) => {
       values.push(avatar_url || null);
     }
 
+    if (req.file) {
+      updates.push('avatar_url = ?');
+      values.push(`/uploads/users/${req.file.filename}`);
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
@@ -670,7 +695,7 @@ const updateMe = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Profile updated successfully.',
-      data: users[0],
+      data: formatUser(users[0]),
     });
   } catch (err) {
     console.error('Update me error:', err);
@@ -717,6 +742,13 @@ const adminLogin = async (req, res) => {
       });
     }
 
+    if (user.status === 'banned') {
+      return res.status(403).json({
+        success: false,
+        message: 'Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên để hỗ trợ.',
+      });
+    }
+
     if (user.is_verified === 0) {
       return res.status(403).json({
         success: false,
@@ -747,12 +779,13 @@ const adminLogin = async (req, res) => {
       success: true,
       message: 'Admin login successful.',
       data: {
-        user: {
+        user: formatUser({
           id: user.id,
           full_name: user.full_name,
           email: user.email,
           role: user.role,
-        },
+          avatar_url: user.avatar_url,
+        }),
         token
       },
     });
