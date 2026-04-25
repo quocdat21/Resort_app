@@ -8,6 +8,7 @@ import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/auth/pages/forgot_password_page.dart';
 import 'package:resort_app/features/auth/pages/register_page.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
+import 'package:resort_app/features/auth/pages/verify_page.dart';
 
 // --- MÀN HÌNH ĐĂNG NHẬP ---
 class LoginScreen extends StatefulWidget {
@@ -93,12 +94,54 @@ class _LoginScreenState extends State<LoginScreen> {
           (route) => false,
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Đăng nhập thất bại.'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        if (result['unverified'] == true) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: AppColors.background,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text("Xác thực tài khoản", style: AppTextStyles.h3),
+              content: const Text(
+                "Tài khoản của bạn chưa được xác thực.\nVui lòng xác thực tài khoản để tiếp tục.",
+                style: AppTextStyles.bodyMedium,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Hủy",
+                      style: AppTextStyles.labelSmall
+                          .copyWith(color: AppColors.secondary)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VerifyEmailPage(
+                          email: _emailController.text.trim(),
+                          autoSendOtp: true,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text("Xác thực ngay",
+                      style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Đăng nhập thất bại.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
     } catch (e) {
       print("LOGIN ERROR: $e");

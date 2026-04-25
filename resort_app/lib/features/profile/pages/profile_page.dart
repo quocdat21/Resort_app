@@ -347,7 +347,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.outlineVariant),
+            const Icon(Icons.chevron_right, color: AppColors.outlineVariant),
           ],
         ),
       ),

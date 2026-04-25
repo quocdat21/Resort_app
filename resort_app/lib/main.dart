@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
-// Lưu ý: Thay đổi đường dẫn import bên dưới cho đúng với tên project của bạn
+import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/features/onboarding/pages/onboarding_page.dart';
 
 void main() {
   // Đảm bảo các dịch vụ của Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark, // Android
+      statusBarBrightness: Brightness.light, // iOS (để icon đen)
+    ),
+  );
+
   runApp(const MyApp());
 }
 

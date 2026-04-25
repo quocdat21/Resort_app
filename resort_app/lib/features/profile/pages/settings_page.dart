@@ -61,8 +61,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3E5D8), // Light peachy color
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF3E5D8), // Light peachy color
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -105,7 +105,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: DropdownButton<String>(
                           value: _selectedLanguage,
                           isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.outline),
+                          icon: const Icon(Icons.keyboard_arrow_down,
+                              color: AppColors.outline),
                           items: _languages.map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
@@ -146,7 +147,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_none_outlined, color: AppColors.primary, size: 24),
+                    const Icon(Icons.notifications_none_outlined,
+                        color: AppColors.primary, size: 24),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
@@ -186,7 +188,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.dark_mode_outlined, color: AppColors.primary, size: 24),
+                    const Icon(Icons.dark_mode_outlined,
+                        color: AppColors.primary, size: 24),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(

@@ -9,11 +9,13 @@ import 'package:resort_app/features/home/pages/home_page.dart';
 class VerifyEmailPage extends StatefulWidget {
   final String email;
   final String type; // 'register' or 'reset_password'
+  final bool autoSendOtp;
 
   const VerifyEmailPage({
     super.key,
     required this.email,
     this.type = 'register',
+    this.autoSendOtp = false,
   });
 
   @override
@@ -32,7 +34,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   @override
   void initState() {
     super.initState();
-    _startResendTimer();
+    if (widget.autoSendOtp) {
+      _canResend = true; // allow resend to pass the initial check
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleResend();
+      });
+    } else {
+      _startResendTimer();
+    }
   }
 
   void _startResendTimer() {

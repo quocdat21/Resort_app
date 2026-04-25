@@ -88,10 +88,12 @@ class _Step3FormState extends State<Step3Form> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("FULL NAME", style: AppTextStyles.labelSmall),
+                const Text("FULL NAME", style: AppTextStyles.labelSmall),
                 const SizedBox(height: 8),
                 Text(
-                  widget.fullName.isNotEmpty ? widget.fullName : "Nguyen Minh Tam",
+                  widget.fullName.isNotEmpty
+                      ? widget.fullName
+                      : "Nguyen Minh Tam",
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
@@ -99,10 +101,12 @@ class _Step3FormState extends State<Step3Form> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text("EMAIL ADDRESS", style: AppTextStyles.labelSmall),
+                const Text("EMAIL ADDRESS", style: AppTextStyles.labelSmall),
                 const SizedBox(height: 8),
                 Text(
-                  widget.email.isNotEmpty ? widget.email : "tam.nguyen@forestsanctuary.vn",
+                  widget.email.isNotEmpty
+                      ? widget.email
+                      : "tam.nguyen@forestsanctuary.vn",
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
@@ -148,7 +152,8 @@ class _Step3FormState extends State<Step3Form> {
               Expanded(
                 child: RichText(
                   text: TextSpan(
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: AppColors.onSurfaceVariant),
                     children: [
                       const TextSpan(text: "I agree to the "),
                       TextSpan(
@@ -159,7 +164,9 @@ class _Step3FormState extends State<Step3Form> {
                           decoration: TextDecoration.underline,
                         ),
                       ),
-                      const TextSpan(text: " and\nacknowledge the privacy policy\nregarding forest conservation."),
+                      const TextSpan(
+                          text:
+                              " and\nacknowledge the privacy policy\nregarding forest conservation."),
                     ],
                   ),
                 ),
@@ -193,7 +200,8 @@ class _Step3FormState extends State<Step3Form> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                  const Icon(Icons.arrow_forward,
+                      color: Colors.white, size: 20),
                 ],
               ),
             ),
