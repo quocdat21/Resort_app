@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
-  Filter,
-  ArrowUpDown,
+  // MoreVertical,
+  // Filter,
+  // ArrowUpDown,
   Eye
 } from 'lucide-react';
 import ViewRoom from './view_room';
@@ -32,23 +32,23 @@ interface Room {
 }
 
 const roomsData: Room[] = [
-  { 
-    id: '1', 
-    roomNumber: '101', 
-    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=600', 
+  {
+    id: '1',
+    roomNumber: '101',
+    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=600',
     secondaryImages: [
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=200',
       'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=200'
     ],
-    name: 'Phòng Deluxe Ocean View', 
-    category: 'Deluxe', 
+    name: 'Phòng Deluxe Ocean View',
+    category: 'Deluxe',
     categoryId: '1',
-    zone: 'Khu A', 
-    price: 4500000, 
-    size: 45, 
-    capacity: '2 Người lớn, 1 Trẻ em', 
+    zone: 'Khu A',
+    price: 4500000,
+    size: 45,
+    capacity: '2 Người lớn, 1 Trẻ em',
     description: 'Tận hưởng tầm nhìn tuyệt đẹp ra đại dương từ ban công riêng của bạn. Phòng Deluxe được thiết kế hiện đại với nội thất gỗ cao cấp và tiện nghi đầy đủ.',
-    status: 'Available' 
+    status: 'Available'
   },
   { id: '2', roomNumber: '102', image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=600', name: 'Phòng Family Suite', category: 'Family', zone: 'Khu A', price: 6200000, size: 65, capacity: '4 Người lớn, 2 Trẻ em', status: 'Available' },
   { id: '3', roomNumber: '201', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=200', name: 'Phòng Garden Villa', category: 'Villa', zone: 'Khu B', price: 3800000, size: 55, capacity: '2 Người lớn, 1 Trẻ em', status: 'Maintenance' },
@@ -151,7 +151,7 @@ const RoomsPage: React.FC = () => {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={() => setIsAddOpen(true)}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-green-100 whitespace-nowrap"
           >
@@ -205,30 +205,29 @@ const RoomsPage: React.FC = () => {
                   <td className="px-6 py-4 text-slate-500 text-xs whitespace-nowrap">{room.capacity}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex justify-center">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap ${
-                        room.status === 'Available' ? 'bg-green-50 text-green-600 border-green-100' : 
-                        room.status === 'Occupied' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                        room.status === 'Maintenance' ? 'bg-orange-50 text-orange-600 border-orange-100' : 
-                        'bg-red-50 text-red-600 border-red-100'
-                      }`}>
-                        {room.status === 'Available' ? 'Đang trống' : 
-                         room.status === 'Occupied' ? 'Đang có khách' :
-                         room.status === 'Maintenance' ? 'Bảo trì' : 'Đang ẩn'}
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap ${room.status === 'Available' ? 'bg-green-50 text-green-600 border-green-100' :
+                          room.status === 'Occupied' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                            room.status === 'Maintenance' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                              'bg-red-50 text-red-600 border-red-100'
+                        }`}>
+                        {room.status === 'Available' ? 'Đang trống' :
+                          room.status === 'Occupied' ? 'Đang có khách' :
+                            room.status === 'Maintenance' ? 'Bảo trì' : 'Đang ẩn'}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
-                      <button 
+                      <button
                         onClick={() => handleView(room)}
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" 
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                         title="Xem chi tiết"
                       >
                         <Eye size={16} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEdit(room)}
-                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" 
+                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
                         title="Chỉnh sửa"
                       >
                         <Edit2 size={16} />
@@ -268,24 +267,24 @@ const RoomsPage: React.FC = () => {
         </div>
       </div>
       {/* Modals */}
-      <AddRoom 
-        isOpen={isAddOpen} 
-        onClose={() => setIsAddOpen(false)} 
-        onSuccess={() => console.log('Refresh rooms')} 
+      <AddRoom
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onSuccess={() => console.log('Refresh rooms')}
       />
 
       {selectedRoom && (
         <>
-          <ViewRoom 
-            isOpen={isViewOpen} 
-            onClose={() => setIsViewOpen(false)} 
-            room={selectedRoom} 
+          <ViewRoom
+            isOpen={isViewOpen}
+            onClose={() => setIsViewOpen(false)}
+            room={selectedRoom}
           />
-          <EditRoom 
-            isOpen={isEditOpen} 
-            onClose={() => setIsEditOpen(false)} 
-            onSuccess={() => console.log('Refresh rooms')} 
-            room={selectedRoom} 
+          <EditRoom
+            isOpen={isEditOpen}
+            onClose={() => setIsEditOpen(false)}
+            onSuccess={() => console.log('Refresh rooms')}
+            room={selectedRoom}
           />
         </>
       )}

@@ -7,13 +7,13 @@ import {
     Layers,
     Maximize2,
     Users,
-    DollarSign,
+    // DollarSign,
     Info,
     CheckCircle2,
     AlertCircle,
     EyeOff,
     Image as ImageIcon,
-    Edit2,
+    // Edit2,
     UserCheck
 } from 'lucide-react';
 

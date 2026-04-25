@@ -1,4 +1,6 @@
--- USERS
+-- =========================================
+-- 1. USERS
+-- =========================================
 CREATE TABLE Users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   full_name VARCHAR(100) NOT NULL,
@@ -18,7 +20,9 @@ CREATE TABLE Users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- OTP
+-- =========================================
+-- 2. OTP
+-- =========================================
 CREATE TABLE OTP_Verifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NULL,
@@ -32,64 +36,102 @@ CREATE TABLE OTP_Verifications (
   INDEX (email),
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
--- ZONES
-CREATE TABLE Zones ( 
-  id INT AUTO_INCREMENT PRIMARY KEY, 
-  name VARCHAR(100) NOT NULL 
-  );
 
--- CATEGORIES
+-- =========================================
+-- 3. ZONES (Resort / Hotel / Tower)
+-- =========================================
+CREATE TABLE Zones (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name ENUM('Resort','Hotel','Tower') NOT NULL
+);
+
+-- =========================================
+-- 4. CATEGORIES (Khu: Đồi Cọ, Trung tâm,...)
+-- =========================================
 CREATE TABLE Categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
   zone_id INT,
-  name VARCHAR(50),
-  icon_url VARCHAR(255),
+  name VARCHAR(100),
   FOREIGN KEY (zone_id) REFERENCES Zones(id) ON DELETE SET NULL
 );
 
-
--- ROOMS
-CREATE TABLE Rooms (
+-- =========================================
+-- 5. ROOM TYPES (LOẠI PHÒNG)
+-- =========================================
+CREATE TABLE Room_Types (
   id INT AUTO_INCREMENT PRIMARY KEY,
   category_id INT,
-  name VARCHAR(255),
-  room_number VARCHAR(20) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
   description TEXT,
   size_sqm INT,
   capacity_adults INT DEFAULT 2,
   capacity_children INT DEFAULT 0,
-  base_price DECIMAL(15,0) NOT NULL,
-  status ENUM('Available','Occupied','Maintenance','Hidden') DEFAULT 'Available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (category_id) REFERENCES Categories(id) ON DELETE SET NULL
 );
 
-
--- ROOM IMAGES
-CREATE TABLE Room_Images (
+-- =========================================
+-- 6. ROOMS (PHÒNG THỰC TẾ)
+-- =========================================
+CREATE TABLE Rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  room_id INT,
-  image_url VARCHAR(255),
-  FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
+  room_type_id INT,
+  room_number VARCHAR(20) UNIQUE,
+  status ENUM('Available','Occupied','Maintenance') DEFAULT 'Available',
+  FOREIGN KEY (room_type_id) REFERENCES Room_Types(id) ON DELETE CASCADE
 );
 
--- AMENITIES
+-- =========================================
+-- 7. ROOM IMAGES
+-- =========================================
+CREATE TABLE Room_Images (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  room_type_id INT,
+  image_url VARCHAR(255),
+  FOREIGN KEY (room_type_id) REFERENCES Room_Types(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- 8. AMENITIES
+-- =========================================
 CREATE TABLE Amenities (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100),
   icon_url VARCHAR(255)
 );
 
--- ROOM AMENITIES
 CREATE TABLE Room_Amenities (
-  room_id INT,
+  room_type_id INT,
   amenity_id INT,
-  PRIMARY KEY (room_id, amenity_id),
-  FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE,
+  PRIMARY KEY (room_type_id, amenity_id),
+  FOREIGN KEY (room_type_id) REFERENCES Room_Types(id) ON DELETE CASCADE,
   FOREIGN KEY (amenity_id) REFERENCES Amenities(id) ON DELETE CASCADE
 );
 
--- SERVICES
+-- =========================================
+-- 9. ROOM RATES (GIÁ THEO THỜI GIAN)
+-- =========================================
+CREATE TABLE Room_Rates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  room_type_id INT,
+  start_date DATE,
+  end_date DATE,
+  day_type ENUM('Weekday','Weekend','Holiday'),
+  package_type ENUM('Breakfast','Halfboard'),
+  price DECIMAL(15,0) NOT NULL,
+  FOREIGN KEY (room_type_id) REFERENCES Room_Types(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Holidays (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  holiday_name VARCHAR(100),
+  start_date DATE,
+  end_date DATE
+);
+
+-- =========================================
+-- 10. SERVICES
+-- =========================================
 CREATE TABLE Services (
   id INT AUTO_INCREMENT PRIMARY KEY,
   type ENUM('Hall','Food','Event','Other'),
@@ -105,7 +147,9 @@ CREATE TABLE Services (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- BOOKINGS
+-- =========================================
+-- 11. BOOKINGS
+-- =========================================
 CREATE TABLE Bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_code VARCHAR(20) UNIQUE,
@@ -113,10 +157,16 @@ CREATE TABLE Bookings (
   room_id INT,
   check_in DATE NOT NULL,
   check_out DATE NOT NULL,
-  adults INT DEFAULT 1,
-  children INT DEFAULT 0,
-  room_price DECIMAL(15,0),
-  service_price DECIMAL(15,0) DEFAULT 0,
+  package_type ENUM('Breakfast','Halfboard') DEFAULT 'Breakfast',
+  adults_count INT DEFAULT 1,
+  children_under_6 INT DEFAULT 0,
+  children_6_12 INT DEFAULT 0,
+  extra_bed_count INT DEFAULT 0,
+  room_price_total DECIMAL(15,0),
+  surcharge_total DECIMAL(15,0) DEFAULT 0,
+  service_price_total DECIMAL(15,0) DEFAULT 0,
+  vat_amount DECIMAL(15,0) DEFAULT 0,
+  discount_amount DECIMAL(15,0) DEFAULT 0,
   total_amount DECIMAL(15,0),
   status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -124,7 +174,20 @@ CREATE TABLE Bookings (
   FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
 );
 
--- BOOKING SERVICES
+-- =========================================
+-- 12. BOOKING DETAILS (GIÁ TỪNG NGÀY)
+-- =========================================
+CREATE TABLE Booking_Details (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT,
+  date DATE,
+  price DECIMAL(15,0),
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE
+);
+
+-- =========================================
+-- 13. BOOKING SERVICES
+-- =========================================
 CREATE TABLE Booking_Services (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT,
@@ -135,36 +198,23 @@ CREATE TABLE Booking_Services (
   FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
 );
 
--- SERVICE BOOKINGS
-CREATE TABLE Service_Bookings (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  booking_code VARCHAR(20) UNIQUE,
-  user_id INT,
-  service_id INT,
-  booking_date DATE NOT NULL,
-  quantity INT DEFAULT 1,
-  total_amount DECIMAL(15,0),
-  status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
-);
-
--- PAYMENTS
+-- =========================================
+-- 14. PAYMENTS
+-- =========================================
 CREATE TABLE Payments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT NULL,
-  service_booking_id INT NULL,
   payment_method ENUM('Credit Card','E-Wallet','Bank Transfer'),
   transaction_id VARCHAR(100),
   amount DECIMAL(15,0),
   status ENUM('Pending','Paid','Failed','Refunded') DEFAULT 'Pending',
   payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_booking_id) REFERENCES Service_Bookings(id) ON DELETE CASCADE
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE
 );
 
--- REVIEWS
+-- =========================================
+-- 15. REVIEWS
+-- =========================================
 CREATE TABLE Reviews (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT,
@@ -178,21 +228,9 @@ CREATE TABLE Reviews (
   FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
 );
 
--- SERVICE REVIEWS
-CREATE TABLE Service_Reviews (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  service_booking_id INT,
-  user_id INT,
-  service_id INT,
-  rating INT,
-  comment TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (service_booking_id) REFERENCES Service_Bookings(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
-);
-
--- VOUCHERS
+-- =========================================
+-- 16. VOUCHERS
+-- =========================================
 CREATE TABLE Vouchers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   code VARCHAR(50) UNIQUE NOT NULL,
@@ -208,13 +246,13 @@ CREATE TABLE Vouchers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ADD VOUCHER TO BOOKINGS
 ALTER TABLE Bookings
 ADD voucher_id INT NULL,
-ADD discount_amount DECIMAL(15,0) DEFAULT 0,
 ADD FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE SET NULL;
 
--- USER VOUCHERS
+-- =========================================
+-- 17. USER VOUCHERS
+-- =========================================
 CREATE TABLE User_Vouchers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
@@ -225,7 +263,9 @@ CREATE TABLE User_Vouchers (
   FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE CASCADE
 );
 
--- NOTIFICATIONS
+-- =========================================
+-- 18. NOTIFICATIONS
+-- =========================================
 CREATE TABLE Notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
