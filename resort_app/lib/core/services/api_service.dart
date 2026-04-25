@@ -115,17 +115,38 @@ class ApiService {
   }
 
   /// PUT /api/auth/me
-  static Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateProfile({
+    required Map<String, String> data,
+    String? avatarPath,
+  }) async {
     final token = await getToken();
-    final response = await http.put(
-      Uri.parse('$baseUrl/auth/me'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(data),
-    );
-    return jsonDecode(response.body);
+    final uri = Uri.parse('$baseUrl/auth/me');
+
+    if (avatarPath != null) {
+      final request = http.MultipartRequest('PUT', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Thêm các fields khác
+      request.fields.addAll(data);
+
+      // Thêm file
+      request.files
+          .add(await http.MultipartFile.fromPath('avatar', avatarPath));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      return jsonDecode(response.body);
+    } else {
+      final response = await http.put(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(data),
+      );
+      return jsonDecode(response.body);
+    }
   }
 
   // ==================== TOKEN / USER STORAGE ====================

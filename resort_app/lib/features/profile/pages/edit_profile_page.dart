@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
@@ -24,6 +26,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   String? _selectedGender;
   final List<String> _genders = ['Male', 'Female', 'Other'];
+
+  File? _pickedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _pickedImage = File(image.path);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -125,15 +139,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
         }
       }
 
-      final Map<String, dynamic> data = {
+      final Map<String, String> data = {
         'full_name': _nameController.text.trim(),
         'phone_number': _phoneController.text.trim(),
         'date_of_birth': formattedDob,
-        'gender': _selectedGender,
+        'gender': _selectedGender ?? '',
         'address': _addressController.text.trim(),
       };
 
-      final response = await ApiService.updateProfile(data);
+      final response = await ApiService.updateProfile(
+        data: data,
+        avatarPath: _pickedImage?.path,
+      );
 
       if (!mounted) return;
 
@@ -191,50 +208,65 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 Center(
                   child: Column(
                     children: [
-                      Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: avatarUrl.isNotEmpty
-                                  ? DecorationImage(
-                                      image: NetworkImage(avatarUrl),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const DecorationImage(
-                                      image: AssetImage(
-                                          "assets/icons/profile.png"),
-                                      fit: BoxFit.cover,
-                                    ),
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.surfaceContainerHighest,
+                                border: Border.all(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    width: 4),
+                                image: _pickedImage != null
+                                    ? DecorationImage(
+                                        image: FileImage(_pickedImage!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : (avatarUrl.isNotEmpty
+                                        ? DecorationImage(
+                                            image: NetworkImage(avatarUrl),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : const DecorationImage(
+                                            image: AssetImage(
+                                                "assets/icons/profile.png"),
+                                            fit: BoxFit.cover,
+                                          )),
+                              ),
                             ),
-                          ),
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: AppColors.surface, width: 2),
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: AppColors.surface, width: 2),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        "CHANGE PHOTO",
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: const Color(0xFF7D6444),
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Text(
+                          "CHANGE PHOTO",
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: const Color(0xFF7D6444),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                       ),
                     ],

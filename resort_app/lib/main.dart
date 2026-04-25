@@ -13,7 +13,6 @@ void main() {
       statusBarBrightness: Brightness.light, // iOS (để icon đen)
     ),
   );
-
   runApp(const MyApp());
 }
 

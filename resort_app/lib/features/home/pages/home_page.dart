@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
@@ -16,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _userName = '';
+  String? _avatarUrl;
 
   @override
   void initState() {
@@ -28,9 +30,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // Attempt to load from local storage first
     if (_userName == 'Traveler') {
       final user = await ApiService.getUser();
-      if (user != null && user['full_name'] != null && mounted) {
+      if (user != null && mounted) {
         setState(() {
-          _userName = user['full_name'];
+          _userName = user['full_name'] ?? 'Traveler';
+          _avatarUrl = user['avatar_url'];
         });
       }
     }
@@ -40,9 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await ApiService.fetchMe();
       if (response['success'] == true && mounted) {
         final data = response['data'];
-        if (data != null && data['full_name'] != null) {
+        if (data != null) {
           setState(() {
-            _userName = data['full_name'];
+            _userName = data['full_name'] ?? _userName;
+            _avatarUrl = data['avatar_url'] ?? _avatarUrl;
           });
         }
       }
@@ -53,38 +57,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      drawer: const SideMenuDrawerPage(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildWelcome(),
-                    const SizedBox(height: 16),
-                    _buildSearch(),
-                    const SizedBox(height: 20),
-                    _buildBanner(),
-                    const SizedBox(height: 20),
-                    _buildCategories(),
-                    const SizedBox(height: 20),
-                    _buildPopular(),
-                    const SizedBox(height: 100),
-                  ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark, // Android
+        statusBarBrightness: Brightness.light, // iOS
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        drawer: const SideMenuDrawerPage(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildWelcome(),
+                      const SizedBox(height: 16),
+                      _buildSearch(),
+                      const SizedBox(height: 20),
+                      _buildBanner(),
+                      const SizedBox(height: 20),
+                      _buildCategories(),
+                      const SizedBox(height: 20),
+                      _buildPopular(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        bottomNavigationBar: const BottomNav(currentIndex: 0),
       ),
-      bottomNavigationBar: const BottomNav(currentIndex: 0),
     );
   }
 
@@ -112,9 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             ],
           ),
-          const Row(
+          Row(
             children: [
-              Stack(
+              const Stack(
                 children: [
                   Icon(Icons.notifications),
                   Positioned(
@@ -127,12 +138,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 ],
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               CircleAvatar(
                 radius: 18,
-                backgroundImage: AssetImage(
-                  "assets/icons/profile.png",
-                ),
+                backgroundColor: AppColors.surfaceContainerHigh,
+                backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                    ? NetworkImage(_avatarUrl!)
+                    : const AssetImage("assets/icons/profile.png")
+                        as ImageProvider,
               )
             ],
           )
