@@ -4,6 +4,7 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./src/routes/auth.routes');
+const userRoutes = require('./src/routes/user.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // ROUTES
 // ========================
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -45,6 +47,17 @@ app.use((err, req, res, next) => {
     message: 'Internal server error.',
   });
 });
+
+const pool = require('./src/config/db');
+
+(async () => {
+  try {
+    await pool.query('SELECT 1');
+    console.log('✅ MySQL connected OK');
+  } catch (err) {
+    console.error('❌ MySQL error:', err.message);
+  }
+})();
 
 // ========================
 // START SERVER
