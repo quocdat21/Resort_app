@@ -1,10 +1,12 @@
 const BASE_URL = 'http://localhost:3000/api';
 
-const getHeaders = () => {
+const getHeaders = (isFormData: boolean = false) => {
   const token = localStorage.getItem('admin_token');
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -28,11 +30,12 @@ export const apiService = {
   },
 
   async post(endpoint: string, body: any) {
+    const isFormData = body instanceof FormData;
     try {
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(body),
+        headers: getHeaders(isFormData),
+        body: isFormData ? body : JSON.stringify(body),
       });
       return await response.json();
     } catch (error) {
@@ -42,11 +45,12 @@ export const apiService = {
   },
 
   async put(endpoint: string, body: any) {
+    const isFormData = body instanceof FormData;
     try {
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(body),
+        headers: getHeaders(isFormData),
+        body: isFormData ? body : JSON.stringify(body),
       });
       return await response.json();
     } catch (error) {

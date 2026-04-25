@@ -7,21 +7,54 @@ import {
   LogOut
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { apiService } from '../../services/api_service';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [adminUser, setAdminUser] = useState<{full_name?: string, role?: string, avatar_url?: string} | null>(null);
+  const [adminUser, setAdminUser] = useState<{id?: number | string, full_name?: string, role?: string, avatar_url?: string} | null>(null);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('admin_user');
-    if (userStr) {
-      try {
-        setAdminUser(JSON.parse(userStr));
-      } catch (e) {
-        console.error(e);
+    const loadUser = async () => {
+      // 1. Load từ localStorage trước để có cái hiện ngay
+      const userStr = localStorage.getItem('admin_user');
+      if (userStr) {
+        try {
+          setAdminUser(JSON.parse(userStr));
+        } catch (e) {
+          console.error(e);
+        }
       }
-    }
+
+      // 2. Fetch từ server để lấy thông tin mới nhất (đề phòng đổi trên app)
+      try {
+        const response = await apiService.get('/auth/admin/me');
+        if (response.success && response.data) {
+          const updatedAdmin = {
+            id: response.data.id,
+            full_name: response.data.full_name,
+            email: response.data.email,
+            role: response.data.role,
+            avatar_url: response.data.avatar_url
+          };
+          setAdminUser(updatedAdmin);
+          localStorage.setItem('admin_user', JSON.stringify(updatedAdmin));
+        }
+      } catch (error) {
+        console.error('Failed to refresh admin profile:', error);
+      }
+    };
+
+    loadUser();
+
+    // Lắng nghe sự kiện update thông tin người dùng từ edit_user.tsx
+    window.addEventListener('userUpdate', loadUser);
+    window.addEventListener('storage', loadUser);
+
+    return () => {
+      window.removeEventListener('userUpdate', loadUser);
+      window.removeEventListener('storage', loadUser);
+    };
   }, []);
 
   const handleLogout = () => {

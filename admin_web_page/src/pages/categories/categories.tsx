@@ -56,7 +56,11 @@ const CategoriesPage: React.FC = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-200">
-                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-16">ID</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                    <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
+                                        ID <ArrowUpDown size={12} />
+                                    </div>
+                                </th>
                                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                                     <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
                                         Name <ArrowUpDown size={12} />
@@ -83,7 +87,7 @@ const CategoriesPage: React.FC = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center">
                                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${category.status === 'Active' ? 'bg-green-50 text-green-600 border-green-100' :
-                                                    'bg-slate-100 text-slate-500 border-slate-200'
+                                                'bg-slate-100 text-slate-500 border-slate-200'
                                                 }`}>
                                                 {category.status}
                                             </span>
@@ -130,8 +134,8 @@ const CategoriesPage: React.FC = () => {
 const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean }> = ({ icon, disabled }) => (
     <button
         className={`w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 transition-all ${disabled
-                ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-                : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
+            ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+            : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
             }`}
         disabled={disabled}
     >
@@ -142,8 +146,8 @@ const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean }> 
 const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean }> = ({ children, active }) => (
     <button
         className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-                ? 'bg-green-50 text-green-700 border border-green-200'
-                : 'text-slate-500 hover:bg-slate-50'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'text-slate-500 hover:bg-slate-50'
             }`}
     >
         {children}

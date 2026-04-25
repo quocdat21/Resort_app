@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Portal from '../../components/common/Portal';
 import {
     X,
     Upload,
@@ -10,15 +11,24 @@ import {
     Lock,
     Shield,
     Activity,
-    MapPin
+    MapPin,
+    Eye,
+    EyeOff
 } from 'lucide-react';
+import { apiService } from '../../services/api_service';
 
 interface AddUserProps {
     isOpen: boolean;
     onClose: () => void;
+    onSuccess: () => void;
 }
 
-const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose }) => {
+const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose, onSuccess }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -38,15 +48,66 @@ const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setAvatarFile(file);
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('User Added:', formData);
-        onClose();
+        
+        // --- Password Validation ---
+        const password = formData.password;
+        const has8Chars = password.length >= 8;
+        const hasSpecialSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        const hasUppercase = /[A-Z]/.test(password);
+
+        if (!has8Chars) {
+            setError('Mật khẩu phải có ít nhất 8 ký tự.');
+            return;
+        }
+        if (!hasSpecialSymbol) {
+            setError('Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.');
+            return;
+        }
+        if (!hasUppercase) {
+            setError('Mật khẩu phải chứa ít nhất 1 ký tự viết hoa.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+
+            const formDataToSend = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                formDataToSend.append(key, value);
+            });
+            if (avatarFile) {
+                formDataToSend.append('avatar', avatarFile);
+            }
+
+            const response = await apiService.post('/users', formDataToSend);
+            if (response.success) {
+                onSuccess();
+                onClose();
+            } else {
+                setError(response.message || 'Có lỗi xảy ra khi tạo người dùng');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Lỗi kết nối server');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <Portal>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100">
                     <div className="flex items-center gap-3">
@@ -68,22 +129,33 @@ const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose }) => {
 
                 {/* Content */}
                 <div className="px-8 py-8 overflow-y-auto max-h-[75vh] custom-scrollbar">
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium animate-in slide-in-from-top-2">
+                            {error}
+                        </div>
+                    )}
                     <form id="add-user-form" onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                             {/* Left: Avatar Placeholder */}
                             <div className="md:col-span-4 flex flex-col items-center">
                                 <div className="relative group mb-4">
-                                    <div className="w-32 h-32 rounded-full bg-slate-50 flex items-center justify-center border-4 border-white shadow-sm text-slate-300">
-                                        <User size={48} />
+                                    <div className="w-32 h-32 rounded-full bg-slate-50 flex items-center justify-center border-4 border-white shadow-sm text-slate-300 overflow-hidden">
+                                        {avatarPreview ? (
+                                            <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={48} />
+                                        )}
                                     </div>
-                                    <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                    <label className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                                         <Upload className="text-white" size={24} />
-                                    </div>
+                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                    </label>
                                 </div>
-                                <button type="button" className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+                                <label className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm cursor-pointer">
                                     <Upload size={16} />
                                     <span>Tải ảnh lên</span>
-                                </button>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                </label>
                                 <p className="text-[10px] text-slate-400 mt-3 font-medium uppercase tracking-wider text-center">
                                     JPG, PNG, WEBP<br />(max. 2MB)
                                 </p>
@@ -131,15 +203,38 @@ const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose }) => {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <FormInput
-                                        label="Mật khẩu"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        type="password"
-                                        placeholder="••••••••••••"
-                                        required
-                                    />
+                                    <div className="relative">
+                                        <FormInput
+                                            label="Mật khẩu"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••••••"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-9 text-slate-400 hover:text-green-600 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-4 mt-1 px-1">
+                                        <div className={`flex items-center gap-1 text-[10px] font-bold ${formData.password.length >= 8 ? 'text-green-600' : 'text-slate-400'}`}>
+                                            <div className={`w-1 h-1 rounded-full ${formData.password.length >= 8 ? 'bg-green-600' : 'bg-slate-400'}`} />
+                                            8+ Ký tự
+                                        </div>
+                                        <div className={`flex items-center gap-1 text-[10px] font-bold ${/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'text-green-600' : 'text-slate-400'}`}>
+                                            <div className={`w-1 h-1 rounded-full ${/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'bg-green-600' : 'bg-slate-400'}`} />
+                                            Ký tự đặc biệt
+                                        </div>
+                                        <div className={`flex items-center gap-1 text-[10px] font-bold ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-slate-400'}`}>
+                                            <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(formData.password) ? 'bg-green-600' : 'bg-slate-400'}`} />
+                                            Viết hoa
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -186,9 +281,9 @@ const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose }) => {
                                         value={formData.status}
                                         onChange={handleChange}
                                         options={[
-                                            { label: 'Hoạt động', value: 'active' },
-                                            { label: 'Không hoạt động', value: 'inactive' },
-                                            { label: 'Bị chặn', value: 'banned' }
+                                            { label: 'active', value: 'active' },
+                                            { label: 'inactive', value: 'inactive' },
+                                            { label: 'banned', value: 'banned' }
                                         ]}
                                     />
                                 </div>
@@ -208,13 +303,15 @@ const AddUser: React.FC<AddUserProps> = ({ isOpen, onClose }) => {
                     <button
                         form="add-user-form"
                         type="submit"
-                        className="px-6 py-2 bg-green-700 text-white rounded-xl text-sm font-bold hover:bg-green-800 transition-all shadow-md shadow-green-100 active:scale-95"
+                        disabled={loading}
+                        className={`px-6 py-2 bg-green-700 text-white rounded-xl text-sm font-bold hover:bg-green-800 transition-all shadow-md shadow-green-100 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        Tạo người dùng
+                        {loading ? 'Đang tạo...' : 'Tạo người dùng'}
                     </button>
                 </div>
             </div>
         </div>
+        </Portal>
     );
 };
 

@@ -169,7 +169,17 @@ const UsersPage: React.FC = () => {
       </div>
 
       {/* Users Table Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative min-h-[400px]">
+        {/* Loading Overlay for subsequent loads */}
+        {loading && users.length > 0 && (
+          <div className="absolute inset-0 z-20 bg-white/40 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300">
+            <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center gap-3">
+              <div className="w-10 h-10 border-4 border-green-100 border-t-green-700 rounded-full animate-spin"></div>
+              <span className="text-[11px] font-bold text-green-800 uppercase tracking-widest">Đang cập nhật...</span>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -223,12 +233,33 @@ const UsersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="text-sm">
-              {loading ? (
-                <tr>
-                  <td colSpan={11} className="px-6 py-8 text-center text-slate-500">
-                    Đang tải danh sách người dùng...
-                  </td>
-                </tr>
+              {loading && users.length === 0 ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={`skeleton-${i}`} className="border-b border-slate-100 animate-pulse">
+                    <td className="px-6 py-5"><div className="h-4 w-8 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-100"></div>
+                        <div className="h-4 w-40 bg-slate-100 rounded"></div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5"><div className="h-4 w-32 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 w-24 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 w-16 bg-slate-100 rounded-md"></div></td>
+                    <td className="px-6 py-5"><div className="mx-auto h-5 w-5 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5"><div className="mx-auto h-6 w-16 bg-slate-100 rounded-full"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 w-10 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 w-10 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5"><div className="mx-auto h-4 w-20 bg-slate-100 rounded"></div></td>
+                    <td className="px-6 py-5">
+                      <div className="flex justify-center gap-2">
+                        <div className="w-8 h-8 bg-slate-100 rounded-lg"></div>
+                        <div className="w-8 h-8 bg-slate-100 rounded-lg"></div>
+                        <div className="w-8 h-8 bg-slate-100 rounded-lg"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : error ? (
                 <tr>
                   <td colSpan={11} className="px-6 py-8 text-center text-red-500">
@@ -247,7 +278,7 @@ const UsersPage: React.FC = () => {
                     <td className="px-6 py-4 font-bold text-slate-900">{user.id}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shadow-sm border border-slate-100" />
                         <span className="min-w-[200px] font-bold text-slate-900">{user.fullName}</span>
                       </div>
                     </td>
@@ -371,6 +402,7 @@ const UsersPage: React.FC = () => {
       <AddUser
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
+        onSuccess={() => fetchUsers()}
       />
       {selectedUser && (
         <>
@@ -382,6 +414,7 @@ const UsersPage: React.FC = () => {
           <EditUser
             isOpen={isEditOpen}
             onClose={() => setIsEditOpen(false)}
+            onSuccess={() => fetchUsers()}
             user={selectedUser}
           />
         </>
