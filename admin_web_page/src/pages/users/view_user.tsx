@@ -30,6 +30,8 @@ interface ViewUserProps {
         totalStays: number;
         createdAt: string;
         avatar: string;
+        status?: string;
+        updatedAt?: string;
     };
 }
 
@@ -41,11 +43,8 @@ const ViewUser: React.FC<ViewUserProps> = ({ isOpen, onClose, user }) => {
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-900">View User</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Thông tin người dùng</h2>
                     <div className="flex items-center gap-2">
-                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
-                            <MoreHorizontal size={20} />
-                        </button>
                         <button
                             onClick={onClose}
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
@@ -67,13 +66,20 @@ const ViewUser: React.FC<ViewUserProps> = ({ isOpen, onClose, user }) => {
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-xl font-bold text-slate-900">{user.fullName}</h3>
-                                {user.verified && (
+
+                                {user.verified ? (
                                     <span className="flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full border border-green-100">
                                         <ShieldCheck size={10} className="fill-green-600/10" />
                                         Verified
                                     </span>
+                                ) : (
+                                    <span className="flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-full border border-red-100">
+                                        <X size={10} />
+                                        Verified
+                                    </span>
                                 )}
                             </div>
+
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2 text-sm text-slate-500">
                                     <Mail size={14} />
@@ -93,32 +99,49 @@ const ViewUser: React.FC<ViewUserProps> = ({ isOpen, onClose, user }) => {
                     {/* Details List */}
                     <div className="space-y-4">
                         <DetailItem icon={<UserIcon size={16} />} label="ID" value={user.id.toString()} />
-                        <DetailItem icon={<UserIcon size={16} />} label="Full Name" value={user.fullName} />
+                        <DetailItem icon={<UserIcon size={16} />} label="Họ và tên" value={user.fullName} />
                         <DetailItem icon={<Mail size={16} />} label="Email" value={user.email} />
-                        <DetailItem icon={<Phone size={16} />} label="Phone Number" value={user.phone} />
+                        <DetailItem icon={<Phone size={16} />} label="Số điện thoại" value={user.phone} />
                         <DetailItem
                             icon={<ShieldCheck size={16} />}
-                            label="Role"
+                            label="Vai trò"
                             value={<span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md border border-blue-100 uppercase">{user.role}</span>}
                         />
                         <DetailItem
                             icon={<ShieldCheck size={16} />}
-                            label="Verified"
+                            label="Xác thực"
                             value={
                                 <div className="flex items-center gap-1.5 text-slate-900 font-bold">
                                     <div className={`w-4 h-4 rounded-full flex items-center justify-center ${user.verified ? 'bg-green-500' : 'bg-red-500'}`}>
                                         <ShieldCheck size={10} className="text-white" />
                                     </div>
-                                    {user.verified ? 'Yes' : 'No'}
+                                    {user.verified ? 'Đã xác thực' : 'Chưa xác thực'}
                                 </div>
                             }
                         />
-                        <DetailItem icon={<Calendar size={16} />} label="Date of Birth" value={user.dob} />
-                        <DetailItem icon={<UserIcon size={16} />} label="Gender" value={user.gender} />
-                        <DetailItem icon={<MapPin size={16} />} label="Address" value={user.address} />
-                        <DetailItem icon={<Award size={16} />} label="Loyalty Points" value={user.loyaltyPoints.toString()} />
-                        <DetailItem icon={<Bed size={16} />} label="Total Stays" value={user.totalStays.toString()} />
-                        <DetailItem icon={<Clock size={16} />} label="Created At" value={user.createdAt} />
+                        <DetailItem
+                            icon={<Clock size={16} />}
+                            label="Trạng thái"
+                            value={
+                                <span className={`flex items-center w-fit gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold border uppercase ${user.status === 'active'
+                                    ? 'bg-green-50 text-green-700 border-green-100'
+                                    : user.status === 'banned'
+                                        ? 'bg-red-50 text-red-700 border-red-100'
+                                        : 'bg-slate-50 text-slate-700 border-slate-100'
+                                    }`}>
+                                    <span className={`w-1 h-1 rounded-full ${user.status === 'active' ? 'bg-green-600' : user.status === 'banned' ? 'bg-red-600' : 'bg-slate-600'
+                                        }`}></span>
+                                    {user.status || 'ACTIVE'}
+                                </span>
+                            }
+                        />
+                        <DetailItem icon={<Calendar size={16} />} label="Ngày sinh" value={user.dob} />
+                        <DetailItem icon={<UserIcon size={16} />} label="Giới tính" value={user.gender} />
+                        <DetailItem icon={<MapPin size={16} />} label="Địa chỉ" value={user.address} />
+                        <DetailItem icon={<Award size={16} />} label="Điểm tích lũy" value={user.loyaltyPoints.toString()} />
+                        <DetailItem icon={<Bed size={16} />} label="Tổng lượt ở" value={user.totalStays.toString()} />
+                        <DetailItem icon={<Clock size={16} />} label="Ngày tạo" value={user.createdAt} />
+                        <DetailItem icon={<Clock size={16} />} label="Cập nhật cuối" value={user.updatedAt || user.createdAt} />
                     </div>
                 </div>
 
@@ -128,7 +151,7 @@ const ViewUser: React.FC<ViewUserProps> = ({ isOpen, onClose, user }) => {
                         onClick={onClose}
                         className="px-6 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-100 hover:border-slate-300 transition-all shadow-sm active:scale-95"
                     >
-                        Close
+                        Đóng
                     </button>
                 </div>
             </div>

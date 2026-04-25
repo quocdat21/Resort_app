@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Upload, 
-  ChevronDown, 
+import {
+  X,
+  Upload,
+  ChevronDown,
   Calendar as CalendarIcon
 } from 'lucide-react';
 
@@ -23,6 +23,8 @@ interface EditUserProps {
     totalStays: number;
     createdAt: string;
     avatar: string;
+    status?: string;
+    updatedAt?: string;
   };
 }
 
@@ -36,8 +38,8 @@ const EditUser: React.FC<EditUserProps> = ({ isOpen, onClose, user }) => {
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-900">Edit User</h2>
-          <button 
+          <h2 className="text-xl font-bold text-slate-900">Sửa thông tin người dùng</h2>
+          <button
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
           >
@@ -51,9 +53,9 @@ const EditUser: React.FC<EditUserProps> = ({ isOpen, onClose, user }) => {
             {/* Left: Avatar Upload */}
             <div className="md:col-span-4 flex flex-col items-center">
               <div className="relative group mb-4">
-                <img 
-                  src={user.avatar} 
-                  alt={user.fullName} 
+                <img
+                  src={user.avatar}
+                  alt={user.fullName}
                   className="w-32 h-32 rounded-full object-cover border-4 border-slate-50 shadow-sm"
                 />
                 <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
@@ -62,7 +64,7 @@ const EditUser: React.FC<EditUserProps> = ({ isOpen, onClose, user }) => {
               </div>
               <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
                 <Upload size={16} />
-                <span>Change Avatar</span>
+                <span>Thay đổi ảnh đại diện</span>
               </button>
               <p className="text-[10px] text-slate-400 mt-3 font-medium uppercase tracking-wider">
                 JPG, PNG, WEBP (max. 2MB)
@@ -72,32 +74,32 @@ const EditUser: React.FC<EditUserProps> = ({ isOpen, onClose, user }) => {
             {/* Right: Form */}
             <div className="md:col-span-8 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormInput label="Full Name" defaultValue={user.fullName} required />
-                <FormSelect label="Role" defaultValue={user.role} required options={['admin', 'staff', 'customer']} />
+                <FormInput label="Họ và tên" defaultValue={user.fullName} required />
+                <FormSelect label="Vai trò" defaultValue={user.role} required options={['admin', 'staff', 'customer']} />
                 <FormInput label="Email" defaultValue={user.email} required type="email" />
-                <FormInput label="Phone Number" defaultValue={user.phone} />
+                <FormInput label="Số điện thoại" defaultValue={user.phone} />
               </div>
 
               <div className="space-y-2">
-                <FormInput 
-                  label="Password" 
-                  type="password" 
-                  placeholder="••••••••••••••" 
+                <FormInput
+                  label="Mật khẩu"
+                  type="password"
+                  placeholder="••••••••••••••"
                 />
-                <p className="text-[10px] text-slate-400 font-medium">Leave blank to keep current password</p>
+                <p className="text-[10px] text-slate-400 font-medium text-xs">Để trống nếu không muốn thay đổi mật khẩu</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="relative">
-                  <FormInput label="Date of Birth" defaultValue={user.dob} />
+                  <FormInput label="Ngày sinh" defaultValue={user.dob} />
                   <CalendarIcon className="absolute right-3 bottom-3 text-slate-400" size={16} />
                 </div>
-                <FormSelect label="Gender" defaultValue={user.gender} options={['Male', 'Female', 'Other']} />
+                <FormSelect label="Giới tính" defaultValue={user.gender} options={['Male', 'Female', 'Other']} />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-900 mb-1 block">Address</label>
-                <textarea 
+                <label className="text-xs font-bold text-slate-900 mb-1 block">Địa chỉ</label>
+                <textarea
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm min-h-[100px]"
                   defaultValue={user.address}
                 />
@@ -105,26 +107,35 @@ const EditUser: React.FC<EditUserProps> = ({ isOpen, onClose, user }) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-900 block">Verified</label>
+                  <label className="text-xs font-bold text-slate-900 block">Xác thực</label>
                   <div className="flex items-center gap-3">
-                    <button 
+                    <button
                       onClick={() => setIsVerified(!isVerified)}
                       className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${isVerified ? 'bg-green-600' : 'bg-slate-200'}`}
                     >
                       <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${isVerified ? 'translate-x-6' : ''}`} />
                     </button>
-                    <span className="text-sm font-bold text-slate-700">{isVerified ? 'Yes' : 'No'}</span>
+                    <span className="text-sm font-bold text-slate-700">{isVerified ? 'Đã xác thực' : 'Chưa xác thực'}</span>
                   </div>
                 </div>
-                <FormInput label="Loyalty Points" defaultValue={user.loyaltyPoints.toString()} />
-                <FormInput label="Total Stays" defaultValue={user.totalStays.toString()} />
+                <FormSelect label="Trạng thái" defaultValue={user.status} options={['active', 'inactive', 'banned']} />
+                <FormInput label="Điểm tích lũy" defaultValue={user.loyaltyPoints.toString()} />
+                <FormInput label="Tổng lượt ở" defaultValue={user.totalStays.toString()} />
                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-slate-900 block">Created At</label>
-                   <input 
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-400 font-medium cursor-not-allowed shadow-inner"
-                      value={user.createdAt}
-                      disabled
-                   />
+                  <label className="text-xs font-bold text-slate-900 block">Ngày tạo</label>
+                  <input
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-400 font-medium cursor-not-allowed shadow-inner"
+                    value={user.createdAt}
+                    disabled
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-900 block">Cập nhật cuối</label>
+                  <input
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-400 font-medium cursor-not-allowed shadow-inner"
+                    value={user.updatedAt || user.createdAt}
+                    disabled
+                  />
                 </div>
               </div>
             </div>
@@ -133,16 +144,16 @@ const EditUser: React.FC<EditUserProps> = ({ isOpen, onClose, user }) => {
 
         {/* Footer */}
         <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-          <button 
+          <button
             onClick={onClose}
             className="px-6 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-100 transition-all shadow-sm active:scale-95"
           >
-            Cancel
+            Hủy
           </button>
-          <button 
+          <button
             className="px-6 py-2 bg-green-700 text-white rounded-xl text-sm font-bold hover:bg-green-800 transition-all shadow-md shadow-green-100 active:scale-95"
           >
-            Save Changes
+            Lưu thay đổi
           </button>
         </div>
       </div>
@@ -155,7 +166,7 @@ const FormInput: React.FC<{ label: string; defaultValue?: string; required?: boo
     <label className="text-xs font-bold text-slate-900 block">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
-    <input 
+    <input
       type={type}
       className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm"
       defaultValue={defaultValue}
@@ -170,7 +181,7 @@ const FormSelect: React.FC<{ label: string; defaultValue?: string; required?: bo
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <div className="relative">
-      <select 
+      <select
         className="w-full appearance-none px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm cursor-pointer"
         defaultValue={defaultValue}
       >
