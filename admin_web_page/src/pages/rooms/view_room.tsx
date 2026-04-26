@@ -7,14 +7,9 @@ import {
     Layers,
     Maximize2,
     Users,
-    // DollarSign,
     Info,
-    CheckCircle2,
-    AlertCircle,
-    EyeOff,
     Image as ImageIcon,
-    // Edit2,
-    UserCheck
+    LayoutGrid
 } from 'lucide-react';
 
 interface ViewRoomProps {
@@ -22,18 +17,18 @@ interface ViewRoomProps {
     onClose: () => void;
     room: {
         id: string;
-        roomNumber: string;
-        image: string;
-        secondaryImages?: string[];
+        main_image_url: string;
+        secondary_images?: { id: number, image_url: string }[];
         name: string;
-        category: string;
-        categoryId?: string;
-        zone: string;
-        price: number;
-        size: number;
-        capacity: string;
+        category_name: string;
+        category_id?: string;
+        zone_name: string;
+        base_price: number;
+        size_sqm: number;
+        capacity_adults: number;
+        capacity_children: number;
         description?: string;
-        status: 'Available' | 'Occupied' | 'Maintenance' | 'Hidden';
+        instance_count: number;
     };
 }
 
@@ -42,13 +37,6 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-    };
-
-    const statusConfig = {
-        Available: { label: 'Đang trống', icon: <CheckCircle2 size={14} />, color: 'bg-green-50 text-green-700 border-green-100' },
-        Occupied: { label: 'Đang có khách', icon: <UserCheck size={14} />, color: 'bg-blue-50 text-blue-700 border-blue-100' },
-        Maintenance: { label: 'Bảo trì', icon: <AlertCircle size={14} />, color: 'bg-orange-50 text-orange-700 border-orange-100' },
-        Hidden: { label: 'Đang ẩn', icon: <EyeOff size={14} />, color: 'bg-red-50 text-red-700 border-red-100' },
     };
 
     return (
@@ -62,8 +50,8 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                 <Home className="text-white" size={24} />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900">Chi tiết phòng</h2>
-                                <p className="text-sm text-slate-500 font-medium">Mã phòng: <span className="text-green-700 font-bold">#{room.roomNumber}</span></p>
+                                <h2 className="text-2xl font-bold text-slate-900">Chi tiết Template Phòng</h2>
+                                <p className="text-sm text-slate-500 font-medium">Mã hệ thống: <span className="text-green-700 font-bold">#{room.id}</span></p>
                             </div>
                         </div>
                         <button
@@ -81,14 +69,14 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                             <div className="lg:col-span-5 space-y-6">
                                 <div className="relative group">
                                     <img
-                                        src={room.image}
+                                        src={`http://localhost:3000${room.main_image_url}`}
                                         alt={room.name}
                                         className="w-full aspect-[4/3] object-cover rounded-[24px] shadow-md border border-slate-100"
                                     />
                                     <div className="absolute top-4 left-4">
-                                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold shadow-lg backdrop-blur-md border uppercase tracking-wider ${statusConfig[room.status].color}`}>
-                                            {statusConfig[room.status].icon}
-                                            <span>{statusConfig[room.status].label}</span>
+                                        <div className="flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold shadow-lg backdrop-blur-md border border-green-100 bg-green-50 text-green-700 uppercase tracking-wider">
+                                            <LayoutGrid size={14} />
+                                            <span>{room.instance_count} Phòng đang quản lý</span>
                                         </div>
                                     </div>
                                 </div>
@@ -97,17 +85,17 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                 <div className="space-y-3">
                                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hình ảnh chi tiết</h4>
                                     <div className="grid grid-cols-5 gap-3">
-                                        {room.secondaryImages && room.secondaryImages.map((img, idx) => (
-                                            <div key={idx} className="aspect-square relative group cursor-pointer">
+                                        {room.secondary_images && room.secondary_images.map((img, idx) => (
+                                            <div key={img.id} className="aspect-square relative group cursor-pointer">
                                                 <img
-                                                    src={img}
+                                                    src={`http://localhost:3000${img.image_url}`}
                                                     alt={`View ${idx + 1}`}
                                                     className="w-full h-full object-cover rounded-xl border border-slate-100 shadow-sm transition-all group-hover:scale-105"
                                                 />
                                             </div>
                                         ))}
                                         {/* Placeholders */}
-                                        {[...Array(5 - (room.secondaryImages?.length || 0))].map((_, i) => (
+                                        {[...Array(5 - (room.secondary_images?.length || 0))].map((_, i) => (
                                             <div key={i} className="aspect-square bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center">
                                                 <ImageIcon size={16} className="text-slate-300" />
                                             </div>
@@ -122,29 +110,29 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-2xl font-black text-slate-900 leading-tight">{room.name}</h3>
                                         <span className="text-2xl font-black text-green-700">
-                                            {formatPrice(room.price)}
+                                            {formatPrice(room.base_price)}
                                             <span className="text-xs text-slate-400 font-bold uppercase ml-1">/ Đêm</span>
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-slate-500 font-medium">
                                         <MapPin size={14} />
-                                        <span>Khu vực: <span className="text-slate-900 font-bold">{room.zone}</span></span>
+                                        <span>Khu vực: <span className="text-slate-900 font-bold">{room.zone_name}</span></span>
                                     </div>
                                 </div>
 
                                 {/* Info Cards Grid */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <InfoCard icon={<Layers size={18} />} label="Loại phòng" value={room.category} color="purple" />
-                                    <InfoCard icon={<Maximize2 size={18} />} label="Diện tích" value={`${room.size} m²`} color="blue" />
-                                    <InfoCard icon={<Users size={18} />} label="Sức chứa" value={room.capacity} color="teal" />
-                                    <InfoCard icon={<Info size={18} />} label="Mã phòng" value={`#${room.roomNumber}`} color="orange" />
+                                    <InfoCard icon={<Layers size={18} />} label="Loại phòng" value={room.category_name} color="purple" />
+                                    <InfoCard icon={<Maximize2 size={18} />} label="Diện tích" value={`${room.size_sqm} m²`} color="blue" />
+                                    <InfoCard icon={<Users size={18} />} label="Sức chứa" value={`${room.capacity_adults} Lớn, ${room.capacity_children} Trẻ`} color="teal" />
+                                    <InfoCard icon={<LayoutGrid size={18} />} label="Số lượng phòng" value={`${room.instance_count} phòng`} color="orange" />
                                 </div>
 
                                 {/* Description */}
                                 <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100">
                                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                                         <Info size={14} />
-                                        Mô tả chi tiết
+                                        Mô tả chi tiết (Dùng chung cho tất cả phòng con)
                                     </h4>
                                     <p className="text-slate-600 text-sm leading-relaxed italic">
                                         {room.description || "Chưa có mô tả chi tiết cho phòng này. Vui lòng cập nhật thông tin để khách hàng có thêm thông tin chi tiết về tiện nghi và hướng nhìn của phòng."}
@@ -158,8 +146,8 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                         <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">{room.id}</span>
                                     </div>
                                     <div className="flex items-center justify-between py-1">
-                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cập nhật lần cuối</span>
-                                        <span className="text-xs font-bold text-slate-700 italic">Vừa xong</span>
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái dữ liệu</span>
+                                        <span className="text-xs font-bold text-green-600 italic">Hợp lệ</span>
                                     </div>
                                 </div>
                             </div>
@@ -167,17 +155,12 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                         <button
                             onClick={onClose}
                             className="px-8 py-3 bg-white border border-slate-200 text-slate-700 rounded-[18px] text-sm font-bold hover:bg-slate-100 transition-all shadow-sm active:scale-95"
                         >
                             Đóng cửa sổ
-                        </button>
-                        <button
-                            className="px-8 py-3 bg-green-700 text-white rounded-[18px] text-sm font-bold hover:bg-green-800 transition-all shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
-                        >
-                            Chỉnh sửa thông tin
                         </button>
                     </div>
                 </div>
