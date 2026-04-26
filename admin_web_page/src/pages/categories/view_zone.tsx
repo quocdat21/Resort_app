@@ -1,0 +1,142 @@
+import React from 'react';
+import Portal from '../../components/common/Portal';
+import {
+    X,
+    MapPin,
+    Info,
+    Layers,
+    Clock,
+} from 'lucide-react';
+
+interface ViewZoneProps {
+    isOpen: boolean;
+    onClose: () => void;
+    zone: {
+        id: number;
+        name: string;
+        categoryCount?: number;
+        roomCount?: number;
+        createdAt?: string;
+        updatedAt?: string;
+    };
+}
+
+const ViewZone: React.FC<ViewZoneProps> = ({ isOpen, onClose, zone }) => {
+    if (!isOpen) return null;
+
+    return (
+        <Portal>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                                <MapPin size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900">Chi tiết khu vực</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thông tin hạ tầng resort</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="px-8 py-8">
+                        {/* Zone Info Large */}
+                        <div className="flex flex-col items-center mb-8 text-center">
+                            <div className="w-20 h-20 rounded-2xl bg-slate-50 flex items-center justify-center border-4 border-white shadow-md mb-4">
+                                <MapPin size={32} className="text-green-600" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-1">{zone.name}</h3>
+                            <div className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wider">
+                                Zone ID: {zone.id}
+                            </div>
+                        </div>
+
+                        {/* Details List */}
+                        <div className="space-y-4">
+                            <DetailItem
+                                icon={<Info size={16} />}
+                                label="Tên khu vực"
+                                value={zone.name}
+                            />
+                            <DetailItem
+                                icon={<Layers size={16} />}
+                                label="Số loại phòng"
+                                value={
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-black text-green-700">{zone.categoryCount || 0}</span>
+                                    </div>
+                                }
+                            />
+                            <DetailItem
+                                icon={<Clock size={16} />}
+                                label="Tổng số phòng"
+                                value={<span className="font-black text-slate-900">{zone.roomCount || 0}</span>}
+                            />
+                            <DetailItem
+                                icon={<Clock size={16} />}
+                                label="Ngày tạo"
+                                value={
+                                    <div className="text-right text-xs text-slate-900">
+                                        <span className="font-bold">{zone.createdAt ? new Date(zone.createdAt).toLocaleDateString('vi-VN') : '-'}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium ml-2">{zone.createdAt ? new Date(zone.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                    </div>
+                                }
+                            />
+                            <DetailItem
+                                icon={<Clock size={16} />}
+                                label="Cập nhật lần cuối"
+                                value={
+                                    <div className="text-right text-xs text-slate-900">
+                                        <span className="font-bold">{zone.updatedAt ? new Date(zone.updatedAt).toLocaleDateString('vi-VN') : '-'}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium ml-2">{zone.updatedAt ? new Date(zone.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                    </div>
+                                }
+                            />
+                        </div>
+
+                        {/* Description Mock */}
+                        <div className="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Ghi chú hệ thống</h4>
+                            <p className="text-xs text-slate-500 leading-relaxed italic">
+                                Khu vực này bao gồm các cơ sở hạ tầng chính của resort. Mọi thay đổi về tên khu vực sẽ được cập nhật trên bản đồ và hệ thống đặt phòng.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end">
+                        <button
+                            onClick={onClose}
+                            className="px-8 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-100 transition-all shadow-sm active:scale-95"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Portal>
+    );
+};
+
+const DetailItem: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNode }> = ({ icon, label, value }) => (
+    <div className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 group">
+        <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-600 transition-colors">
+            {icon}
+            <span className="text-sm font-medium">{label}</span>
+        </div>
+        <div className="text-sm font-bold text-slate-900">
+            {value}
+        </div>
+    </div>
+);
+
+export default ViewZone;
