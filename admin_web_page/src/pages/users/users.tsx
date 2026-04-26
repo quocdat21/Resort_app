@@ -314,7 +314,16 @@ const UsersPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-700">{user.loyaltyPoints}</td>
                     <td className="px-6 py-4 font-medium text-slate-700">{user.totalStays}</td>
-                    <td className="px-6 py-4 text-slate-500 text-center whitespace-nowrap">{user.createdAt.split(' ')[0]}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs text-slate-900 flex items-center justify-center gap-2">
+                        <span className="font-bold">
+                          {user.createdAt ? user.createdAt.split(' ')[0].split('-').reverse().join('/') : '-'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {user.createdAt ? user.createdAt.split(' ')[1].substring(0, 5) : ''}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-3">
                         <button

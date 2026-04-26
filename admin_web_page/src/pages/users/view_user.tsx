@@ -143,8 +143,26 @@ const ViewUser: React.FC<ViewUserProps> = ({ isOpen, onClose, user }) => {
                             <DetailItem icon={<MapPin size={16} />} label="Địa chỉ" value={user.address} />
                             <DetailItem icon={<Award size={16} />} label="Điểm tích lũy" value={user.loyaltyPoints.toString()} />
                             <DetailItem icon={<Bed size={16} />} label="Tổng lượt ở" value={user.totalStays.toString()} />
-                            <DetailItem icon={<Clock size={16} />} label="Ngày tạo" value={user.createdAt} />
-                            <DetailItem icon={<Clock size={16} />} label="Cập nhật cuối" value={user.updatedAt || user.createdAt} />
+                            <DetailItem
+                                icon={<Clock size={16} />}
+                                label="Ngày tạo"
+                                value={
+                                    <div className="text-right text-xs text-slate-900">
+                                        <span className="font-bold">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '-'}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium ml-2">{user.createdAt ? new Date(user.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                    </div>
+                                }
+                            />
+                            <DetailItem
+                                icon={<Clock size={16} />}
+                                label="Cập nhật lần cuối"
+                                value={
+                                    <div className="text-right text-xs text-slate-900">
+                                        <span className="font-bold">{user.updatedAt ? new Date(user.updatedAt).toLocaleDateString('vi-VN') : '-'}</span>
+                                        <span className="text-[10px] text-slate-400 font-medium ml-2">{user.updatedAt ? new Date(user.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                    </div>
+                                }
+                            />
                         </div>
                     </div>
 
