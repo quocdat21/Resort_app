@@ -5,6 +5,9 @@ require('dotenv').config();
 // Import routes
 const authRoutes = require('./src/routes/auth.routes');
 const userRoutes = require('./src/routes/user.routes');
+const zoneRoutes = require('./src/routes/zone.routes');
+const categoryRoutes = require('./src/routes/category.routes');
+const roomRoutes = require('./src/routes/room.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +25,9 @@ app.use('/uploads', express.static('uploads'));
 // ========================
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/zones', zoneRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -43,9 +49,25 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({
+
+  // Handle Multer Errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      message: 'File quá lớn. Giới hạn tối đa là 50MB.'
+    });
+  }
+  
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({
+      success: false,
+      message: 'Số lượng file vượt quá giới hạn cho phép.'
+    });
+  }
+
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Internal server error.',
+    message: err.message || 'Internal server error.',
   });
 });
 

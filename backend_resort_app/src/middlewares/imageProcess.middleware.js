@@ -2,15 +2,15 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const processImage = async (req, res, next) => {
-  if (!req.file) return next();
+const processSingleFile = async (file) => {
+  if (!file) return;
 
-  const filePath = req.file.path;
-  const ext = path.extname(req.file.filename).toLowerCase();
+  const filePath = file.path;
+  const ext = path.extname(file.filename).toLowerCase();
 
   // Kiểm tra nếu là định dạng HEIC/HEIF hoặc đơn giản là muốn convert tất cả về JPG để đồng nhất
   if (ext === '.heic' || ext === '.heif') {
-    const newFilename = req.file.filename.replace(ext, '.jpg');
+    const newFilename = file.filename.replace(ext, '.jpg');
     const newPath = filePath.replace(ext, '.jpg');
 
     try {
@@ -26,20 +26,48 @@ const processImage = async (req, res, next) => {
         fs.unlinkSync(filePath);
       }
 
-      // Cập nhật lại thông tin file trong req.file để controller sử dụng tên file mới (.jpg)
-      req.file.path = newPath;
-      req.file.filename = newFilename;
-      req.file.mimetype = 'image/jpeg';
+      // Cập nhật lại thông tin file để controller sử dụng tên file mới (.jpg)
+      file.path = newPath;
+      file.filename = newFilename;
+      file.mimetype = 'image/jpeg';
       
-      console.log(`✅ Đã convert ${req.file.originalname} sang JPG`);
+      console.log(`✅ Đã convert ${file.originalname} sang JPG`);
     } catch (error) {
       console.error('❌ Lỗi khi xử lý ảnh với Sharp:', error);
-      // Nếu có lỗi trong quá trình convert, ta vẫn cho qua để controller xử lý file gốc (nếu có thể)
-      // Hoặc bạn có thể trả về lỗi tùy ý
     }
   }
+};
 
-  next();
+const processImage = async (req, res, next) => {
+  try {
+    // Handle single file upload (req.file)
+    if (req.file) {
+      await processSingleFile(req.file);
+    }
+
+    // Handle multiple fields/files upload (req.files)
+    if (req.files) {
+      // If it's an array (from upload.array())
+      if (Array.isArray(req.files)) {
+        for (const file of req.files) {
+          await processSingleFile(file);
+        }
+      } 
+      // If it's an object with fields (from upload.fields())
+      else {
+        for (const fieldname in req.files) {
+          for (const file of req.files[fieldname]) {
+            await processSingleFile(file);
+          }
+        }
+      }
+    }
+
+    next();
+  } catch (error) {
+    console.error('❌ Lỗi middleware xử lý ảnh:', error);
+    next();
+  }
 };
 
 module.exports = processImage;

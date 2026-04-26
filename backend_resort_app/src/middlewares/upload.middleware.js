@@ -5,16 +5,23 @@ const fs = require('fs');
 // Cấu hình nơi lưu trữ
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const dir = 'uploads/users';
+    let dir = 'uploads/general';
+    if (file.fieldname === 'avatar') dir = 'uploads/users';
+    if (file.fieldname === 'icon') dir = 'uploads/categories';
+    if (file.fieldname === 'mainImage' || file.fieldname === 'secondaryImages') dir = 'uploads/rooms';
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     cb(null, dir);
   },
   filename: function (req, file, cb) {
-    // Tạo tên file duy nhất: user_id + timestamp + extension
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+    let prefix = file.fieldname;
+    if (file.fieldname === 'mainImage') {
+      prefix = 'pr-' + file.fieldname;
+    }
+    cb(null, prefix + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -36,7 +43,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
+    fileSize: 1024 * 1024 * 50 // Giới hạn 50MB cho ảnh chất lượng cao
   },
   fileFilter: fileFilter
 });
