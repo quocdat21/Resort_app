@@ -17,6 +17,7 @@ const roomController = {
                r.capacity_adults, r.capacity_children, r.base_price, r.created_at, r.updated_at,
                c.name as category_name, z.name as zone_name,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count,
+               (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.room_id = r.id) as amenity_count,
                (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id AND ri.image_url LIKE '%/pr-%' LIMIT 1) as main_image_url
         FROM Rooms r
         LEFT JOIN Categories c ON r.category_id = c.id
@@ -74,7 +75,8 @@ const roomController = {
     try {
       const { id } = req.params;
       const [room] = await pool.execute(`
-        SELECT r.*, c.name as category_name, z.name as zone_name
+        SELECT r.*, c.name as category_name, z.name as zone_name,
+               (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count
         FROM Rooms r
         LEFT JOIN Categories c ON r.category_id = c.id
         LEFT JOIN Zones z ON c.zone_id = z.id
@@ -87,6 +89,11 @@ const roomController = {
 
       const [images] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ?', [id]);
       const [instances] = await pool.execute('SELECT * FROM Room_Numbers WHERE room_id = ?', [id]);
+      const [amenities] = await pool.execute(`
+        SELECT a.* FROM Amenities a
+        JOIN Room_Amenities ra ON a.id = ra.amenity_id
+        WHERE ra.room_id = ?
+      `, [id]);
 
       const mainImage = images.find(img => img.image_url.includes('/pr-')) || images[0] || null;
       const secondaryImages = images.filter(img => img !== mainImage);
@@ -97,7 +104,8 @@ const roomController = {
           ...room[0],
           main_image_url: mainImage ? mainImage.image_url : null,
           secondary_images: secondaryImages,
-          instances: instances
+          instances: instances,
+          amenities: amenities
         }
       });
     } catch (error) {
@@ -109,13 +117,11 @@ const roomController = {
   // Create room template
   createRoom: async (req, res) => {
     try {
-      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice } = req.body;
-      const mainImageUrl = req.files && req.files.mainImage ? `/uploads/rooms/${req.files.mainImage[0].filename}` : null;
+      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice, amenities } = req.body;
 
-      // Duplicate name check (optional, depending on requirements)
+      // Duplicate name check
       const [duplicate] = await pool.execute('SELECT id FROM Rooms WHERE name = ?', [name]);
       if (duplicate.length > 0) {
-        // Cleanup uploaded files
         if (req.files) {
           if (req.files.mainImage) fs.unlinkSync(req.files.mainImage[0].path);
           if (req.files.secondaryImages) req.files.secondaryImages.forEach(f => fs.unlinkSync(f.path));
@@ -131,23 +137,30 @@ const roomController = {
 
       const roomId = result.insertId;
 
-      // Handle images (all go to Room_Images)
+      // Handle images
       if (req.files) {
-        // Main image
         if (req.files.mainImage) {
-          await pool.execute(
-            'INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)',
-            [roomId, `/uploads/rooms/${req.files.mainImage[0].filename}`]
-          );
+          await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [roomId, `/uploads/rooms/${req.files.mainImage[0].filename}`]);
         }
-        // Secondary images
         if (req.files.secondaryImages) {
           for (const file of req.files.secondaryImages) {
-            await pool.execute(
-              'INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)',
-              [roomId, `/uploads/rooms/${file.filename}`]
-            );
+            await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [roomId, `/uploads/rooms/${file.filename}`]);
           }
+        }
+      }
+
+      // Handle Amenities
+      if (amenities) {
+        let amenityIds = [];
+        try {
+          amenityIds = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
+          if (Array.isArray(amenityIds)) {
+            for (const amenityId of amenityIds) {
+              await pool.execute('INSERT INTO Room_Amenities (room_id, amenity_id) VALUES (?, ?)', [roomId, amenityId]);
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing amenities:", e);
         }
       }
 
@@ -162,15 +175,13 @@ const roomController = {
   updateRoom: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice } = req.body;
+      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice, amenities, existingImages } = req.body;
 
-      // Check existence
       const [existing] = await pool.execute('SELECT * FROM Rooms WHERE id = ?', [id]);
       if (existing.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng' });
 
       const updates = [];
       const values = [];
-
       if (name !== undefined) { updates.push('name = ?'); values.push(name); }
       if (categoryId !== undefined) { updates.push('category_id = ?'); values.push(categoryId || null); }
       if (description !== undefined) { updates.push('description = ?'); values.push(description); }
@@ -184,31 +195,50 @@ const roomController = {
         await pool.execute(`UPDATE Rooms SET ${updates.join(', ')} WHERE id = ?`, values);
       }
 
-      // Handle main image update
+      // Main image update
       if (req.files && req.files.mainImage) {
-        // Delete old main image from disk and DB
         const [oldImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url LIKE "%/pr-%"', [id]);
         if (oldImages.length > 0) {
           const oldPath = `./${oldImages[0].image_url.startsWith('/') ? oldImages[0].image_url.substring(1) : oldImages[0].image_url}`;
           if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
           await pool.execute('DELETE FROM Room_Images WHERE id = ?', [oldImages[0].id]);
         }
-        // Insert new main image
-        await pool.execute(
-          'INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)',
-          [id, `/uploads/rooms/${req.files.mainImage[0].filename}`]
-        );
+        await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [id, `/uploads/rooms/${req.files.mainImage[0].filename}`]);
       }
 
-      // Handle secondary images (Replace all or append? Let's say Replace for simplicity or handle deletion separately)
-      // For now, if secondaryImages are uploaded, we append them.
+      // Secondary images sync
+      let imagesToKeep = [];
+      if (existingImages) {
+        try { imagesToKeep = JSON.parse(existingImages); } catch (e) {}
+      }
+
+      const [currentImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url NOT LIKE "%/pr-%"', [id]);
+      for (const img of currentImages) {
+        if (!imagesToKeep.includes(img.image_url)) {
+          const oldPath = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
+          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+          await pool.execute('DELETE FROM Room_Images WHERE id = ?', [img.id]);
+        }
+      }
+
       if (req.files && req.files.secondaryImages) {
         for (const file of req.files.secondaryImages) {
-          await pool.execute(
-            'INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)',
-            [id, `/uploads/rooms/${file.filename}`]
-          );
+          await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [id, `/uploads/rooms/${file.filename}`]);
         }
+      }
+
+      // Amenities sync
+      if (amenities !== undefined) {
+        let amenityIds = [];
+        try {
+          amenityIds = typeof amenities === 'string' ? JSON.parse(amenities) : amenities;
+          if (Array.isArray(amenityIds)) {
+            await pool.execute('DELETE FROM Room_Amenities WHERE room_id = ?', [id]);
+            for (const amenityId of amenityIds) {
+              await pool.execute('INSERT INTO Room_Amenities (room_id, amenity_id) VALUES (?, ?)', [id, amenityId]);
+            }
+          }
+        } catch (e) {}
       }
 
       res.json({ success: true, message: 'Cập nhật phòng thành công' });
@@ -222,18 +252,13 @@ const roomController = {
   deleteRoom: async (req, res) => {
     try {
       const { id } = req.params;
-      const [existing] = await pool.execute('SELECT * FROM Rooms WHERE id = ?', [id]);
-      if (existing.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng' });
-
-      // Delete image files from disk
       const [images] = await pool.execute('SELECT image_url FROM Room_Images WHERE room_id = ?', [id]);
       images.forEach(img => {
         const p = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
         if (fs.existsSync(p)) fs.unlinkSync(p);
       });
-
       await pool.execute('DELETE FROM Rooms WHERE id = ?', [id]);
-      res.json({ success: true, message: 'Đã xóa phòng template và tất cả dữ liệu liên quan' });
+      res.json({ success: true, message: 'Đã xóa phòng template thành công' });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -241,7 +266,6 @@ const roomController = {
   },
 
   // --- ROOM INSTANCES (CHILDREN) ---
-
   getInstances: async (req, res) => {
     try {
       const { roomId } = req.params;
@@ -256,17 +280,10 @@ const roomController = {
   createInstance: async (req, res) => {
     try {
       const { roomId, roomNumber, status } = req.body;
-
-      // Check if room number already exists globally
       const [duplicate] = await pool.execute('SELECT id FROM Room_Numbers WHERE room_number = ?', [roomNumber]);
-      if (duplicate.length > 0) {
-        return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại' });
-      }
+      if (duplicate.length > 0) return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại' });
 
-      await pool.execute(
-        'INSERT INTO Room_Numbers (room_id, room_number, status) VALUES (?, ?, ?)',
-        [roomId, roomNumber, status || 'Available']
-      );
+      await pool.execute('INSERT INTO Room_Numbers (room_id, room_number, status) VALUES (?, ?, ?)', [roomId, roomNumber, status || 'Available']);
       res.status(201).json({ success: true, message: 'Đã thêm số phòng thành công' });
     } catch (error) {
       console.error(error);
@@ -278,7 +295,6 @@ const roomController = {
     try {
       const { id } = req.params;
       const { roomNumber, status } = req.body;
-
       const [existing] = await pool.execute('SELECT * FROM Room_Numbers WHERE id = ?', [id]);
       if (existing.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy số phòng' });
 
@@ -287,10 +303,7 @@ const roomController = {
         if (duplicate.length > 0) return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại' });
       }
 
-      await pool.execute(
-        'UPDATE Room_Numbers SET room_number = ?, status = ? WHERE id = ?',
-        [roomNumber || existing[0].room_number, status || existing[0].status, id]
-      );
+      await pool.execute('UPDATE Room_Numbers SET room_number = ?, status = ? WHERE id = ?', [roomNumber || existing[0].room_number, status || existing[0].status, id]);
       res.json({ success: true, message: 'Cập nhật số phòng thành công' });
     } catch (error) {
       console.error(error);

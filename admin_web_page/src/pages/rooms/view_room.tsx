@@ -9,7 +9,8 @@ import {
     Users,
     Info,
     Image as ImageIcon,
-    LayoutGrid
+    LayoutGrid,
+    Clock
 } from 'lucide-react';
 
 interface ViewRoomProps {
@@ -29,6 +30,9 @@ interface ViewRoomProps {
         capacity_children: number;
         description?: string;
         instance_count: number;
+        amenities?: { id: number, name: string, icon_url: string }[];
+        created_at?: string;
+        updated_at?: string;
     };
 }
 
@@ -128,6 +132,30 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                     <InfoCard icon={<LayoutGrid size={18} />} label="Số lượng phòng" value={`${room.instance_count} phòng`} color="orange" />
                                 </div>
 
+                                {/* Amenities */}
+                                {room.amenities && room.amenities.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Layers size={14} />
+                                            Tiện nghi có sẵn
+                                        </h4>
+                                        <div className="flex flex-wrap gap-3">
+                                            {room.amenities.map((amenity) => (
+                                                <div key={amenity.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
+                                                    <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-xl shrink-0">
+                                                        {amenity.icon_url ? (
+                                                            <img src={`http://localhost:3000${amenity.icon_url}`} alt={amenity.name} className="w-6 h-6 object-contain" />
+                                                        ) : (
+                                                            <Layers size={16} className="text-slate-300" />
+                                                        )}
+                                                    </div>
+                                                    <span className="text-xs font-bold text-slate-700 whitespace-nowrap">{amenity.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Description */}
                                 <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100">
                                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -140,14 +168,32 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                 </div>
 
                                 {/* System Info Table */}
-                                <div className="pt-4 border-t border-slate-100 space-y-3">
-                                    <div className="flex items-center justify-between py-1">
-                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mã hệ thống (ID)</span>
-                                        <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">{room.id}</span>
+                                <div className="pt-6 border-t border-slate-100 space-y-4">
+                                    <div className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-600 transition-colors">
+                                            <Clock size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Ngày tạo</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-bold text-slate-900">{room.created_at ? new Date(room.created_at).toLocaleDateString('vi-VN') : '-'}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">{room.created_at ? new Date(room.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between py-1">
-                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái dữ liệu</span>
-                                        <span className="text-xs font-bold text-green-600 italic">Hợp lệ</span>
+
+                                    <div className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3 text-slate-400 group-hover:text-slate-600 transition-colors">
+                                            <Clock size={16} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Cập nhật lần cuối</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-bold text-slate-900">{room.updated_at ? new Date(room.updated_at).toLocaleDateString('vi-VN') : '-'}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium">{room.updated_at ? new Date(room.updated_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mã định danh (ID)</span>
+                                        <span className="text-[10px] font-mono font-black text-slate-300">#ROOM-TEMPLATE-{room.id}</span>
                                     </div>
                                 </div>
                             </div>

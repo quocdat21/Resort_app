@@ -163,6 +163,13 @@ exports.updateCategory = async (req, res) => {
     }
 
     if (req.file && req.file.filename) {
+      // Delete old icon if it exists
+      if (existing[0].icon_url) {
+        const oldPath = `./${existing[0].icon_url.startsWith('/') ? existing[0].icon_url.substring(1) : existing[0].icon_url}`;
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
       updates.push('icon_url = ?');
       values.push(`/uploads/categories/${req.file.filename}`);
     }

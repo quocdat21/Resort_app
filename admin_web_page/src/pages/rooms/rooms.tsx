@@ -30,6 +30,7 @@ interface Room {
   capacity_children: number;
   description?: string;
   instance_count: number;
+  amenity_count: number;
 }
 
 interface RoomInstance {
@@ -247,13 +248,14 @@ const RoomsPage: React.FC = () => {
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Giá Cơ Bản</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Sức Chứa</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Số Phòng</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Tiện nghi</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center">
+                  <td colSpan={10} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="w-8 h-8 text-green-700 animate-spin" />
                       <p className="text-slate-400 font-medium">Đang tải danh sách phòng...</p>
@@ -262,7 +264,7 @@ const RoomsPage: React.FC = () => {
                 </tr>
               ) : rooms.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={10} className="px-6 py-12 text-center text-slate-400 font-medium">
                     Không tìm thấy phòng nào phù hợp
                   </td>
                 </tr>
@@ -270,7 +272,7 @@ const RoomsPage: React.FC = () => {
                 rooms.map((room) => (
                   <tr key={room.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="font-bold text-slate-400">#{room.id}</span>
+                      <span className="font-bold text-slate-400">{room.id}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap min-w-[400px]">
                       <div className="flex items-center gap-4">
@@ -296,6 +298,11 @@ const RoomsPage: React.FC = () => {
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <span className="font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg text-xs border border-slate-200">
                         {room.instance_count} phòng
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <span className="flex items-center justify-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold border border-blue-100">
+                        {room.amenity_count} tiện nghi
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

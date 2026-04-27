@@ -35,7 +35,9 @@ CREATE TABLE OTP_Verifications (
 -- ZONES
 CREATE TABLE Zones ( 
   id INT AUTO_INCREMENT PRIMARY KEY, 
-  name VARCHAR(100) NOT NULL 
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   );
 
 -- CATEGORIES
@@ -44,24 +46,35 @@ CREATE TABLE Categories (
   zone_id INT,
   name VARCHAR(50),
   icon_url VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (zone_id) REFERENCES Zones(id) ON DELETE SET NULL
 );
-
 
 -- ROOMS
 CREATE TABLE Rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
   category_id INT,
   name VARCHAR(255),
-  room_number VARCHAR(20) NOT NULL UNIQUE,
+  main_image_url VARCHAR(255),
   description TEXT,
   size_sqm INT,
   capacity_adults INT DEFAULT 2,
   capacity_children INT DEFAULT 0,
   base_price DECIMAL(15,0) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES Categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE Room_Numbers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  room_id INT,
+  room_number VARCHAR(20) NOT NULL UNIQUE,
   status ENUM('Available','Occupied','Maintenance','Hidden') DEFAULT 'Available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (category_id) REFERENCES Categories(id) ON DELETE SET NULL
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
 );
 
 
@@ -110,7 +123,7 @@ CREATE TABLE Bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_code VARCHAR(20) UNIQUE,
   user_id INT,
-  room_id INT,
+  room_number_id INT,
   check_in DATE NOT NULL,
   check_out DATE NOT NULL,
   adults INT DEFAULT 1,
@@ -121,7 +134,7 @@ CREATE TABLE Bookings (
   status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
+  FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
 );
 
 -- BOOKING SERVICES
@@ -169,13 +182,13 @@ CREATE TABLE Reviews (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT,
   user_id INT,
-  room_id INT,
+  room_number_id INT,
   rating INT CHECK (rating BETWEEN 1 AND 5),
   comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
+  FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
 );
 
 -- SERVICE REVIEWS

@@ -11,8 +11,11 @@ import {
     DollarSign,
     Info,
     ChevronDown,
-    Plus,
+    Save,
     //Trash2,
+    Plus,
+    Check,
+    Smile,
     Image as ImageIcon
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -46,6 +49,9 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
         capacityChildren: '0',
         basePrice: ''
     });
+
+    const [allAmenities, setAllAmenities] = useState<{ id: number; name: string; icon_url: string }[]>([]);
+    const [selectedAmenities, setSelectedAmenities] = useState<number[]>([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -81,14 +87,49 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
                 }
             };
             fetchCategories();
+
+            // Fetch amenities
+            const fetchAmenities = async () => {
+                try {
+                    const response = await axios.get('http://localhost:3000/api/amenities');
+                    if (response.data.success) {
+                        setAllAmenities(response.data.data);
+                    }
+                } catch (err) {
+                    console.error('Fetch amenities error:', err);
+                }
+            };
+            fetchAmenities();
         }
     }, [isOpen]);
 
     if (!isOpen) return null;
 
+    const formatCurrency = (value: string) => {
+        if (!value) return '';
+        const number = value.replace(/\D/g, '');
+        return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    const parseCurrency = (value: string) => {
+        return value.replace(/\./g, '');
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'basePrice') {
+            const parsed = parseCurrency(value);
+            if (isNaN(Number(parsed)) && parsed !== '') return;
+            setFormData(prev => ({ ...prev, [name]: parsed }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const toggleAmenity = (id: number) => {
+        setSelectedAmenities(prev => 
+            prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+        );
     };
 
     const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,6 +190,8 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
             secondaryImages.forEach(img => {
                 if (img) data.append('secondaryImages', img);
             });
+
+            data.append('amenities', JSON.stringify(selectedAmenities));
 
             const response = await axios.post('http://localhost:3000/api/rooms', data, {
                 headers: {
@@ -302,10 +345,10 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
                                         <FormInput
                                             label="Giá cơ bản (/đêm)"
                                             name="basePrice"
-                                            type="number"
-                                            value={formData.basePrice}
+                                            type="text"
+                                            value={formatCurrency(formData.basePrice)}
                                             onChange={handleChange}
-                                            placeholder="Ví dụ: 4500000"
+                                            placeholder="Ví dụ: 4.500.000"
                                             icon={<DollarSign size={16} />}
                                             required
                                         />
@@ -334,6 +377,51 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
                                             onChange={handleChange}
                                             icon={<Users size={16} />}
                                         />
+                                    </div>
+
+                                    {/* Amenities Selection */}
+                                    <div className="space-y-4">
+                                        <label className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                            <Info size={14} className="text-green-700" />
+                                            Tiện nghi phòng (Chọn các tiện nghi có sẵn)
+                                        </label>
+                                        <div className="flex flex-wrap gap-3">
+                                            {allAmenities.map((amenity) => {
+                                                const isSelected = selectedAmenities.includes(amenity.id);
+                                                return (
+                                                    <div
+                                                        key={amenity.id}
+                                                        onClick={() => toggleAmenity(amenity.id)}
+                                                        className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all cursor-pointer group min-w-[80px] ${
+                                                            isSelected 
+                                                            ? 'border-green-600 bg-green-50 shadow-md shadow-green-100' 
+                                                            : 'border-slate-100 bg-white hover:border-green-200 hover:bg-slate-50'
+                                                        }`}
+                                                    >
+                                                        <div className="w-10 h-10 flex items-center justify-center relative">
+                                                            {amenity.icon_url ? (
+                                                                <img 
+                                                                    src={`http://localhost:3000${amenity.icon_url}`} 
+                                                                    alt={amenity.name} 
+                                                                    className={`w-8 h-8 object-contain transition-all ${isSelected ? 'scale-110' : 'grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100'}`} 
+                                                                />
+                                                            ) : (
+                                                                <Smile size={24} className={isSelected ? 'text-green-600' : 'text-slate-300'} />
+                                                            )}
+                                                            
+                                                            {isSelected && (
+                                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                                                                    <Check size={10} strokeWidth={4} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold text-center whitespace-nowrap uppercase tracking-tighter ${isSelected ? 'text-green-700' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                                                            {amenity.name}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-2">

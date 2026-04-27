@@ -7,7 +7,13 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let dir = 'uploads/general';
     if (file.fieldname === 'avatar') dir = 'uploads/users';
-    if (file.fieldname === 'icon') dir = 'uploads/categories';
+    if (file.fieldname === 'icon') {
+      if (req.originalUrl.includes('amenities')) {
+        dir = 'uploads/amenities';
+      } else {
+        dir = 'uploads/categories';
+      }
+    }
     if (file.fieldname === 'mainImage' || file.fieldname === 'secondaryImages') dir = 'uploads/rooms';
 
     if (!fs.existsSync(dir)) {
