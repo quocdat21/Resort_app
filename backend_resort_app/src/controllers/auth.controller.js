@@ -1,4 +1,4 @@
-
+const fs = require('fs');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
@@ -667,6 +667,14 @@ const updateMe = async (req, res) => {
     }
 
     if (req.file) {
+      // Get current user to delete old avatar
+      const [currentUser] = await pool.execute('SELECT avatar_url FROM Users WHERE id = ?', [req.user.id]);
+      if (currentUser.length > 0 && currentUser[0].avatar_url) {
+        const oldPath = `./${currentUser[0].avatar_url.startsWith('/') ? currentUser[0].avatar_url.substring(1) : currentUser[0].avatar_url}`;
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
       updates.push('avatar_url = ?');
       values.push(`/uploads/users/${req.file.filename}`);
     }

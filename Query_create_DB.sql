@@ -108,14 +108,28 @@ CREATE TABLE Services (
   type ENUM('Hall','Food','Event','Other'),
   name VARCHAR(255),
   capacity INT,
-  price_full_day DECIMAL(15,0),
-  price_half_day DECIMAL(15,0),
-  base_price DECIMAL(15,0),
-  price_unit VARCHAR(50),
   description TEXT,
   image_url VARCHAR(255),
   status ENUM('active','inactive') DEFAULT 'active',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+-- SERVICE PRICES
+CREATE TABLE ServicePrices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  service_id INT,
+  price_type ENUM('full_day','half_day','unit'),
+  price DECIMAL(15,0),
+  unit VARCHAR(50),
+  description TEXT,
+  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
+);
+-- SERVICE IMAGES
+CREATE TABLE Service_Images (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  service_id INT,
+  image_url VARCHAR(255),
+  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
 );
 
 -- BOOKINGS
@@ -133,6 +147,7 @@ CREATE TABLE Bookings (
   total_amount DECIMAL(15,0),
   status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
   FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
 );

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const fs = require('fs');
 const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 12;
 
@@ -212,6 +213,13 @@ exports.updateUser = async (req, res) => {
     if (verified !== undefined) { updates.push('is_verified = ?'); values.push(verified ? 1 : 0); }
 
     if (req.file) {
+      // Delete old avatar if exists
+      if (user[0].avatar_url) {
+        const oldPath = `./${user[0].avatar_url.startsWith('/') ? user[0].avatar_url.substring(1) : user[0].avatar_url}`;
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
       updates.push('avatar_url = ?');
       values.push(`/uploads/users/${req.file.filename}`);
     }
