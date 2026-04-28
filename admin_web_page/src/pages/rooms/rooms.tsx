@@ -199,12 +199,12 @@ const RoomsPage: React.FC = () => {
             <select
               className="w-full appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm cursor-pointer text-slate-700 min-w-[140px]"
               value={selectedZone}
-              onChange={(e) => { 
+              onChange={(e) => {
                 const zoneId = e.target.value;
-                setSelectedZone(zoneId); 
+                setSelectedZone(zoneId);
                 setSelectedCategory('all');
-                setCurrentPage(1); 
-                
+                setCurrentPage(1);
+
                 if (zoneId === 'all') {
                   setCategories([]);
                 } else {
@@ -226,11 +226,10 @@ const RoomsPage: React.FC = () => {
           {/* Lọc theo Loại phòng (Category) */}
           <div className="relative flex-1 sm:flex-none">
             <select
-              className={`w-full appearance-none border rounded-xl pl-4 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm min-w-[140px] ${
-                selectedZone === 'all' 
-                ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' 
+              className={`w-full appearance-none border rounded-xl pl-4 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm min-w-[140px] ${selectedZone === 'all'
+                ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
                 : 'bg-white border-slate-200 text-slate-700 cursor-pointer'
-              }`}
+                }`}
               value={selectedCategory}
               onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
               disabled={selectedZone === 'all'}
@@ -262,7 +261,7 @@ const RoomsPage: React.FC = () => {
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-200">
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest w-20 whitespace-nowrap text-center">ID</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap min-w-[400px]">Tên Phòng</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap min-w-[500px]">Tên Phòng</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Khu Vực</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Loại Phòng</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Diện Tích</th>
@@ -421,6 +420,7 @@ const RoomsPage: React.FC = () => {
           <RoomInstances
             isOpen={isInstancesOpen}
             onClose={() => setIsInstancesOpen(false)}
+            onSuccess={fetchRooms}
             room={selectedRoom}
           />
         </>

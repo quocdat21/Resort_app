@@ -10,6 +10,7 @@ import {
     Activity,
     Save,
     Image as ImageIcon,
+
     Loader2
 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -24,16 +25,17 @@ interface RoomInstance {
     id: string;
     room_id: string;
     room_number: string;
-    status: 'Available' | 'Occupied' | 'Maintenance' | 'Hidden';
+    status: 'Available' | 'Maintenance' | 'Hidden';
 }
 
 interface RoomInstancesProps {
     isOpen: boolean;
     onClose: () => void;
+    onSuccess?: () => void;
     room: Room | null;
 }
 
-const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) => {
+const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSuccess, room }) => {
     const [instances, setInstances] = useState<RoomInstance[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -84,6 +86,7 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) 
                 fetchInstances();
                 setIsAdding(false);
                 setFormData({ roomNumber: '', status: 'Available' });
+                if (onSuccess) onSuccess();
             }
         } catch (error: any) {
             Swal.fire('Lỗi!', error.response?.data?.message || 'Không thể thêm số phòng', 'error');
@@ -102,6 +105,7 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) 
             if (response.data.success) {
                 fetchInstances();
                 setIsEditing(null);
+                if (onSuccess) onSuccess();
             }
         } catch (error: any) {
             Swal.fire('Lỗi!', error.response?.data?.message || 'Không thể cập nhật', 'error');
@@ -127,6 +131,7 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) 
                 });
                 if (response.data.success) {
                     fetchInstances();
+                    if (onSuccess) onSuccess();
                 }
             } catch (error: any) {
                 Swal.fire('Lỗi!', error.response?.data?.message || 'Không thể xóa', 'error');
@@ -141,7 +146,7 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) 
 
     return (
         <Portal>
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
                 <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200">
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
@@ -264,7 +269,6 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) 
                                                         onChange={e => setFormData({ ...formData, status: e.target.value as RoomInstance['status'] })}
                                                     >
                                                         <option value="Available">Đang trống</option>
-                                                        <option value="Occupied">Đang có khách</option>
                                                         <option value="Maintenance">Bảo trì</option>
                                                         <option value="Hidden">Đang ẩn</option>
                                                     </select>
@@ -285,14 +289,11 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, room }) 
                                                         </div>
                                                         <div>
                                                             <p className="text-xs font-bold text-slate-900">Phòng {inst.room_number}</p>
-                                                            <span className={`text-[9px] font-bold uppercase tracking-wider ${
-                                                                inst.status === 'Available' ? 'text-green-600' :
-                                                                inst.status === 'Occupied' ? 'text-blue-600' :
+                                                            <span className={`text-[9px] font-bold uppercase tracking-wider ${inst.status === 'Available' ? 'text-green-600' :
                                                                 inst.status === 'Maintenance' ? 'text-orange-600' : 'text-red-600'
-                                                            }`}>
+                                                                }`}>
                                                                 {inst.status === 'Available' ? 'Đang trống' :
-                                                                 inst.status === 'Occupied' ? 'Có khách' :
-                                                                 inst.status === 'Maintenance' ? 'Bảo trì' : 'Ẩn'}
+                                                                    inst.status === 'Maintenance' ? 'Bảo trì' : 'Ẩn'}
                                                             </span>
                                                         </div>
                                                     </div>

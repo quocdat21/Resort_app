@@ -253,10 +253,10 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
 
     return (
         <Portal>
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-                <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 bg-slate-50/50 shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-green-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-100">
                                 <Plus size={24} />
@@ -275,7 +275,7 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
                     </div>
 
                     {/* Content */}
-                    <div className="px-8 py-8 overflow-y-auto max-h-[75vh] custom-scrollbar">
+                    <div className="flex-1 px-8 py-8 overflow-y-auto custom-scrollbar">
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium animate-in slide-in-from-top-2">
                                 {error}
