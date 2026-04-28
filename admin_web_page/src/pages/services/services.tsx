@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   Plus,
@@ -12,122 +12,126 @@ import {
   ArrowUpDown,
   ClipboardList,
   Users,
-  Tag
+  Tag,
+  Layers,
+  Loader2
 } from 'lucide-react';
+import { apiService } from '../../services/api_service';
 import ViewService from './view_service';
+import AddService from './add_service';
+import EditService from './edit_service';
+import Swal from 'sweetalert2';
+
+interface ServicePrice {
+  id: number;
+  price_type: 'full_day' | 'half_day' | 'unit';
+  price: number;
+  unit: string;
+  description: string;
+}
+
+interface ServiceImage {
+  id: number;
+  image_url: string;
+}
 
 interface Service {
   id: number;
   type: 'Hall' | 'Food' | 'Event' | 'Other';
   name: string;
   capacity?: number;
-  price_full_day?: number;
-  price_half_day?: number;
-  base_price?: number;
-  price_unit?: string;
   description?: string;
+  image_url?: string;
+  status: 'active' | 'inactive';
+  created_at?: string;
+  updated_at?: string;
+  prices?: ServicePrice[];
+  secondary_images?: ServiceImage[];
 }
-
-const servicesData: Service[] = [
-  // Hội trường
-  {
-    id: 1,
-    type: 'Hall',
-    name: 'Hội trường Diamond',
-    capacity: 1000,
-    price_full_day: 20000000,
-    price_half_day: 10000000,
-    description: 'Bao gồm màn hình led full HD 900 inches và nước lọc miễn phí, Âm thanh, ánh sáng, giấy, bút, Flip chart'
-  },
-  {
-    id: 2,
-    type: 'Hall',
-    name: 'Hội trường Sapphire',
-    capacity: 600,
-    price_full_day: 12000000,
-    price_half_day: 6000000,
-    description: 'Bao gồm màn hình led full HD 350 inches và nước lọc miễn phí, Âm thanh, ánh sáng, giấy, bút, Flip chart'
-  },
-  {
-    id: 3,
-    type: 'Hall',
-    name: 'Hội trường Ruby',
-    capacity: 600,
-    price_full_day: 8000000,
-    price_half_day: 6000000,
-    description: 'Bao gồm màn hình led full HD 400 inches và nước lọc miễn phí, Âm thanh, ánh sáng, giấy, bút, Flip chart'
-  },
-  {
-    id: 4,
-    type: 'Hall',
-    name: 'Hội trường Topaz',
-    capacity: 150,
-    price_full_day: 6000000,
-    price_half_day: 3000000,
-    description: 'Bao gồm màn hình led full HD và nước lọc miễn phí, Âm thanh, ánh sáng, giấy, bút, Flip chart'
-  },
-  {
-    id: 5,
-    type: 'Hall',
-    name: 'Hội trường VIP 6',
-    capacity: 30,
-    price_full_day: 3000000,
-    price_half_day: 1500000,
-    description: 'Bao gồm máy chiếu và nước lọc miễn phí, Âm thanh, ánh sáng, giấy, bút, Flip chart'
-  },
-  // Dịch vụ khác
-  {
-    id: 6,
-    type: 'Food',
-    name: 'Ăn uống, ẩm thực',
-    base_price: 150000,
-    price_unit: 'suất',
-    description: 'Thực đơn món dân tộc, đặc sản Mộc Châu...'
-  },
-  {
-    id: 7,
-    type: 'Event',
-    name: 'Lửa trại',
-    base_price: 1900000,
-    description: 'Âm thanh, rượu cần, khoai nướng'
-  },
-  {
-    id: 8,
-    type: 'Event',
-    name: 'Văn nghệ dân tộc',
-    base_price: 3000000,
-    description: 'Gồm MC, đội văn nghệ'
-  },
-  {
-    id: 9,
-    type: 'Other',
-    name: 'Âm thanh',
-    base_price: 1000000
-  },
-  {
-    id: 10,
-    type: 'Food',
-    name: 'Teabreak',
-    base_price: 40000,
-    price_unit: 'suất'
-  },
-  {
-    id: 11,
-    type: 'Other',
-    name: 'Hoa tươi',
-    base_price: 80000,
-    price_unit: 'giờ'
-  }
-];
 
 const ServicesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'Hall' | 'Other'>('Hall');
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 8,
+    totalPages: 0
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, [activeTab, currentPage, searchTerm]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        searchTerm,
+        page: currentPage.toString(),
+        limit: '6'
+      });
+
+      if (activeTab === 'Hall') {
+        params.append('type', 'Hall');
+      } else {
+        params.append('excludeType', 'Hall');
+      }
+
+      const response = await apiService.get(`/services?${params.toString()}`);
+      if (response.success) {
+        setServices(response.data);
+        if (response.pagination) setPagination(response.pagination);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    const result = await Swal.fire({
+      title: 'Bạn có chắc chắn?',
+      text: "Dịch vụ sẽ bị xóa vĩnh viễn và không thể khôi phục!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa ngay',
+      cancelButtonText: 'Hủy'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await apiService.delete(`/services/${id}`);
+        if (response.success) {
+          Swal.fire('Đã xóa!', 'Dịch vụ đã được xóa thành công.', 'success');
+          fetchData();
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        Swal.fire('Lỗi!', 'Không thể xóa dịch vụ này.', 'error');
+      }
+    }
+  };
 
   const formatPrice = (price?: number) => {
     if (price === undefined || price === null) return '-';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  };
+
+  const formatNumber = (num?: number) => {
+    if (num === undefined || num === null) return '-';
+    return new Intl.NumberFormat('vi-VN').format(num);
   };
 
   const getTypeBadge = (type: string) => {
@@ -139,69 +143,143 @@ const ServicesPage: React.FC = () => {
     }
   };
 
+  const filteredData = services; // Data is already filtered by fetchData
+
   return (
     <div className="space-y-6">
-      {/* Top Bar */}
+      {/* Header: Tab Switcher & Action */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm dịch vụ..."
-            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+          <button
+            onClick={() => setActiveTab('Hall')}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'Hall'
+              ? 'bg-green-600 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-900'
+              }`}
+          >
+            <ClipboardList size={16} />
+            Hội trường
+          </button>
+          <button
+            onClick={() => setActiveTab('Other')}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'Other'
+              ? 'bg-green-600 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-900'
+              }`}
+          >
+            <Layers size={16} />
+            Dịch vụ khác
+          </button>
         </div>
-        <button className="flex items-center justify-center gap-2 px-6 py-2 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-green-100 whitespace-nowrap active:scale-95">
+
+        <button
+          onClick={() => setIsAddOpen(true)}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-green-100 whitespace-nowrap active:scale-95"
+        >
           <Plus size={18} />
-          <span>Thêm dịch vụ</span>
+          <span>Thêm {activeTab === 'Hall' ? 'hội trường' : 'dịch vụ'}</span>
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative w-full sm:w-80">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <input
+          type="text"
+          placeholder={`Tìm kiếm ${activeTab === 'Hall' ? 'hội trường' : 'dịch vụ'}...`}
+          className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
       {/* Services Table Card */}
-      <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden min-h-[400px] relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center gap-3">
+            <Loader2 size={32} className="text-green-700 animate-spin" />
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Đang tải dữ liệu...</p>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center w-16">ID</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tên dịch vụ</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loại</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Sức chứa</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đơn giá (1 ngày/Đơn vị)</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Giá 1/2 ngày</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {activeTab === 'Hall' ? 'Tên hội trường' : 'Tên dịch vụ'}
+                </th>
+                {activeTab === 'Other' && (
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Loại</th>
+                )}
+                {activeTab === 'Hall' && (
+                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Sức chứa</th>
+                )}
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {activeTab === 'Hall' ? 'Giá thuê 1 ngày' : 'Đơn giá'}
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {activeTab === 'Hall' ? 'Giá 1/2 ngày' : 'Đơn vị'}
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-slate-50">
-              {servicesData.map((service) => (
+              {filteredData.map((service) => (
                 <tr key={service.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-5 text-center font-bold text-slate-400">#{service.id}</td>
+                  <td className="px-6 py-5 text-center font-bold text-slate-400">{service.id}</td>
                   <td className="px-6 py-5">
-                    <div className="font-bold text-slate-900 group-hover:text-green-700 transition-colors">{service.name}</div>
-                  </td>
-                  <td className="px-6 py-5">
-                    {getTypeBadge(service.type)}
-                  </td>
-                  <td className="px-6 py-5 text-center">
-                    {service.capacity ? (
-                      <div className="flex items-center justify-center gap-1.5 text-slate-500 font-bold">
-                        <Users size={14} className="text-slate-300" />
-                        {service.capacity}
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-100 group-hover:border-green-200 transition-all">
+                        {service.image_url ? (
+                          <img 
+                            src={`http://localhost:3000${service.image_url}`} 
+                            alt={service.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <Layers size={20} />
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-slate-300">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="font-black text-slate-900">
-                      {service.type === 'Hall' ? formatPrice(service.price_full_day) : formatPrice(service.base_price)}
-                      {service.price_unit && <span className="text-[10px] text-slate-400 font-bold ml-1 uppercase tracking-tighter">/{service.price_unit}</span>}
+                      <div className="font-bold text-slate-900 group-hover:text-green-700 transition-colors line-clamp-1">{service.name}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-5 font-bold text-slate-500">
-                    {service.type === 'Hall' ? formatPrice(service.price_half_day) : <span className="text-slate-300">-</span>}
+                  {activeTab === 'Other' && (
+                    <td className="px-6 py-5">
+                      {getTypeBadge(service.type)}
+                    </td>
+                  )}
+                  {activeTab === 'Hall' && (
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex items-center justify-center gap-1.5 text-slate-500 font-bold">
+                        <Users size={14} className="text-slate-300" />
+                        {formatNumber(service.capacity)} khách
+                      </div>
+                    </td>
+                  )}
+                  <td className="px-6 py-5">
+                    <div className="font-bold text-slate-900">
+                      {activeTab === 'Hall'
+                        ? formatPrice(service.prices?.find(p => p.price_type === 'full_day')?.price)
+                        : formatPrice(service.prices?.[0]?.price)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 font-bold text-slate-900">
+                    {activeTab === 'Hall' ? (
+                      formatPrice(service.prices?.find(p => p.price_type === 'half_day')?.price)
+                    ) : (
+                      <span className="text-slate-600 uppercase tracking-tighter text-[10px]">{service.prices?.[0]?.unit || 'lần'}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-5 text-center">
+                    {service.status === 'active' ? (
+                      <span className="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-bold border border-green-100 uppercase tracking-wider">Hoạt động</span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100 uppercase tracking-wider">Ngừng</span>
+                    )}
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center justify-end gap-2">
@@ -215,16 +293,34 @@ const ServicesPage: React.FC = () => {
                       >
                         <Eye size={16} />
                       </button>
-                      <button className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Chỉnh sửa">
+                      <button
+                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        title="Chỉnh sửa"
+                        onClick={() => {
+                          setSelectedService(service);
+                          setIsEditOpen(true);
+                        }}
+                      >
                         <Edit2 size={16} />
                       </button>
-                      <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Xóa">
+                      <button
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        title="Xóa"
+                        onClick={() => handleDelete(service.id)}
+                      >
                         <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
+              {filteredData.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">
+                    Không tìm thấy {activeTab === 'Hall' ? 'hội trường' : 'dịch vụ'} nào phù hợp.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -234,19 +330,43 @@ const ServicesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4 pt-2">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
           <Tag size={12} />
-          Hiển thị 1 đến {servicesData.length} trong tổng số {servicesData.length} dịch vụ
+          Hiển thị {Math.min((currentPage - 1) * pagination.limit + 1, pagination.total)} đến {Math.min(currentPage * pagination.limit, pagination.total)} trong tổng số {pagination.total} mục
         </p>
 
         <div className="flex items-center gap-1">
-          <PaginationButton icon={<ChevronFirst size={16} />} disabled />
-          <PaginationButton icon={<ChevronLeft size={16} />} disabled />
+          <PaginationButton
+            icon={<ChevronFirst size={16} />}
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(1)}
+          />
+          <PaginationButton
+            icon={<ChevronLeft size={16} />}
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+          />
 
           <div className="flex items-center">
-            <PageNumber active>1</PageNumber>
+            {Array.from({ length: pagination.totalPages }, (_, i) => (
+              <PageNumber
+                key={i + 1}
+                active={currentPage === i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </PageNumber>
+            ))}
           </div>
 
-          <PaginationButton icon={<ChevronRight size={16} />} disabled />
-          <PaginationButton icon={<ChevronLast size={16} />} disabled />
+          <PaginationButton
+            icon={<ChevronRight size={16} />}
+            disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
+            onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+          />
+          <PaginationButton
+            icon={<ChevronLast size={16} />}
+            disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
+            onClick={() => setCurrentPage(pagination.totalPages)}
+          />
         </div>
       </div>
 
@@ -258,12 +378,26 @@ const ServicesPage: React.FC = () => {
         }}
         service={selectedService}
       />
+
+      <AddService
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onSuccess={fetchData}
+      />
+
+      <EditService
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={fetchData}
+        serviceId={selectedService?.id || null}
+      />
     </div>
   );
 };
 
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean }> = ({ icon, disabled }) => (
+const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean; onClick?: () => void }> = ({ icon, disabled, onClick }) => (
   <button
+    onClick={onClick}
     className={`w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 transition-all ${disabled
       ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
       : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
@@ -274,8 +408,9 @@ const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean }> 
   </button>
 );
 
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean }> = ({ children, active }) => (
+const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean; onClick?: () => void }> = ({ children, active, onClick }) => (
   <button
+    onClick={onClick}
     className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${active
       ? 'bg-green-700 text-white shadow-lg shadow-green-100'
       : 'text-slate-500 hover:bg-slate-50'
