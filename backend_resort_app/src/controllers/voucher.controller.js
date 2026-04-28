@@ -1,0 +1,195 @@
+const pool = require('../config/db');
+
+const voucherController = {
+  // Get all vouchers with pagination and filters
+  getAllVouchers: async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 6;
+      const offset = (page - 1) * limit;
+      const { status, searchTerm } = req.query;
+
+      let query = "SELECT * FROM Vouchers WHERE 1=1";
+      const values = [];
+
+      if (status && status !== 'all') {
+        query += " AND status = ?";
+        values.push(status);
+      }
+
+      if (searchTerm) {
+        query += " AND code LIKE ?";
+        values.push(`%${searchTerm}%`);
+      }
+
+      // Count total for pagination
+      let countQuery = query.replace("SELECT *", "SELECT COUNT(*) as total");
+      const [countResult] = await pool.execute(countQuery, values);
+      const total = countResult[0].total;
+
+      // Add ordering and pagination
+      query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+      values.push(limit, offset);
+
+      const [vouchers] = await pool.execute(query, values);
+
+      res.json({
+        success: true,
+        data: vouchers,
+        pagination: {
+          total,
+          totalPages: Math.ceil(total / limit),
+          currentPage: page,
+          limit
+        }
+      });
+    } catch (error) {
+      console.error('Error in getAllVouchers:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  },
+
+  // Get single voucher by ID
+  getVoucherById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [vouchers] = await pool.execute("SELECT * FROM Vouchers WHERE id = ?", [id]);
+
+      if (vouchers.length === 0) {
+        return res.status(404).json({ success: false, message: 'Voucher not found' });
+      }
+
+      res.json({ success: true, data: vouchers[0] });
+    } catch (error) {
+      console.error('Error in getVoucherById:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  },
+
+  // Create new voucher
+  createVoucher: async (req, res) => {
+    try {
+      const { 
+        code, 
+        discount_type, 
+        discount_value, 
+        max_discount, 
+        min_order_value, 
+        usage_limit, 
+        start_date, 
+        end_date, 
+        status 
+      } = req.body;
+
+      // Check if code already exists
+      const [existing] = await pool.execute("SELECT id FROM Vouchers WHERE code = ?", [code]);
+      if (existing.length > 0) {
+        return res.status(400).json({ success: false, message: 'Mã voucher này đã tồn tại' });
+      }
+
+      const query = `
+        INSERT INTO Vouchers (
+          code, discount_type, discount_value, max_discount, 
+          min_order_value, usage_limit, start_date, end_date, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const values = [
+        code, 
+        discount_type, 
+        discount_value, 
+        max_discount || null, 
+        min_order_value || 0, 
+        usage_limit || null, 
+        start_date, 
+        end_date, 
+        status || 'active'
+      ];
+
+      const [result] = await pool.execute(query, values);
+
+      res.status(201).json({
+        success: true,
+        message: 'Voucher created successfully',
+        data: { id: result.insertId }
+      });
+    } catch (error) {
+      console.error('Error in createVoucher:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  },
+
+  // Update voucher
+  updateVoucher: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { 
+        code, 
+        discount_type, 
+        discount_value, 
+        max_discount, 
+        min_order_value, 
+        usage_limit, 
+        start_date, 
+        end_date, 
+        status 
+      } = req.body;
+
+      // Check if code exists for other vouchers
+      const [existing] = await pool.execute("SELECT id FROM Vouchers WHERE code = ? AND id != ?", [code, id]);
+      if (existing.length > 0) {
+        return res.status(400).json({ success: false, message: 'Mã voucher này đã được sử dụng' });
+      }
+
+      const query = `
+        UPDATE Vouchers SET 
+          code = ?, discount_type = ?, discount_value = ?, max_discount = ?, 
+          min_order_value = ?, usage_limit = ?, start_date = ?, end_date = ?, status = ?
+        WHERE id = ?
+      `;
+
+      const values = [
+        code, 
+        discount_type, 
+        discount_value, 
+        max_discount || null, 
+        min_order_value || 0, 
+        usage_limit || null, 
+        start_date, 
+        end_date, 
+        status,
+        id
+      ];
+
+      const [result] = await pool.execute(query, values);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: 'Voucher not found' });
+      }
+
+      res.json({ success: true, message: 'Voucher updated successfully' });
+    } catch (error) {
+      console.error('Error in updateVoucher:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  },
+
+  // Delete voucher
+  deleteVoucher: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [result] = await pool.execute("DELETE FROM Vouchers WHERE id = ?", [id]);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: 'Voucher not found' });
+      }
+
+      res.json({ success: true, message: 'Voucher deleted successfully' });
+    } catch (error) {
+      console.error('Error in deleteVoucher:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  }
+};
+
+module.exports = voucherController;
