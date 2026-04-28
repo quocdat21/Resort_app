@@ -122,7 +122,7 @@ const EditVoucher: React.FC<EditVoucherProps> = ({ isOpen, onClose, voucher, onS
 
     return (
         <Portal>
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
                 <form
                     onSubmit={handleSubmit}
                     className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300"

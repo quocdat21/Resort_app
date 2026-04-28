@@ -222,7 +222,7 @@ const EditService: React.FC<EditServiceProps> = ({ isOpen, onClose, onSuccess, s
 
     return (
         <Portal>
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
                 <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
                     <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-10 rounded-t-[32px]">
                         <div className="flex items-center gap-4">
