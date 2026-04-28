@@ -15,7 +15,7 @@ const roomController = {
       let query = `
         SELECT r.id, r.name, r.category_id, r.description, r.size_sqm, 
                r.capacity_adults, r.capacity_children, r.base_price, r.created_at, r.updated_at,
-               c.name as category_name, z.name as zone_name,
+               c.name as category_name, c.zone_id, z.name as zone_name,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count,
                (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.room_id = r.id) as amenity_count,
                (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id AND ri.image_url LIKE '%/pr-%' LIMIT 1) as main_image_url
@@ -75,7 +75,7 @@ const roomController = {
     try {
       const { id } = req.params;
       const [room] = await pool.execute(`
-        SELECT r.*, c.name as category_name, z.name as zone_name,
+        SELECT r.*, c.name as category_name, c.zone_id, z.name as zone_name,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count
         FROM Rooms r
         LEFT JOIN Categories c ON r.category_id = c.id
@@ -209,7 +209,7 @@ const roomController = {
       // Secondary images sync
       let imagesToKeep = [];
       if (existingImages) {
-        try { imagesToKeep = JSON.parse(existingImages); } catch (e) {}
+        try { imagesToKeep = JSON.parse(existingImages); } catch (e) { }
       }
 
       const [currentImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url NOT LIKE "%/pr-%"', [id]);
@@ -238,7 +238,7 @@ const roomController = {
               await pool.execute('INSERT INTO Room_Amenities (room_id, amenity_id) VALUES (?, ?)', [id, amenityId]);
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       res.json({ success: true, message: 'Cập nhật phòng thành công' });

@@ -11,7 +11,7 @@ exports.getAllUsers = async (req, res) => {
       sort_by = 'created_at',
       order = 'desc',
       page = 1,
-      limit = 8
+      limit = 6
     } = req.query;
 
     // Validate sort để tránh SQL Injection
@@ -90,7 +90,7 @@ exports.getAllUsers = async (req, res) => {
       updatedAt: user.updated_at
         ? new Date(user.updated_at).toISOString().replace('T', ' ').substring(0, 19)
         : '',
-      avatar: user.avatar_url 
+      avatar: user.avatar_url
         ? (user.avatar_url.startsWith('http') ? user.avatar_url : `${process.env.BASE_URL || 'http://localhost:3000'}${user.avatar_url}`)
         : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=random`
     }));
@@ -118,16 +118,16 @@ exports.getAllUsers = async (req, res) => {
 // Create new user (Admin)
 exports.createUser = async (req, res) => {
   try {
-    const { 
-      fullName, 
-      email, 
-      phoneNumber, 
-      password, 
-      role, 
-      dateOfBirth, 
-      gender, 
-      address, 
-      status 
+    const {
+      fullName,
+      email,
+      phoneNumber,
+      password,
+      role,
+      dateOfBirth,
+      gender,
+      address,
+      status
     } = req.body;
 
     // Check if email exists
@@ -148,14 +148,14 @@ exports.createUser = async (req, res) => {
         date_of_birth, gender, address, status, avatar_url, is_verified
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [
-        fullName, 
-        email, 
-        phoneNumber || null, 
-        hashedPassword, 
-        role || 'customer', 
-        dateOfBirth || null, 
-        gender || 'Other', 
-        address || null, 
+        fullName,
+        email,
+        phoneNumber || null,
+        hashedPassword,
+        role || 'customer',
+        dateOfBirth || null,
+        gender || 'Other',
+        address || null,
         status || 'active',
         avatar_url
       ]
@@ -176,15 +176,15 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { 
-      fullName, 
-      email, 
-      phone, 
-      password, 
-      role, 
-      dob, 
-      gender, 
-      address, 
+    const {
+      fullName,
+      email,
+      phone,
+      password,
+      role,
+      dob,
+      gender,
+      address,
       status,
       loyaltyPoints,
       totalStays,
@@ -262,7 +262,7 @@ exports.updateUser = async (req, res) => {
       loyaltyPoints: u.loyalty_points,
       totalStays: u.total_stays,
       status: u.status,
-      avatar: u.avatar_url 
+      avatar: u.avatar_url
         ? (u.avatar_url.startsWith('http') ? u.avatar_url : `${process.env.BASE_URL || 'http://localhost:3000'}${u.avatar_url}`)
         : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name)}&background=random`
     };
