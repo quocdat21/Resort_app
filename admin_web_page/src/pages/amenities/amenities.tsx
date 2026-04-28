@@ -28,7 +28,7 @@ const AmenitiesPage: React.FC = () => {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -111,10 +111,10 @@ const AmenitiesPage: React.FC = () => {
       onClick={onClick}
       disabled={disabled}
       className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-          ? 'bg-green-700 text-white shadow-md'
-          : disabled
-            ? 'text-slate-300 cursor-not-allowed'
-            : 'text-slate-600 hover:bg-slate-100 hover:text-green-700'
+        ? 'bg-green-700 text-white shadow-md'
+        : disabled
+          ? 'text-slate-300 cursor-not-allowed'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-green-700'
         }`}
     >
       {children}
