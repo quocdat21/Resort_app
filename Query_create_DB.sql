@@ -70,10 +70,11 @@ CREATE TABLE Rooms (
 CREATE TABLE Room_Numbers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   room_id INT,
-  room_number VARCHAR(20) NOT NULL UNIQUE,
+  room_number VARCHAR(20) NOT NULL,
   status ENUM('Available','Maintenance','Hidden') DEFAULT 'Available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE (room_id, room_number),
   FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
 );
 

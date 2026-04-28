@@ -39,7 +39,7 @@ const roomController = {
         values.push(`%${searchTerm}%`);
       }
 
-      query += " ORDER BY r.created_at DESC LIMIT ? OFFSET ?";
+      query += " ORDER BY r.created_at ASC LIMIT ? OFFSET ?";
       values.push(limit, offset);
 
       const [rows] = await pool.execute(query, values);
@@ -280,8 +280,8 @@ const roomController = {
   createInstance: async (req, res) => {
     try {
       const { roomId, roomNumber, status } = req.body;
-      const [duplicate] = await pool.execute('SELECT id FROM Room_Numbers WHERE room_number = ?', [roomNumber]);
-      if (duplicate.length > 0) return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại' });
+      const [duplicate] = await pool.execute('SELECT id FROM Room_Numbers WHERE room_number = ? AND room_id = ?', [roomNumber, roomId]);
+      if (duplicate.length > 0) return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại trong loại phòng này' });
 
       await pool.execute('INSERT INTO Room_Numbers (room_id, room_number, status) VALUES (?, ?, ?)', [roomId, roomNumber, status || 'Available']);
       res.status(201).json({ success: true, message: 'Đã thêm số phòng thành công' });
@@ -299,8 +299,8 @@ const roomController = {
       if (existing.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy số phòng' });
 
       if (roomNumber) {
-        const [duplicate] = await pool.execute('SELECT id FROM Room_Numbers WHERE room_number = ? AND id != ?', [roomNumber, id]);
-        if (duplicate.length > 0) return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại' });
+        const [duplicate] = await pool.execute('SELECT id FROM Room_Numbers WHERE room_number = ? AND room_id = ? AND id != ?', [roomNumber, existing[0].room_id, id]);
+        if (duplicate.length > 0) return res.status(400).json({ success: false, message: 'Số phòng này đã tồn tại trong loại phòng này' });
       }
 
       await pool.execute('UPDATE Room_Numbers SET room_number = ?, status = ? WHERE id = ?', [roomNumber || existing[0].room_number, status || existing[0].status, id]);

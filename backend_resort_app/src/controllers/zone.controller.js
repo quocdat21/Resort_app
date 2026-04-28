@@ -9,7 +9,8 @@ exports.getAllZones = async (req, res) => {
     let query = `
       SELECT z.*, 
              (SELECT COUNT(*) FROM Categories c WHERE c.zone_id = z.id) as category_count,
-             (SELECT COUNT(*) FROM Rooms r 
+             (SELECT COUNT(*) FROM Room_Numbers rn 
+              JOIN Rooms r ON rn.room_id = r.id 
               JOIN Categories c ON r.category_id = c.id 
               WHERE c.zone_id = z.id) as room_count
       FROM Zones z
