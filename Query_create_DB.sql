@@ -71,7 +71,7 @@ CREATE TABLE Room_Numbers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   room_id INT,
   room_number VARCHAR(20) NOT NULL UNIQUE,
-  status ENUM('Available','Occupied','Maintenance','Hidden') DEFAULT 'Available',
+  status ENUM('Available','Maintenance','Hidden') DEFAULT 'Available',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (room_id) REFERENCES Rooms(id) ON DELETE CASCADE
@@ -132,94 +132,6 @@ CREATE TABLE Service_Images (
   FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
 );
 
--- BOOKINGS
-CREATE TABLE Bookings (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  booking_code VARCHAR(20) UNIQUE,
-  user_id INT,
-  room_number_id INT,
-  check_in DATE NOT NULL,
-  check_out DATE NOT NULL,
-  adults INT DEFAULT 1,
-  children INT DEFAULT 0,
-  room_price DECIMAL(15,0),
-  service_price DECIMAL(15,0) DEFAULT 0,
-  total_amount DECIMAL(15,0),
-  status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
-);
-
--- BOOKING SERVICES
-CREATE TABLE Booking_Services (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  booking_id INT,
-  service_id INT,
-  quantity INT DEFAULT 1,
-  price DECIMAL(15,0),
-  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
-);
-
--- SERVICE BOOKINGS
-CREATE TABLE Service_Bookings (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  booking_code VARCHAR(20) UNIQUE,
-  user_id INT,
-  service_id INT,
-  booking_date DATE NOT NULL,
-  quantity INT DEFAULT 1,
-  total_amount DECIMAL(15,0),
-  status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
-);
-
--- PAYMENTS
-CREATE TABLE Payments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  booking_id INT NULL,
-  service_booking_id INT NULL,
-  payment_method ENUM('Credit Card','E-Wallet','Bank Transfer'),
-  transaction_id VARCHAR(100),
-  amount DECIMAL(15,0),
-  status ENUM('Pending','Paid','Failed','Refunded') DEFAULT 'Pending',
-  payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_booking_id) REFERENCES Service_Bookings(id) ON DELETE CASCADE
-);
-
--- REVIEWS
-CREATE TABLE Reviews (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  booking_id INT,
-  user_id INT,
-  room_number_id INT,
-  rating INT CHECK (rating BETWEEN 1 AND 5),
-  comment TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
-);
-
--- SERVICE REVIEWS
-CREATE TABLE Service_Reviews (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  service_booking_id INT,
-  user_id INT,
-  service_id INT,
-  rating INT,
-  comment TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (service_booking_id) REFERENCES Service_Bookings(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
-  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
-);
-
 -- VOUCHERS
 CREATE TABLE Vouchers (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -236,12 +148,6 @@ CREATE TABLE Vouchers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ADD VOUCHER TO BOOKINGS
-ALTER TABLE Bookings
-ADD voucher_id INT NULL,
-ADD discount_amount DECIMAL(15,0) DEFAULT 0,
-ADD FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE SET NULL;
-
 -- USER VOUCHERS
 CREATE TABLE User_Vouchers (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -251,6 +157,97 @@ CREATE TABLE User_Vouchers (
   UNIQUE (user_id, voucher_id),
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
   FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE CASCADE
+);
+
+-- BOOKINGS
+CREATE TABLE Bookings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_code VARCHAR(20) UNIQUE,
+  user_id INT,
+  type ENUM('room','service') DEFAULT 'room',
+  check_in DATE NULL,
+  check_out DATE NULL,
+  service_booking_date DATE NULL,
+  adults INT DEFAULT 1,
+  children INT DEFAULT 0,
+  total_amount DECIMAL(15,0),
+  voucher_id INT NULL,
+  discount_amount DECIMAL(15,0) DEFAULT 0,
+  status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (voucher_id) REFERENCES Vouchers(id) ON DELETE SET NULL
+);
+
+
+CREATE TABLE Booking_Rooms (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT,
+  room_number_id INT,
+  price DECIMAL(15,0),
+  nights INT,
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
+);
+
+
+-- BOOKING SERVICES
+CREATE TABLE Booking_Services (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT,
+  service_id INT,
+  price_type VARCHAR(50),
+  unit VARCHAR(50),
+  quantity INT DEFAULT 1,
+  price DECIMAL(15,0),
+  total_price DECIMAL(15,0),
+  service_date DATE NULL,
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
+);
+
+-- PAYMENTS
+CREATE TABLE Payments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT NOT NULL,
+  payment_method ENUM('Credit Card','E-Wallet','Bank Transfer'),
+  transaction_id VARCHAR(100),
+  amount DECIMAL(15,0),
+  status ENUM('Pending','Paid','Failed','Refunded') DEFAULT 'Pending',
+  payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE
+);
+
+-- REVIEWS
+CREATE TABLE Reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT,
+  user_id INT,
+  room_number_id INT,
+  rating INT CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (booking_id, room_number_id),
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (room_number_id) REFERENCES Room_Numbers(id) ON DELETE CASCADE
+);
+
+
+-- SERVICE REVIEWS
+CREATE TABLE Service_Reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  booking_service_id INT,
+  service_id INT,
+  rating INT CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (booking_service_id),
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (booking_service_id) REFERENCES Booking_Services(id) ON DELETE CASCADE,
+  FOREIGN KEY (service_id) REFERENCES Services(id) ON DELETE CASCADE
 );
 
 -- NOTIFICATIONS

@@ -9,6 +9,9 @@ const zoneRoutes = require('./src/routes/zone.routes');
 const categoryRoutes = require('./src/routes/category.routes');
 const roomRoutes = require('./src/routes/room.routes');
 const amenityRoutes = require('./src/routes/amenity.routes');
+const serviceRoutes = require('./src/routes/service.routes');
+const voucherRoutes = require('./src/routes/voucher.routes');
+const homeRoutes = require('./src/routes/home.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,6 +33,9 @@ app.use('/api/zones', zoneRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/amenities', amenityRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/vouchers', voucherRoutes);
+app.use('/api/home', homeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
