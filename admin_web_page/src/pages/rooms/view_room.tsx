@@ -87,7 +87,7 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
 
                                 {/* Secondary Images Grid */}
                                 <div className="space-y-3">
-                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hình ảnh chi tiết</h4>
+                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ảnh bổ sung</h4>
                                     <div className="grid grid-cols-5 gap-3">
                                         {room.secondary_images && room.secondary_images.map((img, idx) => (
                                             <div key={img.id} className="aspect-square relative group cursor-pointer">

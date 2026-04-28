@@ -31,6 +31,7 @@ interface EditRoomProps {
         name: string;
         category_name: string;
         category_id?: string;
+        zone_id?: string | number;
         zone_name: string;
         base_price: number;
         size_sqm: number;
@@ -45,7 +46,9 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const [allCategories, setAllCategories] = useState<any[]>([]);
     const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
+    const [zones, setZones] = useState<{ label: string; value: string }[]>([]);
 
     // Main image
     const [mainImage, setMainImage] = useState<File | null>(null);
@@ -59,6 +62,7 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
 
     const [formData, setFormData] = useState({
         name: room.name,
+        zoneId: room.zone_id?.toString() || '',
         categoryId: room.category_id || '',
         description: room.description || '',
         sizeSqm: room.size_sqm.toString(),
@@ -74,9 +78,15 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
 
     useEffect(() => {
         if (isOpen) {
+            // Reset image states before setting new room data
+            setMainImage(null);
             setMainImagePreview(room.main_image_url ? `http://localhost:3000${room.main_image_url}` : null);
+            setSecondaryImages(Array(5).fill(null));
+            setSecondaryPreviews(Array(5).fill(null));
+
             setFormData({
                 name: room.name,
+                zoneId: room.zone_id?.toString() || '',
                 categoryId: room.category_id || '',
                 description: room.description || '',
                 sizeSqm: room.size_sqm.toString(),
@@ -101,16 +111,43 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
 
             setSelectedAmenities(room.amenities ? room.amenities.map(a => a.id) : []);
 
+            // Fetch zones
+            const fetchZones = async () => {
+                try {
+                    const response = await axios.get('http://localhost:3000/api/zones');
+                    if (response.data.success) {
+                        const options = response.data.data.map((zone: any) => ({
+                            label: zone.name,
+                            value: zone.id.toString()
+                        }));
+                        setZones([{ label: 'Chọn khu vực', value: '' }, ...options]);
+                    }
+                } catch (err) {
+                    console.error('Fetch zones error:', err);
+                }
+            };
+            fetchZones();
+
             // Fetch categories
             const fetchCategories = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/categories');
+                    const response = await axios.get('http://localhost:3000/api/categories?limit=100');
                     if (response.data.success) {
-                        const options = response.data.data.map((cat: any) => ({
-                            label: cat.name,
-                            value: cat.id.toString()
-                        }));
-                        setCategories([{ label: 'Chọn loại phòng', value: '' }, ...options]);
+                        const allCats = response.data.data;
+                        setAllCategories(allCats);
+                        
+                        // Initialize filtered categories based on current room's zone
+                        const currentZoneId = room.zone_id?.toString();
+                        if (currentZoneId) {
+                            const filteredCats = allCats.filter((cat: any) => cat.zoneId?.toString() === currentZoneId);
+                            const options = filteredCats.map((cat: any) => ({
+                                label: cat.name,
+                                value: cat.id.toString()
+                            }));
+                            setCategories([{ label: 'Chọn loại phòng', value: '' }, ...options]);
+                        } else {
+                            setCategories([{ label: 'Vui lòng chọn khu vực trước', value: '' }]);
+                        }
                     }
                 } catch (err) {
                     console.error('Fetch categories error:', err);
@@ -151,6 +188,20 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
             const parsed = parseCurrency(value);
             if (isNaN(Number(parsed)) && parsed !== '') return;
             setFormData(prev => ({ ...prev, [name]: parsed }));
+        } else if (name === 'zoneId') {
+            setFormData(prev => ({ ...prev, zoneId: value, categoryId: '' }));
+            
+            // Filter categories by selected zone
+            if (value) {
+                const filteredCats = allCategories.filter((cat: any) => cat.zoneId?.toString() === value);
+                const options = filteredCats.map((cat: any) => ({
+                    label: cat.name,
+                    value: cat.id.toString()
+                }));
+                setCategories([{ label: 'Chọn loại phòng', value: '' }, ...options]);
+            } else {
+                setCategories([{ label: 'Vui lòng chọn khu vực trước', value: '' }]);
+            }
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -285,44 +336,56 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
 
                                 {/* Left Column: Images */}
                                 <div className="lg:col-span-5 space-y-8">
-                                    <div className="space-y-3">
-                                        <label className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                            <ImageIcon size={16} className="text-green-700" />
-                                            Ảnh đại diện phòng <span className="text-red-500">*</span>
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <ImageIcon size={14} /> Ảnh đại diện phòng
                                         </label>
-                                        <div className="relative group">
-                                            <div className="aspect-[4/3] rounded-[24px] border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden bg-slate-50 border-green-500 shadow-lg">
-                                                {mainImagePreview ? (
+                                        <div className="relative group aspect-video bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 overflow-hidden hover:border-green-500/50 transition-all">
+                                            {mainImagePreview ? (
+                                                <>
                                                     <img src={mainImagePreview} alt="Main Preview" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <Upload size={32} className="text-slate-300" />
-                                                )}
-                                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handleMainImageChange} />
-                                            </div>
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                                        <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-bold shadow-xl hover:scale-105 transition-all">
+                                                            Thay đổi ảnh
+                                                            <input type="file" className="hidden" accept="image/*" onChange={handleMainImageChange} />
+                                                        </label>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <label className="absolute inset-0 cursor-pointer flex flex-col items-center justify-center gap-3">
+                                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400">
+                                                        <Upload size={20} />
+                                                    </div>
+                                                    <input type="file" className="hidden" accept="image/*" onChange={handleMainImageChange} />
+                                                </label>
+                                            )}
                                         </div>
                                     </div>
+
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                                <Layers size={16} className="text-green-700" />
-                                                Ảnh chi tiết phòng (Tối đa 5 ảnh)
-                                            </label>
-                                        </div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <ImageIcon size={14} /> Ảnh chi tiết (Tối đa 5)
+                                        </label>
                                         <div className="grid grid-cols-5 gap-3">
                                             {secondaryPreviews.map((preview, index) => (
                                                 <div key={index} className="relative group aspect-square">
-                                                    <div className={`w-full h-full rounded-xl border-2 border-dashed transition-all flex items-center justify-center overflow-hidden bg-slate-50 ${preview ? 'border-green-500 shadow-md' : 'border-slate-200 hover:border-green-400'}`}>
+                                                    <div className={`w-full h-full rounded-2xl border-2 border-dashed transition-all flex items-center justify-center overflow-hidden bg-slate-50 ${preview ? 'border-green-500 shadow-md' : 'border-slate-200 hover:border-green-500/50'}`}>
                                                         {preview ? (
-                                                            <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                                            <>
+                                                                <img src={preview} alt={`Sub ${index}`} className="w-full h-full object-cover" />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                                                    <label className="cursor-pointer p-1.5 bg-white rounded-lg shadow-md text-slate-700 hover:text-green-600 transition-colors">
+                                                                        <Upload size={14} />
+                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSecondaryImageChange(index, e)} />
+                                                                    </label>
+                                                                </div>
+                                                            </>
                                                         ) : (
-                                                            <Plus size={20} className="text-slate-300" />
+                                                            <label className="absolute inset-0 cursor-pointer flex items-center justify-center text-slate-300 hover:text-green-500 transition-colors">
+                                                                <Plus size={16} />
+                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSecondaryImageChange(index, e)} />
+                                                            </label>
                                                         )}
-                                                        <input
-                                                            type="file"
-                                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                                            accept="image/*"
-                                                            onChange={(e) => handleSecondaryImageChange(index, e)}
-                                                        />
                                                     </div>
                                                     {preview && (
                                                         <button
@@ -330,7 +393,7 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
                                                             onClick={() => removeSecondaryImage(index)}
                                                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors z-10"
                                                         >
-                                                            <X size={14} />
+                                                            <X size={12} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -348,6 +411,15 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
                                             value={formData.name}
                                             onChange={handleChange}
                                             icon={<Home size={16} />}
+                                            required
+                                        />
+                                        <FormSelect
+                                            label="Khu vực (Zone)"
+                                            name="zoneId"
+                                            value={formData.zoneId}
+                                            onChange={handleChange}
+                                            icon={<Layers size={16} />}
+                                            options={zones}
                                             required
                                         />
                                         <FormSelect

@@ -55,6 +55,7 @@ const RoomsPage: React.FC = () => {
   const [totalRooms, setTotalRooms] = useState(0);
 
   const [zones, setZones] = useState<any[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -97,10 +98,13 @@ const RoomsPage: React.FC = () => {
       try {
         const [zRes, cRes] = await Promise.all([
           axios.get('http://localhost:3000/api/zones'),
-          axios.get('http://localhost:3000/api/categories')
+          axios.get('http://localhost:3000/api/categories?limit=100')
         ]);
         if (zRes.data.success) setZones(zRes.data.data);
-        if (cRes.data.success) setCategories(cRes.data.data);
+        if (cRes.data.success) {
+          setAllCategories(cRes.data.data);
+          // Don't set categories yet, wait for zone selection
+        }
       } catch (error) {
         console.error('Fetch filters error:', error);
       }
@@ -195,7 +199,19 @@ const RoomsPage: React.FC = () => {
             <select
               className="w-full appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm cursor-pointer text-slate-700 min-w-[140px]"
               value={selectedZone}
-              onChange={(e) => { setSelectedZone(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => { 
+                const zoneId = e.target.value;
+                setSelectedZone(zoneId); 
+                setSelectedCategory('all');
+                setCurrentPage(1); 
+                
+                if (zoneId === 'all') {
+                  setCategories([]);
+                } else {
+                  const filtered = allCategories.filter(cat => cat.zoneId?.toString() === zoneId);
+                  setCategories(filtered);
+                }
+              }}
             >
               <option value="all">Tất cả Khu vực</option>
               {zones.map(zone => (
@@ -210,9 +226,14 @@ const RoomsPage: React.FC = () => {
           {/* Lọc theo Loại phòng (Category) */}
           <div className="relative flex-1 sm:flex-none">
             <select
-              className="w-full appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm cursor-pointer text-slate-700 min-w-[140px]"
+              className={`w-full appearance-none border rounded-xl pl-4 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm min-w-[140px] ${
+                selectedZone === 'all' 
+                ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed' 
+                : 'bg-white border-slate-200 text-slate-700 cursor-pointer'
+              }`}
               value={selectedCategory}
               onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
+              disabled={selectedZone === 'all'}
             >
               <option value="all">Tất cả Loại phòng</option>
               {categories.map(cat => (
