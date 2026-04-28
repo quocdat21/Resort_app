@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 
 // Cấu hình nơi lưu trữ
 const storage = multer.diskStorage({
@@ -15,6 +16,7 @@ const storage = multer.diskStorage({
       }
     }
     if (file.fieldname === 'mainImage' || file.fieldname === 'secondaryImages') dir = 'uploads/rooms';
+    if (file.fieldname === 'main_image' || file.fieldname === 'secondary_images') dir = 'uploads/services';
 
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -24,9 +26,11 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     let prefix = file.fieldname;
-    if (file.fieldname === 'mainImage') {
+    if (file.fieldname === 'mainImage' || file.fieldname === 'main_image') {
       prefix = 'pr-' + file.fieldname;
     }
+    // Note: We'll convert to JPEG in optimizeImages, but for now we keep the original extension or .jpg
+    // to match what the original file might be before sharp processes it.
     cb(null, prefix + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
@@ -49,7 +53,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 1024 * 1024 * 50 // Giới hạn 50MB cho ảnh chất lượng cao
+    fileSize: 1024 * 1024 * 200
   },
   fileFilter: fileFilter
 });

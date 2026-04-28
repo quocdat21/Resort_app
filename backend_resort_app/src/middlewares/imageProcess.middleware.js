@@ -5,36 +5,45 @@ const path = require('path');
 const processSingleFile = async (file) => {
   if (!file) return;
 
+  // Chỉ xử lý nếu là file ảnh
+  if (!file.mimetype.startsWith('image/') && !file.originalname.match(/\.(jpg|jpeg|png|webp|heic|heif)$/i)) return;
+
   const filePath = file.path;
   const ext = path.extname(file.filename).toLowerCase();
 
-  // Kiểm tra nếu là định dạng HEIC/HEIF hoặc đơn giản là muốn convert tất cả về JPG để đồng nhất
-  if (ext === '.heic' || ext === '.heif') {
-    const newFilename = file.filename.replace(ext, '.jpg');
-    const newPath = filePath.replace(ext, '.jpg');
+  // Chuẩn hóa tất cả ảnh về định dạng .jpg để tối ưu dung lượng và dễ quản lý
+  const newFilename = file.filename.replace(ext, '.jpg');
+  const newPath = filePath.replace(ext, '.jpg');
+  const tempPath = filePath + '.tmp';
 
-    try {
-      // Dùng sharp để convert sang jpeg
-      await sharp(filePath)
-        .rotate() // Tự động xoay ảnh dựa trên EXIF
-        .toFormat('jpeg')
-        .jpeg({ quality: 90 })
-        .toFile(newPath);
+  try {
+    // Dùng sharp để nén ảnh:
+    // - rotate: tự động xoay theo EXIF
+    // - resize: giới hạn tối đa 1920x1920, không phóng to ảnh nhỏ
+    // - jpeg(80): giảm chất lượng xuống 80% (mắt thường khó phân biệt nhưng giảm dung lượng cực lớn từ 50MB xuống vài trăm KB)
+    await sharp(filePath)
+      .rotate() 
+      .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+      .toFormat('jpeg')
+      .jpeg({ quality: 80, progressive: true })
+      .toFile(tempPath);
 
-      // Xóa file gốc (HEIC)
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
-      // Cập nhật lại thông tin file để controller sử dụng tên file mới (.jpg)
-      file.path = newPath;
-      file.filename = newFilename;
-      file.mimetype = 'image/jpeg';
-      
-      console.log(`✅ Đã convert ${file.originalname} sang JPG`);
-    } catch (error) {
-      console.error('❌ Lỗi khi xử lý ảnh với Sharp:', error);
+    // Xóa file gốc đã upload
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
+
+    // Đổi tên file tạm thành file mới (có đuôi .jpg)
+    fs.renameSync(tempPath, newPath);
+
+    // Cập nhật lại thông tin file trong object req.files để controller sử dụng đúng
+    file.path = newPath;
+    file.filename = newFilename;
+    file.mimetype = 'image/jpeg';
+      
+    console.log(`✅ Đã nén và convert ${file.originalname} sang JPG`);
+  } catch (error) {
+    console.error(`❌ Lỗi khi xử lý ảnh ${file.originalname} với Sharp:`, error);
   }
 };
 
