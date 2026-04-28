@@ -7,7 +7,18 @@ class ApiService {
   // Android emulator: 10.0.2.2
   // iOS simulator / thiết bị thật cùng wifi: dùng IP máy (vd: 192.168.1.x)
   static const String baseUrl = 'http://192.168.0.23:3000/api';
+  static const String serverUrl = 'http://192.168.0.23:3000';
 
+  // ==================== HOME ====================
+
+  /// GET /api/home - aggregated data for home screen
+  static Future<Map<String, dynamic>> fetchHomeData() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/home'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
   // ==================== AUTH ====================
 
   /// POST /api/auth/login
