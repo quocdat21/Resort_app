@@ -101,7 +101,7 @@ const CategoriesPage: React.FC = () => {
                 const response = await apiService.get(`/zones?${params.toString()}`);
                 if (response.success) {
                     setZones(response.data);
-                    // If zones ever support pagination, we'd update it here too
+                    if (response.pagination) setPagination(response.pagination);
                 }
             }
         } catch (error) {
@@ -159,15 +159,7 @@ const CategoriesPage: React.FC = () => {
         setIsEditZoneOpen(true);
     };
 
-    // Filtered data based on search
-    const filteredCategories = categories.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.zoneName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const filteredZones = zones.filter(z =>
-        z.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Data is already filtered by API based on searchTerm
 
     return (
         <div className="space-y-6">
@@ -251,12 +243,12 @@ const CategoriesPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="text-sm">
-                                {filteredCategories.length === 0 ? (
+                                {categories.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-6 py-12 text-center text-slate-400">Không tìm thấy dữ liệu</td>
                                     </tr>
                                 ) : (
-                                    filteredCategories.map((category) => (
+                                    categories.map((category) => (
                                         <tr key={category.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
                                             <td className="px-6 py-4 font-bold text-slate-900">{category.id}</td>
                                             <td className="px-6 py-4">
@@ -320,7 +312,7 @@ const CategoriesPage: React.FC = () => {
                 </div>
             ) : (
                 <ZonesTable
-                    data={filteredZones}
+                    data={zones}
                     onView={handleViewZone}
                     onEdit={handleEditZone}
                     onDelete={handleDeleteZone}
