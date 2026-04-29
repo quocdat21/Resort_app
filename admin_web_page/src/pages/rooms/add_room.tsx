@@ -11,8 +11,6 @@ import {
     DollarSign,
     Info,
     ChevronDown,
-    Save,
-    //Trash2,
     Plus,
     Check,
     Smile,
@@ -141,7 +139,7 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
             setFormData(prev => ({ ...prev, [name]: parsed }));
         } else if (name === 'zoneId') {
             setFormData(prev => ({ ...prev, zoneId: value, categoryId: '' }));
-            
+
             // Filter categories by selected zone
             if (value) {
                 const filteredCats = allCategories.filter((cat: any) => cat.zoneId?.toString() === value);
@@ -159,7 +157,7 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
     };
 
     const toggleAmenity = (id: number) => {
-        setSelectedAmenities(prev => 
+        setSelectedAmenities(prev =>
             prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
         );
     };
@@ -214,7 +212,7 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
             data.append('capacityAdults', formData.capacityAdults);
             data.append('capacityChildren', formData.capacityChildren);
             data.append('basePrice', formData.basePrice);
-            
+
             if (mainImage) {
                 data.append('mainImage', mainImage);
             }
@@ -432,23 +430,22 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
                                                     <div
                                                         key={amenity.id}
                                                         onClick={() => toggleAmenity(amenity.id)}
-                                                        className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all cursor-pointer group min-w-[80px] ${
-                                                            isSelected 
-                                                            ? 'border-green-600 bg-green-50 shadow-md shadow-green-100' 
-                                                            : 'border-slate-100 bg-white hover:border-green-200 hover:bg-slate-50'
-                                                        }`}
+                                                        className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all cursor-pointer group min-w-[80px] ${isSelected
+                                                                ? 'border-green-600 bg-green-50 shadow-md shadow-green-100'
+                                                                : 'border-slate-100 bg-white hover:border-green-200 hover:bg-slate-50'
+                                                            }`}
                                                     >
                                                         <div className="w-10 h-10 flex items-center justify-center relative">
                                                             {amenity.icon_url ? (
-                                                                <img 
-                                                                    src={`http://localhost:3000${amenity.icon_url}`} 
-                                                                    alt={amenity.name} 
-                                                                    className={`w-8 h-8 object-contain transition-all ${isSelected ? 'scale-110' : 'grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100'}`} 
+                                                                <img
+                                                                    src={`http://localhost:3000${amenity.icon_url}`}
+                                                                    alt={amenity.name}
+                                                                    className={`w-8 h-8 object-contain transition-all ${isSelected ? 'scale-110' : 'grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100'}`}
                                                                 />
                                                             ) : (
                                                                 <Smile size={24} className={isSelected ? 'text-green-600' : 'text-slate-300'} />
                                                             )}
-                                                            
+
                                                             {isSelected && (
                                                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white rounded-full flex items-center justify-center animate-in zoom-in duration-200">
                                                                     <Check size={10} strokeWidth={4} />
