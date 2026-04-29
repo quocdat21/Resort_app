@@ -7,7 +7,10 @@ const processImage = require('../middlewares/imageProcess.middleware');
 
 // --- ROOM TEMPLATES ---
 router.get('/', roomController.getAllRooms);
+router.get('/search', roomController.searchRooms);
+router.get('/filter-meta', roomController.getFilterMeta);
 router.get('/:id', roomController.getRoomById);
+router.get('/:id/detail', roomController.getRoomDetail);
 
 // Admin only
 router.post('/', 
