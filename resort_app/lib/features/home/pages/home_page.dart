@@ -5,6 +5,9 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/home/pages/side_menu_drawer_page.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
+import 'package:resort_app/features/room/pages/rooms_search.dart';
+import 'package:resort_app/features/room/pages/rooms_search_results.dart';
+import 'package:resort_app/features/room/pages/room_details_page.dart';
 import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _popularRooms = [];
   List<Map<String, dynamic>> _banners = [];
   bool _isLoadingHome = true;
+  String? _selectedCategoryKey = 'All';
 
   @override
   void initState() {
@@ -241,15 +245,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ================= SEARCH =================
   Widget _buildSearch() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: "Search experiences...",
-        prefixIcon: const Icon(Icons.search),
-        filled: true,
-        fillColor: AppColors.surfaceContainerHigh,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const RoomsSearch()),
+        );
+      },
+      child: AbsorbPointer(
+        child: TextField(
+          readOnly: true,
+          decoration: InputDecoration(
+            hintText: "Search experiences...",
+            prefixIcon: const Icon(Icons.search),
+            filled: true,
+            fillColor: AppColors.surfaceContainerHigh,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+          ),
         ),
       ),
     );
@@ -414,70 +429,74 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SizedBox.shrink();
     }
 
-    // Fallback icons if no icon_url is provided from the backend
-    final fallbackIcons = [
-      Icons.villa,
-      Icons.bed,
-      Icons.houseboat,
-      Icons.cabin,
-      Icons.home_work,
-      Icons.apartment,
-      Icons.house,
-      Icons.holiday_village,
+    // The representative categories including 'All'
+    final displayCategories = [
+      {'key': 'All', 'label': 'All', 'icon': Icons.apps},
+      {'key': 'Twin', 'label': 'Twin', 'icon': Icons.bed},
+      {'key': 'Double', 'label': 'Double', 'icon': Icons.king_bed},
+      {'key': 'Triple', 'label': 'Triple', 'icon': Icons.bedroom_parent},
+      {'key': 'Villa', 'label': 'Villa', 'icon': Icons.villa},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Room Categories", style: AppTextStyles.h3),
-        const SizedBox(height: 12),
+        Text(
+          "Categories",
+          style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
         SizedBox(
           height: 90,
-          child: _categories.isEmpty
-              ? Center(
-                  child: Text(
-                    'Chưa có danh mục phòng',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                )
-              : ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _categories.length,
-                  itemBuilder: (_, i) {
-                    final cat = _categories[i];
-                    final iconUrl = cat['icon_url'];
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: displayCategories.length,
+            itemBuilder: (_, i) {
+              final cat = displayCategories[i];
+              final iconData = cat['icon'] as IconData;
 
-                    return Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundColor: i == 0
-                                ? AppColors.primary
-                                : AppColors.surfaceContainerHigh,
-                            backgroundImage: (iconUrl != null && iconUrl.toString().isNotEmpty)
-                                ? NetworkImage(iconUrl)
-                                : null,
-                            child: (iconUrl == null || iconUrl.toString().isEmpty)
-                                ? Icon(
-                                    fallbackIcons[i % fallbackIcons.length],
-                                    color: i == 0
-                                        ? AppColors.onPrimary
-                                        : AppColors.primary,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            (cat['name'] ?? '').toString().toUpperCase(),
-                            style: AppTextStyles.labelSmall,
-                          )
-                        ],
+              final isSelected = _selectedCategoryKey == cat['key'];
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryKey = cat['key'] as String;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 20),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.surfaceContainerHigh.withOpacity(0.5),
+                        ),
+                        child: Icon(
+                          iconData,
+                          color: isSelected ? AppColors.onPrimary : AppColors.primary,
+                          size: 28,
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 10),
+                      Text(
+                        (cat['label'] as String).toUpperCase(),
+                        style: AppTextStyles.labelSmall.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
+              );
+            },
+          ),
         )
       ],
     );
@@ -491,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const Text("Popular Stays", style: AppTextStyles.h3),
           const SizedBox(height: 12),
-          Center(
+          const Center(
             child: CircularProgressIndicator(
               color: AppColors.primary,
               strokeWidth: 2,
@@ -501,7 +520,14 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (_popularRooms.isEmpty) {
+    final filteredRooms = _selectedCategoryKey == 'All'
+        ? _popularRooms
+        : _popularRooms.where((room) {
+            final catName = (room['category_name'] ?? '').toString().toLowerCase();
+            return catName.contains((_selectedCategoryKey ?? '').toLowerCase());
+          }).toList();
+
+    if (filteredRooms.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -526,10 +552,19 @@ class _HomeScreenState extends State<HomeScreen> {
         const Text("Popular Stays", style: AppTextStyles.h3),
         const SizedBox(height: 12),
         ...List.generate(
-          _popularRooms.length,
-          (i) => _roomCard(_popularRooms[i]),
+          filteredRooms.length,
+          (i) => _roomCard(filteredRooms[i]),
         ),
       ],
+    );
+  }
+
+  void _navigateToRoomDetails(Map<String, dynamic> room) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RoomDetailsPage(room: room),
+      ),
     );
   }
 
@@ -539,79 +574,72 @@ class _HomeScreenState extends State<HomeScreen> {
     final zoneName = (room['zone_name'] ?? 'Resort').toString().toUpperCase();
     final price = room['base_price'] ?? 0;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: imageUrl != null && imageUrl.toString().isNotEmpty
-                ? Image.network(
-                    imageUrl,
-                    width: 110,
-                    height: 110,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 110,
-                      height: 110,
-                      color: AppColors.surfaceContainerHigh,
-                      child: const Icon(Icons.image_not_supported, color: AppColors.outline),
-                    ),
-                  )
-                : Container(
-                    width: 110,
-                    height: 110,
-                    color: AppColors.surfaceContainerHigh,
-                    child: const Icon(Icons.hotel, color: AppColors.outline, size: 32),
-                  ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    room['name'] ?? '',
-                    style: AppTextStyles.h3.copyWith(fontSize: 16),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, size: 14, color: Colors.orange),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${avgRating > 0 ? avgRating.toStringAsFixed(1) : 'Mới'} · $zoneName",
-                        style: AppTextStyles.bodySmall,
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "${_formatPrice(price)}đ / ĐÊM",
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  )
-                ],
+    return GestureDetector(
+      onTap: () => _navigateToRoomDetails(room),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.outlineVariant.withOpacity(0.5)),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              child: Image.network(
+                imageUrl ?? '',
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 120,
+                  color: AppColors.surfaceContainerHigh,
+                  child: const Icon(Icons.hotel),
+                ),
               ),
             ),
-          )
-        ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      room['name'] ?? 'Unknown Room',
+                      style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$avgRating • $zoneName',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.secondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(price),
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

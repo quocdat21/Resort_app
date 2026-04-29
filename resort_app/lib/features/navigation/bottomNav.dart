@@ -3,6 +3,8 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
 import 'package:resort_app/features/profile/pages/profile_page.dart';
+import 'package:resort_app/features/room/pages/rooms_search_results.dart';
+import 'package:resort_app/features/service/pages/services_page.dart';
 
 class BottomNav extends StatelessWidget {
   final int currentIndex;
@@ -19,6 +21,12 @@ class BottomNav extends StatelessWidget {
     switch (index) {
       case 0:
         nextScreen = const HomeScreen();
+        break;
+      case 1:
+        nextScreen = const RoomsSearchResults();
+        break;
+      case 2:
+        nextScreen = const ServicesPage();
         break;
       case 3:
         nextScreen = const ProfilePage();

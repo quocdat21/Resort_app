@@ -9,6 +9,7 @@ import 'package:resort_app/features/auth/pages/forgot_password_page.dart';
 import 'package:resort_app/features/auth/pages/register_page.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
 import 'package:resort_app/features/auth/pages/verify_page.dart';
+import 'package:resort_app/core/constants/dev_credentials.dart';
 
 // --- MÀN HÌNH ĐĂNG NHẬP ---
 class LoginScreen extends StatefulWidget {
@@ -159,6 +160,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Tự động điền tài khoản nếu được bật trong dev_credentials.dart
+    if (DevCredentials.useDevCredentials) {
+      _emailController.text = DevCredentials.email;
+      _passwordController.text = DevCredentials.password;
+      _showPasswordIcon = DevCredentials.password.isNotEmpty;
+    }
+
     _passwordController.addListener(() {
       setState(() {
         _showPasswordIcon = _passwordController.text.isNotEmpty;
