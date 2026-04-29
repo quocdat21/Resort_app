@@ -6,8 +6,8 @@ class ApiService {
   // Đổi thành IP máy bạn nếu chạy trên thiết bị thật
   // Android emulator: 10.0.2.2
   // iOS simulator / thiết bị thật cùng wifi: dùng IP máy (vd: 192.168.1.x)
-  static const String baseUrl = 'http://192.168.0.23:3000/api';
-  static const String serverUrl = 'http://192.168.0.23:3000';
+  static const String baseUrl = 'http://localhost:3000/api';
+  static const String serverUrl = 'http://localhost:3000';
 
   // ==================== HOME ====================
 
@@ -19,6 +19,91 @@ class ApiService {
     );
     return jsonDecode(response.body);
   }
+
+  // ==================== ROOMS ====================
+
+  /// GET /api/rooms/search - search rooms with advanced filters
+  static Future<Map<String, dynamic>> searchRooms({
+    int? adults,
+    int? children,
+    int? minPrice,
+    int? maxPrice,
+    String? categoryId,
+    String? zoneId,
+    String? searchTerm,
+    String? checkIn,
+    String? checkOut,
+    int page = 1,
+    int limit = 20,
+    String sortBy = 'base_price',
+    String sortOrder = 'ASC',
+  }) async {
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+      'sortBy': sortBy,
+      'sortOrder': sortOrder,
+    };
+    if (adults != null) queryParams['adults'] = adults.toString();
+    if (children != null) queryParams['children'] = children.toString();
+    if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
+    if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
+    if (categoryId != null) queryParams['categoryId'] = categoryId;
+    if (zoneId != null) queryParams['zoneId'] = zoneId;
+    if (searchTerm != null) queryParams['searchTerm'] = searchTerm;
+    if (checkIn != null) queryParams['checkIn'] = checkIn;
+    if (checkOut != null) queryParams['checkOut'] = checkOut;
+
+    final uri = Uri.parse('$baseUrl/rooms/search').replace(queryParameters: queryParams);
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// GET /api/rooms/:id/detail - full room detail with images, amenities, reviews
+  static Future<Map<String, dynamic>> getRoomDetail(int roomId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/rooms/$roomId/detail'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// GET /api/rooms - basic room listing (admin-style)
+  static Future<Map<String, dynamic>> fetchRooms({
+    int page = 1,
+    int limit = 20,
+    String? categoryId,
+    String? zoneId,
+    String? searchTerm,
+  }) async {
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (categoryId != null) queryParams['categoryId'] = categoryId;
+    if (zoneId != null) queryParams['zoneId'] = zoneId;
+    if (searchTerm != null) queryParams['searchTerm'] = searchTerm;
+
+    final uri = Uri.parse('$baseUrl/rooms').replace(queryParameters: queryParams);
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// GET /api/rooms/filter-meta - get zones, categories, max price
+  static Future<Map<String, dynamic>> getFilterMeta() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/rooms/filter-meta'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
+
   // ==================== AUTH ====================
 
   /// POST /api/auth/login
