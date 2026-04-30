@@ -89,9 +89,9 @@ const EditService: React.FC<EditServiceProps> = ({ isOpen, onClose, onSuccess, s
                 const previews = Array(5).fill(null);
                 const images = Array(5).fill(null);
                 s.secondary_images?.slice(0, 5).forEach((img: any, idx: number) => {
-                    const url = `http://localhost:3000${img.image_url}`;
+                    const url = img.image_url;
                     previews[idx] = url;
-                    images[idx] = img.image_url; // Store the relative path for easy comparison
+                    images[idx] = img.image_url; // Store the URL
                 });
                 setSecondaryPreviews(previews);
                 setSecondaryImages(images);
@@ -258,7 +258,7 @@ const EditService: React.FC<EditServiceProps> = ({ isOpen, onClose, onSuccess, s
                                             <div className="relative group aspect-video bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 overflow-hidden hover:border-green-500/50 transition-all">
                                                 {(mainImagePreview || existingMainImage) ? (
                                                     <>
-                                                        <img src={mainImagePreview || `http://localhost:3000${existingMainImage}`} alt="Preview" className="w-full h-full object-cover" />
+                                                        <img src={mainImagePreview || existingMainImage!} alt="Preview" className="w-full h-full object-cover" />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                                             <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-bold shadow-xl hover:scale-105 transition-all">
                                                                 Thay đổi ảnh

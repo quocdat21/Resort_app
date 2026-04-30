@@ -103,7 +103,7 @@ const ViewService: React.FC<ViewServiceProps> = ({ isOpen, onClose, service }) =
                                     <div className="relative aspect-video bg-slate-100 rounded-3xl overflow-hidden border border-slate-200 shadow-sm">
                                         {service.image_url ? (
                                             <img
-                                                src={`http://localhost:3000${service.image_url}`}
+                                                src={service.image_url}
                                                 alt={service.name}
                                                 className="w-full h-full object-cover"
                                             />
@@ -135,7 +135,7 @@ const ViewService: React.FC<ViewServiceProps> = ({ isOpen, onClose, service }) =
                                                 <div key={idx} className="aspect-square bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden hover:border-green-500/50 transition-all group relative">
                                                     {img ? (
                                                         <img
-                                                            src={`http://localhost:3000${img.image_url}`}
+                                                            src={img.image_url}
                                                             alt={`Sub ${idx}`}
                                                             className="w-full h-full object-cover"
                                                         />

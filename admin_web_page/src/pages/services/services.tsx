@@ -63,7 +63,7 @@ const ServicesPage: React.FC = () => {
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
-    limit: 8,
+    limit: 5,
     totalPages: 0
   });
 
@@ -77,7 +77,7 @@ const ServicesPage: React.FC = () => {
       const params = new URLSearchParams({
         searchTerm,
         page: currentPage.toString(),
-        limit: '6'
+        limit: '5'
       });
 
       if (activeTab === 'Hall') {
@@ -233,9 +233,9 @@ const ServicesPage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-100 group-hover:border-green-200 transition-all">
                         {service.image_url ? (
-                          <img 
-                            src={`http://localhost:3000${service.image_url}`} 
-                            alt={service.name} 
+                          <img
+                            src={service.image_url}
+                            alt={service.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
