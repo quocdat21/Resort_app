@@ -189,6 +189,58 @@ const voucherController = {
       console.error('Error in deleteVoucher:', error);
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
+  },
+
+  // Validate voucher code
+  validateVoucher: async (req, res) => {
+    try {
+      const { code, orderValue } = req.body;
+      if (!code) {
+        return res.status(400).json({ success: false, message: 'Vui lòng nhập mã giảm giá' });
+      }
+
+      const [vouchers] = await pool.execute(
+        "SELECT * FROM Vouchers WHERE code = ? AND status = 'active'", 
+        [code]
+      );
+
+      if (vouchers.length === 0) {
+        return res.status(404).json({ success: false, message: 'Mã giảm giá không tồn tại hoặc đã hết hạn' });
+      }
+
+      const voucher = vouchers[0];
+      const now = new Date();
+
+      // Check dates
+      if (voucher.start_date && new Date(voucher.start_date) > now) {
+        return res.status(400).json({ success: false, message: 'Mã giảm giá chưa đến thời gian sử dụng' });
+      }
+      if (voucher.end_date && new Date(voucher.end_date) < now) {
+        return res.status(400).json({ success: false, message: 'Mã giảm giá đã hết hạn' });
+      }
+
+      // Check usage limit
+      if (voucher.usage_limit !== null && voucher.used_count >= voucher.usage_limit) {
+        return res.status(400).json({ success: false, message: 'Mã giảm giá đã hết lượt sử dụng' });
+      }
+
+      // Check min order value
+      if (orderValue && orderValue < voucher.min_order_value) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Mã này chỉ áp dụng cho đơn hàng từ ${new Intl.NumberFormat('vi-VN').format(voucher.min_order_value)} VND trở lên` 
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Áp dụng mã giảm giá thành công',
+        data: voucher
+      });
+    } catch (error) {
+      console.error('Error in validateVoucher:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi kiểm tra mã' });
+    }
   }
 };
 

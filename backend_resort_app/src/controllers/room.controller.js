@@ -487,6 +487,10 @@ const roomController = {
         JOIN Room_Amenities ra ON a.id = ra.amenity_id
         WHERE ra.room_id = ?
       `, [id]);
+      const [roomNumbers] = await pool.execute(
+        "SELECT id, room_number, status FROM Room_Numbers WHERE room_id = ? AND status = 'Available' ORDER BY room_number ASC",
+        [id]
+      );
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       const formattedImages = images.map(img => ({
@@ -510,7 +514,8 @@ const roomController = {
           main_image_url: mainImage ? mainImage.image_url : null,
           images: formattedImages,
           secondary_images: secondaryImages,
-          amenities: formattedAmenities
+          amenities: formattedAmenities,
+          room_numbers: roomNumbers
         }
       });
     } catch (error) {

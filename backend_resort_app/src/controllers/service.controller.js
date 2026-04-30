@@ -59,9 +59,21 @@ const serviceController = {
       const [countResult] = await pool.execute(countQuery, countValues);
       const total = countResult[0].total;
 
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      const formattedServices = services.map(s => {
+        return {
+          ...s,
+          image_url: s.image_url ? (s.image_url.startsWith('http') ? s.image_url : `${baseUrl}${s.image_url}`) : null,
+          secondary_images: s.secondary_images ? s.secondary_images.map(img => ({
+            ...img,
+            image_url: img.image_url.startsWith('http') ? img.image_url : `${baseUrl}${img.image_url}`
+          })) : []
+        };
+      });
+
       res.json({
         success: true,
-        data: services,
+        data: formattedServices,
         pagination: {
           total,
           page,
