@@ -37,19 +37,29 @@ const AddVoucher: React.FC<AddVoucherProps> = ({ isOpen, onClose, onSuccess }) =
 
     if (!isOpen) return null;
 
-    const formatNumber = (value: string) => {
+    const formatNumber = (value: string, isDecimal = false) => {
         if (!value) return '';
+        if (isDecimal) return value;
         const stringValue = value.toString().replace(/\D/g, '');
         return stringValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
 
-    const parseNumber = (value: string) => {
+    const parseNumber = (value: string, isDecimal = false) => {
+        if (isDecimal) {
+            let val = value.replace(/[^0-9.]/g, '');
+            const parts = val.split('.');
+            if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+            if (parseFloat(val) > 100) return '100';
+            return val;
+        }
         return value.replace(/\D/g, '');
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        if (['discount_value', 'max_discount', 'min_order_value', 'usage_limit'].includes(name)) {
+        if (name === 'discount_value' && formData.discount_type === 'percentage') {
+            setFormData(prev => ({ ...prev, [name]: parseNumber(value, true) }));
+        } else if (['discount_value', 'max_discount', 'min_order_value', 'usage_limit'].includes(name)) {
             setFormData(prev => ({ ...prev, [name]: parseNumber(value) }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -197,8 +207,8 @@ const AddVoucher: React.FC<AddVoucherProps> = ({ isOpen, onClose, onSuccess }) =
                                                 type="text"
                                                 name="discount_value"
                                                 required
-                                                placeholder={formData.discount_type === 'percentage' ? 'VD: 10' : 'VD: 500.000'}
-                                                value={formatNumber(formData.discount_value)}
+                                                placeholder={formData.discount_type === 'percentage' ? 'VD: 10.5' : 'VD: 500.000'}
+                                                value={formData.discount_type === 'percentage' ? formData.discount_value : formatNumber(formData.discount_value)}
                                                 onChange={handleChange}
                                                 className="w-full pl-5 pr-12 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 text-sm font-bold text-green-700 shadow-sm"
                                             />
