@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search,
     Plus,
@@ -9,37 +9,178 @@ import {
     ChevronLast,
     Eye,
     Edit2,
-    Trash2
+    Trash2,
+    Loader2
 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 import RoomBookingsTable from './rooms_bookings';
 import type { RoomBooking } from './rooms_bookings';
 
 import ServiceBookingsTable from './services_bookings';
 import type { ServiceBooking } from './services_bookings';
-
-
-// --- Mock Data ---
-const roomBookingsData: RoomBooking[] = [
-    { id: 1, bookingCode: 'BK2405261', user: 'John Doe', room: 'Deluxe Ocean View', checkIn: '20/05/2024', checkOut: '26/05/2024', totalAmount: '$340.00', status: 'Confirmed' },
-    { id: 2, bookingCode: 'BK2405262', user: 'Mary Smith', room: 'Family Suite', checkIn: '21/05/2024', checkOut: '27/05/2024', totalAmount: '$600.00', status: 'Pending' },
-    { id: 3, bookingCode: 'BK2405263', user: 'Robert Brown', room: 'Garden Villa', checkIn: '22/05/2024', checkOut: '28/05/2024', totalAmount: '$750.00', status: 'Confirmed' },
-    { id: 4, bookingCode: 'BK2405264', user: 'Linda Williams', room: 'Deluxe Room', checkIn: '23/05/2024', checkOut: '29/05/2024', totalAmount: '$180.00', status: 'Cancelled' },
-    { id: 5, bookingCode: 'BK2405265', user: 'David Johnson', room: 'Superior Room', checkIn: '24/05/2024', checkOut: '30/05/2024', totalAmount: '$140.00', status: 'Completed' },
-];
-
-const serviceBookingsData: ServiceBooking[] = [
-    { id: 1, bookingCode: 'SB2405261', user: 'John Doe', service: 'Hội trường Grand', bookingDate: '20/05/2024', quantity: 1, totalAmount: '$1,000.00', status: 'Confirmed' },
-    { id: 2, bookingCode: 'SB2405262', user: 'Mary Smith', service: 'Nhà hàng Sunset', bookingDate: '21/05/2024', quantity: 4, totalAmount: '$160.00', status: 'Pending' },
-    { id: 3, bookingCode: 'SB2405263', user: 'Robert Brown', service: 'Spa & Massage', bookingDate: '22/05/2024', quantity: 2, totalAmount: '$60.00', status: 'Confirmed' },
-    { id: 4, bookingCode: 'SB2405264', user: 'Linda Williams', service: 'Tiệc cưới', bookingDate: '23/05/2024', quantity: 1, totalAmount: '$3,100.00', status: 'Cancelled' },
-    { id: 5, bookingCode: 'SB2405265', user: 'David Johnson', service: 'Dịch vụ đưa đón', bookingDate: '24/05/2024', quantity: 1, totalAmount: '$30.00', status: 'Completed' },
-];
+import { apiService } from '../../services/api_service';
 
 // --- Main Page ---
 const BookingsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'rooms' | 'services'>('rooms');
     const [searchTerm, setSearchTerm] = useState('');
+    const [roomBookings, setRoomBookings] = useState<RoomBooking[]>([]);
+    const [serviceBookings, setServiceBookings] = useState<ServiceBooking[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchBookings();
+    }, []);
+
+    const fetchBookings = async () => {
+        try {
+            setIsLoading(true);
+            const response = await apiService.get('/bookings/admin/all');
+            
+            if (response.success) {
+                const allData = response.data;
+                
+                // Map Room Bookings
+                const rooms = allData
+                    .filter((b: any) => b.type === 'room')
+                    .map((b: any) => ({
+                        id: b.id,
+                        bookingCode: b.booking_code,
+                        user: b.user_name,
+                        room: b.item_name,
+                        checkIn: formatDate(b.check_in),
+                        checkOut: formatDate(b.check_out),
+                        totalAmount: formatCurrency(b.total_amount),
+                        status: b.status
+                    }));
+
+                // Map Service Bookings
+                const services = allData
+                    .filter((b: any) => b.type === 'service')
+                    .map((b: any) => ({
+                        id: b.id,
+                        bookingCode: b.booking_code,
+                        user: b.user_name,
+                        service: b.item_name,
+                        bookingDate: formatDate(b.service_booking_date || b.created_at),
+                        quantity: b.quantity || 1,
+                        totalAmount: formatCurrency(b.total_amount),
+                        status: b.status
+                    }));
+
+                setRoomBookings(rooms);
+                setServiceBookings(services);
+            } else {
+                setError(response.message || 'Failed to fetch bookings');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Error connecting to server');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUpdateStatus = async (id: number, currentStatus: string) => {
+        const { value: newStatus } = await Swal.fire({
+            title: 'Cập nhật trạng thái',
+            input: 'select',
+            inputOptions: {
+                'Pending': 'Chờ xử lý',
+                'Confirmed': 'Xác nhận',
+                'Cancelled': 'Hủy bỏ',
+                'Completed': 'Hoàn thành'
+            },
+            inputValue: currentStatus,
+            showCancelButton: true,
+            confirmButtonText: 'Cập nhật',
+            cancelButtonText: 'Hủy',
+            inputValidator: (value) => {
+                return new Promise((resolve) => {
+                    if (value) {
+                        resolve(null);
+                    } else {
+                        resolve('Vui lòng chọn trạng thái');
+                    }
+                });
+            }
+        });
+
+        if (newStatus) {
+            try {
+                const response = await apiService.put(`/bookings/admin/update-status/${id}`, { status: newStatus });
+                if (response.success) {
+                    Swal.fire('Thành công', 'Đã cập nhật trạng thái đơn đặt', 'success');
+                    fetchBookings();
+                } else {
+                    Swal.fire('Lỗi', response.message || 'Không thể cập nhật', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
+            }
+        }
+    };
+
+    const handleDeleteBooking = async (id: number) => {
+        const result = await Swal.fire({
+            title: 'Xóa đơn đặt?',
+            text: "Hành động này không thể hoàn tác!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Xóa ngay',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await apiService.delete(`/bookings/${id}`);
+                if (response.success) {
+                    Swal.fire('Đã xóa!', 'Đơn đặt đã được xóa.', 'success');
+                    fetchBookings();
+                } else {
+                    Swal.fire('Lỗi', response.message || 'Không thể xóa', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
+            }
+        }
+    };
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return 'N/A';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('vi-VN');
+    };
+
+    const formatCurrency = (amount: number | string) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount));
+    };
+
+    const ActionButtons = ({ id, status }: { id: number, status: string }) => (
+        <div className="flex items-center justify-center gap-3">
+            <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="View">
+                <Eye size={16} />
+            </button>
+            <button 
+                onClick={() => handleUpdateStatus(id, status)}
+                className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" 
+                title="Edit Status"
+            >
+                <Edit2 size={16} />
+            </button>
+            <button 
+                onClick={() => handleDeleteBooking(id)}
+                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" 
+                title="Delete"
+            >
+                <Trash2 size={16} />
+            </button>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
@@ -78,7 +219,7 @@ const BookingsPage: React.FC = () => {
                         <div className="relative">
                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <div className="appearance-none bg-white border border-slate-200 rounded-xl pl-10 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/20 shadow-sm cursor-pointer text-slate-700 min-w-[240px] flex items-center justify-between">
-                                <span>20/05/2024 - 26/05/2024</span>
+                                <span>All dates</span>
                                 <ChevronRight size={14} className="rotate-90 text-slate-400" />
                             </div>
                         </div>
@@ -111,22 +252,34 @@ const BookingsPage: React.FC = () => {
             </div>
 
             {/* Table Section */}
-            {activeTab === 'rooms' ? (
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <Loader2 className="animate-spin text-green-600 mb-4" size={40} />
+                    <p className="text-slate-500 font-medium">Loading bookings...</p>
+                </div>
+            ) : error ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <p className="text-red-500 font-bold">{error}</p>
+                    <button onClick={fetchBookings} className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-bold transition-all">
+                        Try Again
+                    </button>
+                </div>
+            ) : activeTab === 'rooms' ? (
                 <RoomBookingsTable
-                    data={roomBookingsData}
+                    data={roomBookings.filter(b => b.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) || b.user.toLowerCase().includes(searchTerm.toLowerCase()))}
                     StatusBadge={StatusBadge}
                     ActionButtons={ActionButtons}
                 />
             ) : (
                 <ServiceBookingsTable
-                    data={serviceBookingsData}
+                    data={serviceBookings.filter(b => b.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) || b.user.toLowerCase().includes(searchTerm.toLowerCase()))}
                     StatusBadge={StatusBadge}
                     ActionButtons={ActionButtons}
                 />
             )}
 
             {/* Pagination */}
-            <Pagination />
+            <Pagination total={activeTab === 'rooms' ? roomBookings.length : serviceBookings.length} />
         </div>
     );
 };
@@ -140,30 +293,17 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
         Completed: 'bg-blue-50 text-blue-600 border-blue-100',
     };
     return (
-        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${styles[status as keyof typeof styles]}`}>
+        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${styles[status as keyof typeof styles] || 'bg-slate-50 text-slate-600'}`}>
             {status}
         </span>
     );
 };
 
-const ActionButtons = () => (
-    <div className="flex items-center justify-center gap-3">
-        <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="View">
-            <Eye size={16} />
-        </button>
-        <button className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Edit">
-            <Edit2 size={16} />
-        </button>
-        <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
-            <Trash2 size={16} />
-        </button>
-    </div>
-);
 
-const Pagination = () => (
+const Pagination: React.FC<{ total: number }> = ({ total }) => (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4">
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Showing 1 to 5 of 80 bookings
+            Showing {Math.min(total, 1)} to {total} of {total} bookings
         </p>
 
         <div className="flex items-center gap-1">

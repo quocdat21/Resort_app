@@ -15,7 +15,7 @@ export interface ServiceBooking {
 interface ServiceBookingsTableProps {
   data: ServiceBooking[];
   StatusBadge: React.FC<{ status: string }>;
-  ActionButtons: React.FC;
+  ActionButtons: React.FC<{ id: number; status: string }>;
 }
 
 const ServiceBookingsTable: React.FC<ServiceBookingsTableProps> = ({ data, StatusBadge, ActionButtons }) => {
@@ -58,7 +58,7 @@ const ServiceBookingsTable: React.FC<ServiceBookingsTableProps> = ({ data, Statu
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <ActionButtons />
+                  <ActionButtons id={booking.id} status={booking.status} />
                 </td>
               </tr>
             ))}
