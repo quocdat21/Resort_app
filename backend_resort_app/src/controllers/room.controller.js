@@ -28,6 +28,9 @@ const roomController = {
   // Get all room templates with instance counts
   getAllRooms: async (req, res) => {
     try {
+      // Auto update status
+      await roomController._internalUpdateRoomStatuses();
+
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 6;
       const offset = (page - 1) * limit;
@@ -38,6 +41,7 @@ const roomController = {
                r.capacity_adults, r.capacity_children, r.base_price, r.created_at, r.updated_at,
                c.name as category_name, c.zone_id, z.name as zone_name,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count,
+               (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id AND rn.status = 'Available') as available_count,
                (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.room_id = r.id) as amenity_count,
                (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id AND ri.image_url LIKE '%/pr-%' LIMIT 1) as main_image_url
         FROM Rooms r
@@ -94,6 +98,9 @@ const roomController = {
   // Get room template by ID (with secondary images and instances)
   getRoomById: async (req, res) => {
     try {
+      // Task 4: Auto update status before returning for admin
+      await roomController._internalUpdateRoomStatuses();
+
       const { id } = req.params;
       const [room] = await pool.execute(`
         SELECT r.*, c.name as category_name, c.zone_id, z.name as zone_name,
@@ -289,6 +296,9 @@ const roomController = {
   // --- ROOM INSTANCES (CHILDREN) ---
   getInstances: async (req, res) => {
     try {
+      // Auto update status
+      await roomController._internalUpdateRoomStatuses();
+
       const { roomId } = req.params;
       const [rows] = await pool.execute('SELECT * FROM Room_Numbers WHERE room_id = ?', [roomId]);
       res.json({ success: true, data: rows });
@@ -363,7 +373,21 @@ const roomController = {
                r.capacity_adults, r.capacity_children, r.base_price,
                c.name as category_name, c.zone_id, z.name as zone_name,
                (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id LIMIT 1) as main_image_url,
-               (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id AND rn.status = 'Available') as available_count,
+               (SELECT COUNT(*) FROM Room_Numbers rn 
+                WHERE rn.room_id = r.id 
+                AND rn.status != 'Inactive'
+                AND rn.id NOT IN (
+                  SELECT br.room_number_id 
+                  FROM Booking_Rooms br 
+                  JOIN Bookings b ON br.booking_id = b.id 
+                  WHERE b.status = 'Confirmed' AND b.type = 'room'
+                  AND (
+                    (b.check_in <= ? AND b.check_out > ?) OR
+                    (b.check_in < ? AND b.check_out >= ?) OR
+                    (? <= b.check_in AND ? >= b.check_out)
+                  )
+                )
+               ) as available_count,
                (SELECT AVG(rv.rating) FROM Reviews rv JOIN Booking_Rooms br ON rv.room_number_id = br.room_number_id JOIN Room_Numbers rn2 ON br.room_number_id = rn2.id WHERE rn2.room_id = r.id) as avg_rating,
                (SELECT COUNT(*) FROM Reviews rv JOIN Booking_Rooms br ON rv.room_number_id = br.room_number_id JOIN Room_Numbers rn2 ON br.room_number_id = rn2.id WHERE rn2.room_id = r.id) as review_count
         FROM Rooms r
@@ -372,6 +396,13 @@ const roomController = {
         WHERE 1=1
       `;
       const values = [];
+      const hasDates = checkIn && checkOut;
+
+      // If no dates provided, use today to tomorrow as default for availability check
+      const dIn = checkIn || new Date().toISOString().split('T')[0];
+      const dOut = checkOut || new Date(new Date().getTime() + 86400000).toISOString().split('T')[0];
+
+      values.push(dIn, dIn, dOut, dOut, dIn, dOut);
 
       // Filter by capacity
       if (adults) {
@@ -408,6 +439,9 @@ const roomController = {
         query += " AND (r.name LIKE ? OR c.name LIKE ?)";
         values.push(`%${searchTerm}%`, `%${searchTerm}%`);
       }
+
+      // Filter out rooms with 0 available count
+      query += " HAVING available_count > 0";
 
       // Sorting
       const allowedSorts = ['base_price', 'name', 'capacity_adults', 'created_at'];
@@ -462,10 +496,112 @@ const roomController = {
     }
   },
 
+  // Task 1: API check booked rooms with "Confirmed" status
+  getOccupiedRooms: async (req, res) => {
+    try {
+      const { checkIn, checkOut } = req.query;
+      if (!checkIn || !checkOut) {
+        return res.status(400).json({ success: false, message: 'Thiếu ngày check-in hoặc check-out' });
+      }
+
+      const query = `
+        SELECT br.room_number_id
+        FROM Booking_Rooms br
+        JOIN Bookings b ON br.booking_id = b.id
+        WHERE b.status = 'Confirmed'
+        AND b.type = 'room'
+        AND (
+          (b.check_in <= ? AND b.check_out > ?) OR
+          (b.check_in < ? AND b.check_out >= ?) OR
+          (? <= b.check_in AND ? >= b.check_out)
+        )
+      `;
+      const [rows] = await pool.execute(query, [checkIn, checkIn, checkOut, checkOut, checkIn, checkOut]);
+
+      const occupiedIds = rows.map(r => r.room_number_id);
+
+      res.json({
+        success: true,
+        data: occupiedIds
+      });
+    } catch (error) {
+      console.error('Error in getOccupiedRooms:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
+  // Internal helper to update room statuses without res object
+  _internalUpdateRoomStatuses: async (connection) => {
+    const conn = connection || pool;
+    const now = new Date();
+
+    // Convert to Vietnam time for hour check (if server is UTC)
+    // Or just use local hour if server is already set to local time
+    const hour = now.getHours();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const currentDate = `${year}-${month}-${day}`;
+
+    // If after 14:00, we also consider bookings starting tomorrow as "Booked" for the next slot
+    const checkInLimit = hour >= 14 ? 'DATE_ADD(?, INTERVAL 1 DAY)' : '?';
+
+    // 1. Reset 'Booked' rooms to 'Available'
+    const resetQuery = `
+      UPDATE Room_Numbers rn
+      SET rn.status = 'Available'
+      WHERE rn.status = 'Booked'
+      AND rn.id NOT IN (
+        SELECT br.room_number_id
+        FROM Booking_Rooms br
+        JOIN Bookings b ON br.booking_id = b.id
+        WHERE b.status = 'Confirmed'
+        AND b.type = 'room'
+        AND b.check_in <= ${checkInLimit} AND b.check_out > ?
+      )
+    `;
+    await conn.execute(resetQuery, [currentDate, currentDate]);
+
+    // 2. Mark 'Available' rooms as 'Booked'
+    const bookQuery = `
+      UPDATE Room_Numbers rn
+      SET rn.status = 'Booked'
+      WHERE rn.status = 'Available'
+      AND rn.id IN (
+        SELECT br.room_number_id
+        FROM Booking_Rooms br
+        JOIN Bookings b ON br.booking_id = b.id
+        WHERE b.status = 'Confirmed'
+        AND b.type = 'room'
+        AND b.check_in <= ${checkInLimit} AND b.check_out > ?
+      )
+    `;
+    await conn.execute(bookQuery, [currentDate, currentDate]);
+  },
+
+  // Task 2: Update room status based on bookings (Booked is auto, Occupied is manual)
+  updateRoomStatuses: async (req, res) => {
+    try {
+      await roomController._internalUpdateRoomStatuses();
+      if (res) {
+        res.json({ success: true, message: 'Cập nhật trạng thái phòng thành công' });
+      }
+    } catch (error) {
+      console.error('Error in updateRoomStatuses:', error);
+      if (res) res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
   // --- MOBILE APP: Get room detail with full info ---
   getRoomDetail: async (req, res) => {
     try {
+      // Auto update status before returning
+      await roomController._internalUpdateRoomStatuses();
+
       const { id } = req.params;
+      const { checkIn, checkOut } = req.query;
+
       const [room] = await pool.execute(`
         SELECT r.*, c.name as category_name, c.zone_id, z.name as zone_name,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id AND rn.status = 'Available') as available_count,
@@ -487,10 +623,41 @@ const roomController = {
         JOIN Room_Amenities ra ON a.id = ra.amenity_id
         WHERE ra.room_id = ?
       `, [id]);
+
+      // Get all room numbers for this room type (show all except Hidden)
       const [roomNumbers] = await pool.execute(
-        "SELECT id, room_number, status FROM Room_Numbers WHERE room_id = ? AND status = 'Available' ORDER BY room_number ASC",
+        "SELECT id, room_number, status FROM Room_Numbers WHERE room_id = ? AND status != 'Hidden' ORDER BY room_number ASC",
         [id]
       );
+
+      // If check-in/out provided, determine availability based on bookings
+      if (checkIn && checkOut) {
+        // Reset all to Available first (except Maintenance) to handle future searches
+        roomNumbers.forEach(rn => {
+          if (rn.status !== 'Maintenance') {
+            rn.status = 'Available';
+          }
+        });
+
+        const [occupied] = await pool.execute(`
+          SELECT br.room_number_id
+          FROM Booking_Rooms br
+          JOIN Bookings b ON br.booking_id = b.id
+          WHERE b.status = 'Confirmed'
+          AND b.type = 'room'
+          AND br.room_number_id IN (SELECT id FROM Room_Numbers WHERE room_id = ?)
+          AND (
+            b.check_in < ? AND b.check_out > ?
+          )
+        `, [id, checkOut, checkIn]);
+
+        const occupiedIds = occupied.map(o => o.room_number_id);
+        roomNumbers.forEach(rn => {
+          if (occupiedIds.includes(rn.id)) {
+            rn.status = 'Occupied';
+          }
+        });
+      }
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       const formattedImages = images.map(img => ({

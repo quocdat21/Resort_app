@@ -9,7 +9,12 @@ const voucherController = {
       const offset = (page - 1) * limit;
       const { status, searchTerm } = req.query;
 
-      let query = "SELECT * FROM Vouchers WHERE 1=1";
+      let query = `
+        SELECT v.*, 
+        (SELECT COUNT(*) FROM Bookings b WHERE b.voucher_id = v.id AND b.status = 'Confirmed') as used_count
+        FROM Vouchers v 
+        WHERE 1=1
+      `;
       const values = [];
 
       if (status && status !== 'all') {
@@ -28,7 +33,7 @@ const voucherController = {
       const total = countResult[0].total;
 
       // Add ordering and pagination
-      query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+      query += " ORDER BY created_at ASC LIMIT ? OFFSET ?";
       values.push(limit, offset);
 
       const [vouchers] = await pool.execute(query, values);
@@ -53,7 +58,13 @@ const voucherController = {
   getVoucherById: async (req, res) => {
     try {
       const { id } = req.params;
-      const [vouchers] = await pool.execute("SELECT * FROM Vouchers WHERE id = ?", [id]);
+      const [vouchers] = await pool.execute(
+        `SELECT v.*, 
+         (SELECT COUNT(*) FROM Bookings b WHERE b.voucher_id = v.id AND b.status = 'Confirmed') as used_count
+         FROM Vouchers v 
+         WHERE v.id = ?`, 
+        [id]
+      );
 
       if (vouchers.length === 0) {
         return res.status(404).json({ success: false, message: 'Voucher not found' });
@@ -69,16 +80,16 @@ const voucherController = {
   // Create new voucher
   createVoucher: async (req, res) => {
     try {
-      const { 
-        code, 
-        discount_type, 
-        discount_value, 
-        max_discount, 
-        min_order_value, 
-        usage_limit, 
-        start_date, 
-        end_date, 
-        status 
+      const {
+        code,
+        discount_type,
+        discount_value,
+        max_discount,
+        min_order_value,
+        usage_limit,
+        start_date,
+        end_date,
+        status
       } = req.body;
 
       // Check if code already exists
@@ -95,14 +106,14 @@ const voucherController = {
       `;
 
       const values = [
-        code, 
-        discount_type, 
-        discount_value, 
-        max_discount || null, 
-        min_order_value || 0, 
-        usage_limit || null, 
-        start_date, 
-        end_date, 
+        code,
+        discount_type,
+        discount_value,
+        max_discount || null,
+        min_order_value || 0,
+        usage_limit || null,
+        start_date,
+        end_date,
         status || 'active'
       ];
 
@@ -123,16 +134,16 @@ const voucherController = {
   updateVoucher: async (req, res) => {
     try {
       const { id } = req.params;
-      const { 
-        code, 
-        discount_type, 
-        discount_value, 
-        max_discount, 
-        min_order_value, 
-        usage_limit, 
-        start_date, 
-        end_date, 
-        status 
+      const {
+        code,
+        discount_type,
+        discount_value,
+        max_discount,
+        min_order_value,
+        usage_limit,
+        start_date,
+        end_date,
+        status
       } = req.body;
 
       // Check if code exists for other vouchers
@@ -149,14 +160,14 @@ const voucherController = {
       `;
 
       const values = [
-        code, 
-        discount_type, 
-        discount_value, 
-        max_discount || null, 
-        min_order_value || 0, 
-        usage_limit || null, 
-        start_date, 
-        end_date, 
+        code,
+        discount_type,
+        discount_value,
+        max_discount || null,
+        min_order_value || 0,
+        usage_limit || null,
+        start_date,
+        end_date,
         status,
         id
       ];
@@ -194,13 +205,16 @@ const voucherController = {
   // Validate voucher code
   validateVoucher: async (req, res) => {
     try {
-      const { code, orderValue } = req.body;
+      const { code, orderValue, userId } = req.body;
       if (!code) {
         return res.status(400).json({ success: false, message: 'Vui lòng nhập mã giảm giá' });
       }
 
       const [vouchers] = await pool.execute(
-        "SELECT * FROM Vouchers WHERE code = ? AND status = 'active'", 
+        `SELECT v.*, 
+         (SELECT COUNT(*) FROM Bookings b WHERE b.voucher_id = v.id AND b.status = 'Confirmed') as used_count
+         FROM Vouchers v 
+         WHERE v.code = ? AND v.status = 'active'`,
         [code]
       );
 
@@ -209,6 +223,18 @@ const voucherController = {
       }
 
       const voucher = vouchers[0];
+
+      // Check if user has already used this voucher
+      if (userId) {
+        const [used] = await pool.execute(
+          "SELECT id FROM User_Vouchers WHERE user_id = ? AND voucher_id = ?",
+          [userId, voucher.id]
+        );
+        if (used.length > 0) {
+          return res.status(400).json({ success: false, message: 'Bạn đã sử dụng mã giảm giá này rồi' });
+        }
+      }
+
       const now = new Date();
 
       // Check dates
@@ -226,9 +252,9 @@ const voucherController = {
 
       // Check min order value
       if (orderValue && orderValue < voucher.min_order_value) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Mã này chỉ áp dụng cho đơn hàng từ ${new Intl.NumberFormat('vi-VN').format(voucher.min_order_value)} VND trở lên` 
+        return res.status(400).json({
+          success: false,
+          message: `Mã này chỉ áp dụng cho đơn hàng từ ${new Intl.NumberFormat('vi-VN').format(voucher.min_order_value)} VND trở lên`
         });
       }
 

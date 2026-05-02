@@ -43,4 +43,8 @@ router.post('/instances', verifyToken, requireRole('admin'), roomController.crea
 router.put('/instances/:id', verifyToken, requireRole('admin'), roomController.updateInstance);
 router.delete('/instances/:id', verifyToken, requireRole('admin'), roomController.deleteInstance);
 
+// Task 1 & 2
+router.get('/admin/occupied-rooms', verifyToken, requireRole('admin'), roomController.getOccupiedRooms);
+router.post('/admin/update-statuses', verifyToken, requireRole('admin'), roomController.updateRoomStatuses);
+
 module.exports = router;

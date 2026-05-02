@@ -12,6 +12,9 @@ const amenityRoutes = require('./src/routes/amenity.routes');
 const serviceRoutes = require('./src/routes/service.routes');
 const voucherRoutes = require('./src/routes/voucher.routes');
 const homeRoutes = require('./src/routes/home.routes');
+const paymentRoutes = require('./src/routes/payment.routes');
+const bookingRoutes = require('./src/routes/booking.routes');
+const dashboardRoutes = require('./src/routes/dashboard.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +39,9 @@ app.use('/api/amenities', amenityRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/home', homeRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
