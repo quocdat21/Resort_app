@@ -30,6 +30,7 @@ interface Room {
   capacity_children: number;
   description?: string;
   instance_count: number;
+  available_count: number;
   amenity_count: number;
 }
 
@@ -268,6 +269,7 @@ const RoomsPage: React.FC = () => {
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Giá Cơ Bản</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Sức Chứa</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Số Phòng</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Số Trống</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Tiện nghi</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Thao Tác</th>
               </tr>
@@ -318,6 +320,15 @@ const RoomsPage: React.FC = () => {
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <span className="font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg text-xs border border-slate-200">
                         {room.instance_count} phòng
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <span className={`font-bold px-2.5 py-1 rounded-lg text-xs border ${
+                        room.available_count > 0 
+                          ? 'text-green-700 bg-green-50 border-green-100' 
+                          : 'text-red-700 bg-red-50 border-red-100'
+                      }`}>
+                        {room.available_count} trống
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">

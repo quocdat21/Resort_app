@@ -25,7 +25,7 @@ interface RoomInstance {
     id: string;
     room_id: string;
     room_number: string;
-    status: 'Available' | 'Maintenance' | 'Hidden';
+    status: 'Available' | 'Maintenance' | 'Hidden' | 'Occupied' | 'Booked';
 }
 
 interface RoomInstancesProps {
@@ -182,6 +182,14 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
                                     <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-1">Đang trống</p>
                                     <p className="text-2xl font-black text-green-700">{instances.filter(i => i.status === 'Available').length}</p>
                                 </div>
+                                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm">
+                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Đã đặt (Chờ C.I)</p>
+                                    <p className="text-2xl font-black text-blue-700">{instances.filter(i => i.status === 'Booked').length}</p>
+                                </div>
+                                <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 shadow-sm">
+                                    <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-1">Có khách</p>
+                                    <p className="text-2xl font-black text-orange-700">{instances.filter(i => i.status === 'Occupied').length}</p>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -269,12 +277,14 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
                                                         onChange={e => setFormData({ ...formData, status: e.target.value as RoomInstance['status'] })}
                                                     >
                                                         <option value="Available">Đang trống</option>
+                                                        <option value="Booked" disabled>Đã đặt (Tự động)</option>
+                                                        <option value="Occupied">Có khách (Check-in)</option>
                                                         <option value="Maintenance">Bảo trì</option>
                                                         <option value="Hidden">Đang ẩn</option>
                                                     </select>
                                                     <div className="flex gap-2 pt-1">
                                                         <button onClick={() => handleUpdate(inst.id)} className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-blue-700">
-                                                            <Save size={14} /> Cập nhật
+                                                            <Save size={14} /> Lưu thay đổi
                                                         </button>
                                                         <button onClick={() => setIsEditing(null)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200">
                                                             Hủy
@@ -290,16 +300,28 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
                                                         <div>
                                                             <p className="text-xs font-bold text-slate-900">Phòng {inst.room_number}</p>
                                                             <span className={`text-[9px] font-bold uppercase tracking-wider ${inst.status === 'Available' ? 'text-green-600' :
-                                                                inst.status === 'Maintenance' ? 'text-orange-600' : 'text-red-600'
+                                                                inst.status === 'Booked' ? 'text-blue-600' :
+                                                                inst.status === 'Occupied' ? 'text-orange-600' :
+                                                                inst.status === 'Maintenance' ? 'text-slate-600' : 'text-red-600'
                                                                 }`}>
                                                                 {inst.status === 'Available' ? 'Đang trống' :
+                                                                    inst.status === 'Booked' ? 'Đã đặt' :
+                                                                    inst.status === 'Occupied' ? 'Có khách' :
                                                                     inst.status === 'Maintenance' ? 'Bảo trì' : 'Ẩn'}
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1">
-                                                        <button onClick={() => startEdit(inst)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Chỉnh sửa">
-                                                            <Edit2 size={14} />
+                                                        <button 
+                                                            onClick={() => startEdit(inst)} 
+                                                            className={`p-2 rounded-lg transition-all ${
+                                                                inst.status === 'Booked' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 
+                                                                inst.status === 'Occupied' ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' :
+                                                                'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                                                            }`} 
+                                                            title={inst.status === 'Booked' ? "Thực hiện Check-in" : inst.status === 'Occupied' ? "Thực hiện Check-out" : "Chỉnh sửa"}
+                                                        >
+                                                            {inst.status === 'Booked' ? <Activity size={14} /> : inst.status === 'Occupied' ? <Activity size={14} /> : <Edit2 size={14} />}
                                                         </button>
                                                         <button onClick={() => handleDelete(inst.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Xóa">
                                                             <Trash2 size={14} />
