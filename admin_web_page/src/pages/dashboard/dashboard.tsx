@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
     CalendarCheck,
     Wallet,
@@ -8,7 +9,8 @@ import {
     Star,
     TrendingUp,
     TrendingDown,
-    ChevronRight
+    ChevronRight,
+    Loader2
 } from 'lucide-react';
 import {
     AreaChart,
@@ -25,64 +27,106 @@ import {
     Bar,
 } from 'recharts';
 
-const revenueData = [
-    { day: 'May 20', revenue: 40000 },
-    { day: 'May 21', revenue: 60000 },
-    { day: 'May 22', revenue: 55000 },
-    { day: 'May 23', revenue: 70000 },
-    { day: 'May 24', revenue: 65000 },
-    { day: 'May 25', revenue: 90000 },
-    { day: 'May 26', revenue: 80000 },
-];
-
-const bookingStatusData = [
-    { name: 'Confirmed', value: 642, color: '#10b981' },
-    { name: 'Pending', value: 312, color: '#3b82f6' },
-    { name: 'Cancelled', value: 160, color: '#f59e0b' },
-    { name: 'Completed', value: 134, color: '#ef4444' },
-];
-
-const occupancyRateData = [
-    { name: 'Mon', rate: 70 },
-    { name: 'Tue', rate: 85 },
-    { name: 'Wed', rate: 65 },
-    { name: 'Thu', rate: 72 },
-    { name: 'Fri', rate: 62 },
-    { name: 'Sat', rate: 75 },
-];
-
-const latestBookings = [
-    { code: 'BK2405261', guest: 'John Doe', room: 'Deluxe Ocean View', checkIn: '26/05/2024', status: 'Confirmed' },
-    { code: 'BK2405262', guest: 'Mary Smith', room: 'Family Suite', checkIn: '27/05/2024', status: 'Pending' },
-    { code: 'BK2405263', guest: 'Robert Brown', room: 'Garden Villa', checkIn: '28/05/2024', status: 'Confirmed' },
-    { code: 'BK2405264', guest: 'Linda Williams', room: 'Deluxe Room', checkIn: '29/05/2024', status: 'Pending' },
-    { code: 'BK2405265', guest: 'David Johnson', room: 'Superior Room', checkIn: '30/05/2024', status: 'Paid' },
-];
-
-const latestPayments = [
-    { id: 'TXN100521', method: 'Credit Card', amount: '$1,250.00', status: 'Paid' },
-    { id: 'TXN100522', method: 'E-Wallet', amount: '$380.00', status: 'Paid' },
-    { id: 'TXN100523', method: 'Bank Transfer', amount: '$2,500.00', status: 'Pending' },
-    { id: 'TXN100524', method: 'Credit Card', amount: '$600.00', status: 'Failed' },
-    { id: 'TXN100525', method: 'E-Wallet', amount: '$1,100.00', status: 'Paid' },
-];
+interface DashboardData {
+    stats: {
+        totalRevenue: number;
+        totalBookings: number;
+        totalUsers: number;
+        occupancy: {
+            total: number;
+            occupied: number;
+            rate: number;
+        };
+        totalServices: number;
+        totalPaymentsCount: number;
+        trends: {
+            revenue: number;
+            bookings: number;
+            users: number;
+            services: number;
+            payments: number;
+        };
+    };
+    revenueChart: { day: string; revenue: number }[];
+    bookingStatusData: { name: string; value: number; color: string }[];
+    occupancyChart: { name: string; rate: number; date: string }[];
+    latestBookings: {
+        code: string;
+        guest: string;
+        type: string;
+        checkIn: string;
+        status: string;
+        roomOrService: string;
+    }[];
+    latestPayments: {
+        id: string;
+        method: string;
+        amount: number;
+        status: string;
+    }[];
+}
 
 const recentNotifications = [
-    { id: 1, title: 'New booking received', subtitle: 'BK2405261 by John Doe', time: '5 min ago', icon: <CalendarCheck className="w-4 h-4 text-green-500" /> },
-    { id: 2, title: 'Payment of $1,250.00 received', subtitle: 'TXN100521', time: '15 min ago', icon: <Wallet className="w-4 h-4 text-blue-500" /> },
-    { id: 3, title: 'Room #101 is maintenance completed', subtitle: '', time: '30 min ago', icon: <Bed className="w-4 h-4 text-orange-500" /> },
-    { id: 4, title: 'New review for Deluxe Ocean View', subtitle: '', time: '1 hour ago', icon: <Star className="w-4 h-4 text-purple-500" /> },
-    { id: 5, title: 'New service booking', subtitle: 'SB24052601 by John Doe', time: '2 hours ago', icon: <ConciergeBell className="w-4 h-4 text-green-500" /> },
+    { id: 1, title: 'Hệ thống đã sẵn sàng', subtitle: 'Dashboard đã kết nối API', time: 'Vừa xong', icon: <CalendarCheck className="w-4 h-4 text-green-500" /> },
+    { id: 2, title: 'Dữ liệu doanh thu thực tế', subtitle: 'Cập nhật từ bảng Payments', time: '1 phút trước', icon: <Wallet className="w-4 h-4 text-blue-500" /> },
+    { id: 3, title: 'Tình trạng phòng thực tế', subtitle: 'Cập nhật từ Room_Numbers', time: '5 phút trước', icon: <Bed className="w-4 h-4 text-orange-500" /> },
 ];
 
 const Dashboard: React.FC = () => {
+    const [data, setData] = useState<DashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('admin_token');
+            const response = await axios.get('http://localhost:3000/api/dashboard/overview', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                setData(response.data.data);
+            }
+        } catch (error) {
+            console.error('Fetch dashboard error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    };
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('vi-VN');
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
+                <Loader2 className="w-10 h-10 text-green-700 animate-spin" />
+                <p className="text-slate-500 font-bold animate-pulse">Đang tải dữ liệu Dashboard...</p>
+            </div>
+        );
+    }
+
+    if (!data) return null;
+
     return (
         <>
             {/* Date Selector */}
             <div className="flex justify-end mb-6">
                 <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium cursor-pointer hover:bg-slate-50 transition-colors">
                     <CalendarCheck size={16} className="text-slate-400" />
-                    <span className="text-slate-900">May 20, 2024 - May 26, 2024</span>
+                    <span className="text-slate-900">
+                        {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
                     <ChevronRight size={16} className="text-slate-400 rotate-90" />
                 </div>
             </div>
@@ -92,49 +136,49 @@ const Dashboard: React.FC = () => {
                 <StatCard
                     icon={<Wallet className="text-blue-600" size={20} />}
                     iconBg="bg-blue-50"
-                    label="Total Revenue"
-                    value="$128,540"
-                    trend="+12.5%"
-                    trendUp={true}
+                    label="Tổng doanh thu"
+                    value={formatPrice(data.stats.totalRevenue)}
+                    trend={`${data.stats.trends.revenue >= 0 ? '+' : ''}${data.stats.trends.revenue}%`}
+                    trendUp={data.stats.trends.revenue >= 0}
                 />
                 <StatCard
                     icon={<CalendarCheck className="text-green-600" size={20} />}
                     iconBg="bg-green-50"
-                    label="Total Bookings"
-                    value="1,248"
-                    trend="+8.2%"
-                    trendUp={true}
+                    label="Tổng đơn đặt"
+                    value={data.stats.totalBookings.toString()}
+                    trend={`${data.stats.trends.bookings >= 0 ? '+' : ''}${data.stats.trends.bookings}%`}
+                    trendUp={data.stats.trends.bookings >= 0}
                 />
                 <StatCard
                     icon={<Users className="text-orange-600" size={20} />}
                     iconBg="bg-orange-50"
-                    label="Total Users"
-                    value="3,860"
-                    trend="+15.7%"
-                    trendUp={true}
+                    label="Tổng người dùng"
+                    value={data.stats.totalUsers.toString()}
+                    trend={`${data.stats.trends.users >= 0 ? '+' : ''}${data.stats.trends.users}%`}
+                    trendUp={data.stats.trends.users >= 0}
                 />
                 <StatCard
                     icon={<Bed className="text-purple-600" size={20} />}
                     iconBg="bg-purple-50"
-                    label="Rooms Occupancy"
-                    value="72%"
-                    subtext="141 / 195 rooms"
+                    label="Tỉ lệ lấp đầy"
+                    value={`${data.stats.occupancy.rate}%`}
+                    subtext={`${data.stats.occupancy.occupied} / ${data.stats.occupancy.total} phòng`}
                 />
                 <StatCard
                     icon={<ConciergeBell className="text-pink-600" size={20} />}
                     iconBg="bg-pink-50"
-                    label="Services Booked"
-                    value="856"
-                    trend="+9.1%"
-                    trendUp={true}
+                    label="Dịch vụ đã đặt"
+                    value={data.stats.totalServices.toString()}
+                    trend={`${data.stats.trends.services >= 0 ? '+' : ''}${data.stats.trends.services}%`}
+                    trendUp={data.stats.trends.services >= 0}
                 />
                 <StatCard
                     icon={<Wallet className="text-cyan-600" size={20} />}
                     iconBg="bg-cyan-50"
-                    label="Total Payments"
-                    value="$98,430"
-                    trend="+10.3%"
-                    trendUp={true}
+                    label="Lượt thanh toán"
+                    value={data.stats.totalPaymentsCount.toString()}
+                    trend={`${data.stats.trends.payments >= 0 ? '+' : ''}${data.stats.trends.payments}%`}
+                    trendUp={data.stats.trends.payments >= 0}
                 />
             </div>
 
@@ -142,14 +186,14 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
                 <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900">Revenue Over Time</h3>
-                        <select className="bg-slate-50 border-none text-xs font-bold rounded-lg px-2 py-1 focus:ring-0 text-slate-600">
-                            <option>This Week</option>
+                        <h3 className="font-bold text-slate-900 text-sm">Doanh thu (7 ngày)</h3>
+                        <select className="bg-slate-50 border-none text-[10px] font-bold rounded-lg px-2 py-1 focus:ring-0 text-slate-600">
+                            <option>Tuần này</option>
                         </select>
                     </div>
                     <div className="h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={revenueData}>
+                            <AreaChart data={data.revenueChart}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
@@ -160,6 +204,7 @@ const Dashboard: React.FC = () => {
                                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <Tooltip
+                                    formatter={(value: number) => [formatPrice(value), 'Doanh thu']}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
@@ -170,41 +215,40 @@ const Dashboard: React.FC = () => {
 
                 <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900">Booking Status</h3>
-                        <select className="bg-slate-50 border-none text-xs font-bold rounded-lg px-2 py-1 focus:ring-0 text-slate-600">
-                            <option>This Week</option>
-                        </select>
+                        <h3 className="font-bold text-slate-900 text-sm">Trạng thái đơn</h3>
                     </div>
                     <div className="flex flex-col items-center">
                         <div className="h-[180px] w-full relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={bookingStatusData}
+                                        data={data.bookingStatusData}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={50}
+                                        innerRadius={55}
                                         outerRadius={75}
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {bookingStatusData.map((entry, index) => (
+                                        {data.bookingStatusData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                                <p className="text-xl font-bold text-slate-900">1,248</p>
-                                <p className="text-[10px] text-slate-400 uppercase font-bold">Total</p>
+                                <p className="text-lg font-bold text-slate-900">{data.stats.totalBookings}</p>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold">Tổng đơn</p>
                             </div>
                         </div>
-                        <div className="w-full grid grid-cols-2 gap-y-3 mt-4">
-                            {bookingStatusData.map((item) => (
+                        <div className="w-full space-y-2 mt-4">
+                            {data.bookingStatusData.slice(0, 4).map((item) => (
                                 <div key={item.name} className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                                    <span className="text-xs font-medium text-slate-600">{item.name}</span>
-                                    <span className="text-xs font-bold ml-auto text-slate-900">{item.value} ({Math.round(item.value / 1248 * 100)}%)</span>
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                                    <span className="text-[10px] font-medium text-slate-600">{item.name}</span>
+                                    <span className="text-[10px] font-bold ml-auto text-slate-900">
+                                        {item.value} ({data.stats.totalBookings > 0 ? Math.round(item.value / data.stats.totalBookings * 100) : 0}%)
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -213,22 +257,21 @@ const Dashboard: React.FC = () => {
 
                 <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900">Room Occupancy Rate</h3>
-                        <select className="bg-slate-50 border-none text-xs font-bold rounded-lg px-2 py-1 focus:ring-0 text-slate-600">
-                            <option>This Week</option>
-                        </select>
+                        <h3 className="font-bold text-slate-900 text-sm">Tỷ lệ lấp đầy</h3>
+                        <div className="text-[10px] font-bold text-slate-400">7 ngày qua</div>
                     </div>
                     <div className="h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={occupancyRateData}>
+                            <BarChart data={data.occupancyChart}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <Tooltip
                                     cursor={{ fill: '#f8fafc' }}
+                                    formatter={(value: number) => [`${value}%`, 'Tỷ lệ']}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                                 />
-                                <Bar dataKey="rate" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
+                                <Bar dataKey="rate" fill="#10b981" radius={[4, 4, 0, 0]} barSize={15} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -239,28 +282,26 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
                 <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900">Latest Bookings</h3>
-                        <button className="text-green-600 text-xs font-bold hover:underline">View all</button>
+                        <h3 className="font-bold text-slate-900">Đơn đặt gần đây</h3>
+                        <button className="text-green-600 text-xs font-bold hover:underline">Xem tất cả</button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                                    <th className="pb-4">Booking Code</th>
-                                    <th className="pb-4">Guest</th>
-                                    <th className="pb-4">Room</th>
-                                    <th className="pb-4">Check in</th>
-                                    <th className="pb-4">Status</th>
+                                    <th className="pb-4">Mã đơn</th>
+                                    <th className="pb-4 text-center">Khách</th>
+                                    <th className="pb-4 text-center">Ngày nhận</th>
+                                    <th className="pb-4 text-right">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody className="text-xs font-medium text-slate-700">
-                                {latestBookings.map((booking, idx) => (
-                                    <tr key={idx} className="border-b border-slate-50 last:border-0">
-                                        <td className="py-4 font-bold text-slate-900">{booking.code}</td>
-                                        <td className="py-4">{booking.guest}</td>
-                                        <td className="py-4 text-slate-500">{booking.room}</td>
-                                        <td className="py-4 text-slate-500">{booking.checkIn}</td>
-                                        <td className="py-4">
+                                {data.latestBookings.map((booking, idx) => (
+                                    <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                                        <td className="py-4 font-bold text-slate-900">#{booking.code}</td>
+                                        <td className="py-4 text-center">{booking.guest || 'Ẩn danh'}</td>
+                                        <td className="py-4 text-center text-slate-500">{formatDate(booking.checkIn)}</td>
+                                        <td className="py-4 text-right">
                                             <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${booking.status === 'Confirmed' ? 'bg-green-50 text-green-600' :
                                                     booking.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
                                                         'bg-blue-50 text-blue-600'
@@ -277,28 +318,26 @@ const Dashboard: React.FC = () => {
 
                 <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900">Latest Payments</h3>
-                        <button className="text-green-600 text-xs font-bold hover:underline">View all</button>
+                        <h3 className="font-bold text-slate-900">Thanh toán</h3>
+                        <button className="text-green-600 text-xs font-bold hover:underline">Xem tất cả</button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                                    <th className="pb-4">Transaction ID</th>
-                                    <th className="pb-4">Method</th>
-                                    <th className="pb-4">Amount</th>
-                                    <th className="pb-4">Status</th>
+                                    <th className="pb-4">Mã GD</th>
+                                    <th className="pb-4 text-center">Số tiền</th>
+                                    <th className="pb-4 text-right">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody className="text-xs font-medium text-slate-700">
-                                {latestPayments.map((payment, idx) => (
-                                    <tr key={idx} className="border-b border-slate-50 last:border-0">
+                                {data.latestPayments.map((payment, idx) => (
+                                    <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                                         <td className="py-4 font-bold text-slate-900">{payment.id}</td>
-                                        <td className="py-4">{payment.method}</td>
-                                        <td className="py-4 font-bold text-slate-900">{payment.amount}</td>
-                                        <td className="py-4">
-                                            <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${payment.status === 'Paid' ? 'bg-green-50 text-green-600' :
-                                                    payment.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
+                                        <td className="py-4 text-center font-bold text-slate-900">{formatPrice(payment.amount)}</td>
+                                        <td className="py-4 text-right">
+                                            <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${payment.status === 'success' || payment.status === 'Paid' ? 'bg-green-50 text-green-600' :
+                                                    payment.status === 'pending' || payment.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
                                                         'bg-red-50 text-red-600'
                                                 }`}>
                                                 {payment.status}
@@ -313,8 +352,8 @@ const Dashboard: React.FC = () => {
 
                 <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900">Recent Notifications</h3>
-                        <button className="text-green-600 text-xs font-bold hover:underline">View all</button>
+                        <h3 className="font-bold text-slate-900">Thông báo</h3>
+                        <button className="text-green-600 text-xs font-bold hover:underline">Tất cả</button>
                     </div>
                     <div className="space-y-6">
                         {recentNotifications.map((notif) => (
@@ -352,16 +391,16 @@ const StatCard: React.FC<StatCardProps> = ({ icon, iconBg, label, value, trend, 
             {icon}
         </div>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-        <h4 className="text-xl font-black mb-1 text-slate-900">{value}</h4>
+        <h4 className="text-lg font-black mb-1 text-slate-900 truncate" title={value}>{value}</h4>
         {trend && (
             <div className="flex items-center gap-1">
                 {trendUp ? <TrendingUp size={12} className="text-green-500" /> : <TrendingDown size={12} className="text-red-500" />}
                 <span className={`text-[10px] font-bold ${trendUp ? 'text-green-500' : 'text-red-500'}`}>{trend}</span>
-                <span className="text-[10px] text-slate-400 font-medium ml-1">vs last month</span>
+                <span className="text-[10px] text-slate-400 font-medium ml-1">tháng này</span>
             </div>
         )}
         {subtext && (
-            <p className="text-[10px] text-slate-400 font-medium">{subtext}</p>
+            <p className="text-[10px] text-slate-400 font-medium truncate">{subtext}</p>
         )}
     </div>
 );
