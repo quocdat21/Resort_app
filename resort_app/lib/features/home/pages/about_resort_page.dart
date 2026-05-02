@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/features/home/pages/contact_page.dart';
 import 'package:resort_app/features/home/pages/location_page.dart';
 
@@ -19,7 +20,7 @@ class AboutResortPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "About Resort",
+          AppStrings.get(context, 'about_resort'),
           style: AppTextStyles.h3.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.onBackground,
@@ -150,7 +151,8 @@ class AboutResortPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const Icon(Icons.pool_outlined, color: Colors.white, size: 28),
+                    const Icon(Icons.pool_outlined,
+                        color: Colors.white, size: 28),
                   ],
                 ),
               ),
@@ -257,7 +259,7 @@ class AboutResortPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "View Location",
+                        AppStrings.get(context, 'location'),
                         style: AppTextStyles.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -293,7 +295,7 @@ class AboutResortPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Contact Us",
+                        AppStrings.get(context, 'contact'),
                         style: AppTextStyles.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.onSecondaryContainer,

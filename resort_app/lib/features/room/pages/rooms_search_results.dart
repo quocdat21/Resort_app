@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/room/pages/room_details_page.dart';
@@ -24,7 +25,12 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
 
   // Filter & sort state
   String? _selectedFilterType;
-  String? _sortOrder;  // null = default, 'ASC' = ascending, 'DESC' = descending
+  String? _selectedZoneId;
+  String? _sortOrder; // null = default, 'ASC' = ascending, 'DESC' = descending
+
+  // Zone data from API
+  List<Map<String, dynamic>> _zones = [];
+  String? _avatarUrl;
 
   // 4 representative room type filters
   final List<Map<String, String>> _filterTypes = [
@@ -40,7 +46,39 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
     if (widget.filters != null && widget.filters!['searchTerm'] != null) {
       _selectedFilterType = widget.filters!['searchTerm'];
     }
+    if (widget.filters != null && widget.filters!['zoneId'] != null) {
+      _selectedZoneId = widget.filters!['zoneId'];
+    }
+    _loadZones();
     _fetchRooms();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await ApiService.getUser();
+      if (mounted) {
+        setState(() {
+          _avatarUrl = user?['avatar_url'];
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+    }
+  }
+
+  Future<void> _loadZones() async {
+    try {
+      final result = await ApiService.getFilterMeta();
+      if (result['success'] == true) {
+        final data = result['data'];
+        setState(() {
+          _zones = List<Map<String, dynamic>>.from(data['zones'] ?? []);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading zones: $e');
+    }
   }
 
   Future<void> _fetchRooms() async {
@@ -56,7 +94,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
         children: f['children'] as int?,
         minPrice: f['minPrice'] as int?,
         maxPrice: f['maxPrice'] as int?,
-        zoneId: f['zoneId'] as String?,
+        zoneId: _selectedZoneId ?? f['zoneId'] as String?,
         searchTerm: _selectedFilterType,
         checkIn: f['checkIn'] as String?,
         checkOut: f['checkOut'] as String?,
@@ -72,7 +110,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
         });
       } else {
         setState(() {
-          _error = result['message'] ?? 'Failed to load rooms';
+          _error = result['message'] ?? AppStrings.get(context, 'failed_load_rooms');
           _isLoading = false;
         });
       }
@@ -86,14 +124,14 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
 
   String _buildSearchLabel() {
     final f = widget.filters;
-    if (f == null || f.isEmpty) return 'Moc Chau • All rooms';
+    if (f == null || f.isEmpty) return 'Moc Chau • ${AppStrings.get(context, 'all_rooms')}';
 
     final parts = <String>['Moc Chau'];
     if (f['checkIn'] != null && f['checkOut'] != null) {
       parts.add('${f['checkIn']} → ${f['checkOut']}');
     }
     if (f['adults'] != null && f['adults'] > 0) {
-      parts.add('${f['adults']} Adults');
+      parts.add('${f['adults']} ${AppStrings.get(context, 'adults')}');
     }
     return parts.join(' • ');
   }
@@ -133,7 +171,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.outline),
+                style:
+                    AppTextStyles.bodyMedium.copyWith(color: AppColors.outline),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -141,9 +180,10 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Retry'),
+                child: Text(AppStrings.get(context, 'retry')),
               ),
             ],
           ),
@@ -156,15 +196,16 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.hotel_outlined, size: 64, color: AppColors.outline),
+            const Icon(Icons.hotel_outlined,
+                size: 64, color: AppColors.outline),
             const SizedBox(height: 16),
             Text(
-              'No rooms found',
+              AppStrings.get(context, 'no_rooms_found'),
               style: AppTextStyles.h3.copyWith(color: AppColors.outline),
             ),
             const SizedBox(height: 8),
             Text(
-              'Try adjusting your filters',
+              AppStrings.get(context, 'adjust_filters'),
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.outline),
             ),
           ],
@@ -233,7 +274,10 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const RoomsSearch()),
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RoomsSearch(initialFilters: widget.filters),
+                  ),
                 );
               },
               child: Container(
@@ -246,7 +290,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search, size: 18, color: AppColors.secondary),
+                    const Icon(Icons.search,
+                        size: 18, color: AppColors.secondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -258,16 +303,20 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.edit_outlined, size: 18, color: AppColors.secondary),
+                    const Icon(Icons.edit_outlined,
+                        size: 18, color: AppColors.secondary),
                   ],
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          const CircleAvatar(
+          CircleAvatar(
             radius: 18,
-            backgroundImage: AssetImage('assets/icons/profile.png'),
+            backgroundColor: AppColors.surfaceContainerHigh,
+            backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                ? NetworkImage(ApiService.fixImageUrl(_avatarUrl!))
+                : const AssetImage('assets/icons/profile.png') as ImageProvider,
           ),
         ],
       ),
@@ -285,6 +334,18 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
       sortIcon = Icons.arrow_downward;
     }
 
+    final bool hasActiveFilter =
+        _selectedFilterType != null || _selectedZoneId != null;
+    final List<String> activeLabels = [];
+    if (_selectedFilterType != null) activeLabels.add(_selectedFilterType!);
+    if (_selectedZoneId != null) {
+      final zone = _zones.firstWhere(
+        (z) => z['id'].toString() == _selectedZoneId,
+        orElse: () => <String, dynamic>{},
+      );
+      if (zone.isNotEmpty) activeLabels.add(zone['name'] ?? '');
+    }
+
     return Row(
       children: [
         Expanded(
@@ -293,11 +354,11 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: _selectedFilterType != null
+                color: hasActiveFilter
                     ? AppColors.primary.withOpacity(0.1)
                     : AppColors.surfaceContainerHigh.withOpacity(0.4),
                 borderRadius: BorderRadius.circular(30),
-                border: _selectedFilterType != null
+                border: hasActiveFilter
                     ? Border.all(color: AppColors.primary.withOpacity(0.3))
                     : null,
               ),
@@ -306,11 +367,16 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                 children: [
                   const Icon(Icons.tune, size: 16, color: AppColors.primary),
                   const SizedBox(width: 8),
-                  Text(
-                    _selectedFilterType != null ? _selectedFilterType!.toUpperCase() : 'FILTER',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                  Flexible(
+                    child: Text(
+                      hasActiveFilter
+                          ? activeLabels.join(' • ').toUpperCase()
+                          : 'FILTER',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -361,63 +427,186 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
   }
 
   void _showCategoryFilterSheet() {
+    // Use StatefulBuilder so the bottom sheet can update its own UI
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(2),
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        String? tempFilterType = _selectedFilterType;
+        String? tempZoneId = _selectedZoneId;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.75,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar + header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Filters',
+                              style: AppTextStyles.h3.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary),
+                            ),
+                            if (tempFilterType != null || tempZoneId != null)
+                              GestureDetector(
+                                onTap: () {
+                                  setSheetState(() {
+                                    tempFilterType = null;
+                                    tempZoneId = null;
+                                  });
+                                },
+                                child: Text(
+                                  'Clear All',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
-                ),
+                  // Scrollable filter content
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── ROOM TYPE SECTION ──
+                          Text(
+                            'ROOM TYPE',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildFilterOption(
+                            icon: Icons.hotel,
+                            label: 'All Room Types',
+                            isSelected: tempFilterType == null,
+                            onTap: () {
+                              setSheetState(() => tempFilterType = null);
+                            },
+                          ),
+                          ..._filterTypes.map((type) {
+                            final key = type['key']!;
+                            return _buildFilterOption(
+                              icon: _getFilterIcon(key),
+                              label: type['label']!,
+                              isSelected: tempFilterType == key,
+                              onTap: () {
+                                setSheetState(() => tempFilterType = key);
+                              },
+                            );
+                          }),
+                          const SizedBox(height: 24),
+
+                          // ── ZONE SECTION ──
+                          Text(
+                            'ZONE',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildFilterOption(
+                            icon: Icons.location_on_outlined,
+                            label: 'All Zones',
+                            isSelected: tempZoneId == null,
+                            onTap: () {
+                              setSheetState(() => tempZoneId = null);
+                            },
+                          ),
+                          ..._zones.map((zone) {
+                            final zoneId = zone['id'].toString();
+                            final zoneName = zone['name'] ?? 'Zone';
+                            return _buildFilterOption(
+                              icon: Icons.map_outlined,
+                              label: zoneName,
+                              isSelected: tempZoneId == zoneId,
+                              onTap: () {
+                                setSheetState(() => tempZoneId = zoneId);
+                              },
+                            );
+                          }),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Apply button
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedFilterType = tempFilterType;
+                            _selectedZoneId = tempZoneId;
+                          });
+                          Navigator.pop(context);
+                          _fetchRooms();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Apply Filters',
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'Filter by Room Type',
-                style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
-              ),
-              const SizedBox(height: 20),
-              // "All" option
-              _buildFilterOption(
-                icon: Icons.hotel,
-                label: 'All Rooms',
-                isSelected: _selectedFilterType == null,
-                onTap: () {
-                  setState(() => _selectedFilterType = null);
-                  Navigator.pop(context);
-                  _fetchRooms();
-                },
-              ),
-              ..._filterTypes.map((type) {
-                final key = type['key']!;
-                final isSelected = _selectedFilterType == key;
-                return _buildFilterOption(
-                  icon: _getFilterIcon(key),
-                  label: type['label']!,
-                  isSelected: isSelected,
-                  onTap: () {
-                    setState(() => _selectedFilterType = key);
-                    Navigator.pop(context);
-                    _fetchRooms();
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -425,11 +614,16 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
 
   IconData _getFilterIcon(String key) {
     switch (key) {
-      case 'Twin': return Icons.bed;
-      case 'Double': return Icons.king_bed;
-      case 'Triple': return Icons.bedroom_parent;
-      case 'Villa': return Icons.villa;
-      default: return Icons.hotel;
+      case 'Twin':
+        return Icons.bed;
+      case 'Double':
+        return Icons.king_bed;
+      case 'Triple':
+        return Icons.bedroom_parent;
+      case 'Villa':
+        return Icons.villa;
+      default:
+        return Icons.hotel;
     }
   }
 
@@ -456,7 +650,9 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 20,
+            Icon(
+              icon,
+              size: 20,
               color: isSelected ? AppColors.primary : AppColors.outline,
             ),
             const SizedBox(width: 12),
@@ -470,7 +666,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+              const Icon(Icons.check_circle,
+                  color: AppColors.primary, size: 20),
           ],
         ),
       ),
@@ -488,9 +685,10 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
     final String sizeSqm = room['size_sqm']?.toString() ?? '';
     final int capacityAdults = room['capacity_adults'] ?? 2;
     final int capacityChildren = room['capacity_children'] ?? 0;
+    final String zoneName = room['zone_name'] ?? 'Resort';
     final String categoryName = room['category_name'] ?? '';
-
-    final String shortDesc = '${sizeSqm}m² • $capacityAdults Adults${capacityChildren > 0 ? ' + $capacityChildren Children' : ''} • $categoryName';
+    final String shortDesc =
+        '${sizeSqm}m² • $capacityAdults Adults${capacityChildren > 0 ? ' + $capacityChildren Children' : ''} • $categoryName';
 
     return GestureDetector(
       onTap: () {
@@ -517,16 +715,19 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                     aspectRatio: 1,
                     child: imageUrl != null
                         ? Image.network(
-                            imageUrl,
+                            ApiService.fixImageUrl(imageUrl),
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
                               color: AppColors.surfaceContainerHigh,
-                              child: const Icon(Icons.hotel, size: 48, color: AppColors.outline),
+                              child: const Icon(Icons.hotel,
+                                  size: 48, color: AppColors.outline),
                             ),
                           )
                         : Container(
                             color: AppColors.surfaceContainerHigh,
-                            child: const Icon(Icons.hotel, size: 48, color: AppColors.outline),
+                            child: const Icon(Icons.hotel,
+                                size: 48, color: AppColors.outline),
                           ),
                   ),
                 ),
@@ -535,18 +736,21 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                     top: 16,
                     right: 16,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.star, size: 14, color: Colors.orange),
+                          const Icon(Icons.star,
+                              size: 14, color: Colors.orange),
                           const SizedBox(width: 4),
                           Text(
                             avgRating,
-                            style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
+                            style: AppTextStyles.bodySmall
+                                .copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -557,7 +761,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                     top: 16,
                     left: 16,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(8),
@@ -575,6 +780,22 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
               ],
             ),
             const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined,
+                    size: 14, color: AppColors.secondary),
+                const SizedBox(width: 4),
+                Text(
+                  zoneName.toUpperCase(),
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(
               name,
               style: AppTextStyles.h3.copyWith(
@@ -596,7 +817,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                   children: [
                     Text(
                       'Starts from',
-                      style: AppTextStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.outline),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(fontSize: 10, color: AppColors.outline),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -621,7 +843,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -631,6 +854,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                     'BOOK',
                     style: AppTextStyles.labelSmall.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                       letterSpacing: 1.1,
                     ),
                   ),

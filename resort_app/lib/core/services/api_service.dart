@@ -6,8 +6,22 @@ class ApiService {
   // Đổi thành IP máy bạn nếu chạy trên thiết bị thật
   // Android emulator: 10.0.2.2
   // iOS simulator / thiết bị thật cùng wifi: dùng IP máy (vd: 192.168.1.x)
-  static const String baseUrl = 'http://localhost:3000/api';
-  static const String serverUrl = 'http://localhost:3000';
+  // static const String baseUrl = 'http://192.168.0.23:3000/api';
+  // static const String serverUrl = 'http://192.168.0.23:3000';
+  static const String baseUrl =
+      'https://bootleg-uncooked-broiling.ngrok-free.dev/api';
+  static const String serverUrl =
+      'https://bootleg-uncooked-broiling.ngrok-free.dev';
+
+  /// Replaces localhost URLs from the API with the actual device-accessible server URL
+  static String fixImageUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) {
+      return url.replaceAll('http://localhost:3000', serverUrl);
+    }
+    // Handle relative paths if any
+    return '$serverUrl${url.startsWith('/') ? '' : '/'}$url';
+  }
 
   // ==================== HOME ====================
 
@@ -54,7 +68,8 @@ class ApiService {
     if (checkIn != null) queryParams['checkIn'] = checkIn;
     if (checkOut != null) queryParams['checkOut'] = checkOut;
 
-    final uri = Uri.parse('$baseUrl/rooms/search').replace(queryParameters: queryParams);
+    final uri = Uri.parse('$baseUrl/rooms/search')
+        .replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -63,9 +78,16 @@ class ApiService {
   }
 
   /// GET /api/rooms/:id/detail - full room detail with images, amenities, reviews
-  static Future<Map<String, dynamic>> getRoomDetail(int roomId) async {
+  static Future<Map<String, dynamic>> getRoomDetail(int roomId,
+      {String? checkIn, String? checkOut}) async {
+    final queryParams = <String, String>{};
+    if (checkIn != null) queryParams['checkIn'] = checkIn;
+    if (checkOut != null) queryParams['checkOut'] = checkOut;
+
+    final uri = Uri.parse('$baseUrl/rooms/$roomId/detail')
+        .replace(queryParameters: queryParams);
     final response = await http.get(
-      Uri.parse('$baseUrl/rooms/$roomId/detail'),
+      uri,
       headers: {'Content-Type': 'application/json'},
     );
     return jsonDecode(response.body);
@@ -87,7 +109,31 @@ class ApiService {
     if (zoneId != null) queryParams['zoneId'] = zoneId;
     if (searchTerm != null) queryParams['searchTerm'] = searchTerm;
 
-    final uri = Uri.parse('$baseUrl/rooms').replace(queryParameters: queryParams);
+    final uri =
+        Uri.parse('$baseUrl/rooms').replace(queryParameters: queryParams);
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// GET /api/services - get services (can exclude 'Hall' etc.)
+  static Future<Map<String, dynamic>> fetchServices({
+    int page = 1,
+    int limit = 50,
+    String? type,
+    String? excludeType,
+  }) async {
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (type != null) queryParams['type'] = type;
+    if (excludeType != null) queryParams['excludeType'] = excludeType;
+
+    final uri =
+        Uri.parse('$baseUrl/services').replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -100,6 +146,24 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$baseUrl/rooms/filter-meta'),
       headers: {'Content-Type': 'application/json'},
+    );
+    return jsonDecode(response.body);
+  }
+
+  /// POST /api/vouchers/validate - validate promo code
+  static Future<Map<String, dynamic>> validateVoucher({
+    required String code,
+    required double orderValue,
+    int? userId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/vouchers/validate'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'code': code,
+        'orderValue': orderValue,
+        if (userId != null) 'userId': userId,
+      }),
     );
     return jsonDecode(response.body);
   }
@@ -278,5 +342,36 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('user_data');
+  }
+
+  // ==================== GENERIC METHODS ====================
+
+  static Future<Map<String, dynamic>> post(
+      String endpoint, Map<String, dynamic> body) async {
+    final token = await getToken();
+    final response = await http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body, toEncodable: (item) {
+        if (item is DateTime) return item.toIso8601String();
+        return item;
+      }),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> get(String endpoint) async {
+    final token = await getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+    return jsonDecode(response.body);
   }
 }

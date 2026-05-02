@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
+import 'package:resort_app/core/localization/language_cubit.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -11,21 +14,30 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String _selectedLanguage = 'English (US)';
-  final List<String> _languages = ['English (US)', 'Vietnamese', 'French'];
+  final List<String> _languages = ['English (US)', 'Vietnamese'];
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
 
+  String _getLanguageDisplay(String code) {
+    return code == 'vi' ? 'Vietnamese' : 'English (US)';
+  }
+
+  String _getLanguageCode(String display) {
+    return display == 'Vietnamese' ? 'vi' : 'en';
+  }
+
   void _saveChanges() {
-    // In a real app, you would save these preferences to SharedPreferences or backend
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Settings saved successfully')),
+      SnackBar(content: Text(AppStrings.get(context, 'settings_saved'))),
     );
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentLocale = context.watch<LanguageCubit>().state;
+    String selectedLanguageDisplay = _getLanguageDisplay(currentLocale.languageCode);
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -36,7 +48,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Settings",
+          AppStrings.get(context, 'settings'),
           style: AppTextStyles.h3.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.onBackground,
@@ -77,14 +89,14 @@ class _SettingsPageState extends State<SettingsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Language",
+                                AppStrings.get(context, 'language'),
                                 style: AppTextStyles.bodyLarge.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.onSurface,
                                 ),
                               ),
                               Text(
-                                "Choose your preferred dialect",
+                                AppStrings.get(context, 'choose_dialect'),
                                 style: AppTextStyles.bodySmall.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                 ),
@@ -103,7 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: _selectedLanguage,
+                          value: selectedLanguageDisplay,
                           isExpanded: true,
                           icon: const Icon(Icons.keyboard_arrow_down,
                               color: AppColors.outline),
@@ -119,9 +131,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             );
                           }).toList(),
                           onChanged: (newValue) {
-                            setState(() {
-                              _selectedLanguage = newValue!;
-                            });
+                            if (newValue != null) {
+                              context.read<LanguageCubit>().changeLanguage(_getLanguageCode(newValue));
+                            }
                           },
                         ),
                       ),
@@ -152,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
-                        "Notifications",
+                        AppStrings.get(context, 'notifications'),
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.onSurface,
                         ),
@@ -193,7 +205,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
-                        "Dark Mode",
+                        AppStrings.get(context, 'dark_mode'),
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.onSurface,
                         ),
@@ -228,7 +240,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   onPressed: _saveChanges,
                   child: Text(
-                    "Save Changes",
+                    AppStrings.get(context, 'save_changes'),
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

@@ -50,5 +50,9 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Chúng tôi cần truy cập thư viện ảnh để lưu mã QR thanh toán.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Chúng tôi cần quyền lưu ảnh để lưu mã QR thanh toán vào thiết bị của bạn.</string>
 </dict>
 </plist>

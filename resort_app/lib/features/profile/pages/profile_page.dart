@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/features/auth/pages/login_page.dart';
+import 'package:resort_app/features/booking/pages/booking_history.dart';
+import 'package:resort_app/features/payment/pages/payment_history.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/profile/pages/edit_profile_page.dart';
 import 'package:resort_app/features/profile/pages/settings_page.dart';
@@ -83,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   width: 4),
                               image: avatarUrl.isNotEmpty
                                   ? DecorationImage(
-                                      image: NetworkImage(avatarUrl),
+                                      image: NetworkImage(ApiService.fixImageUrl(avatarUrl)),
                                       fit: BoxFit.cover,
                                     )
                                   : const DecorationImage(
@@ -116,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        "ELITE MEMBER",
+                        AppStrings.get(context, 'elite_member'),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: const Color(0xFF7D6444),
                           letterSpacing: 2.0,
@@ -161,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "LOYALTY POINTS",
+                                    AppStrings.get(context, 'loyalty_points_label'),
                                     style: AppTextStyles.labelSmall.copyWith(
                                       color: AppColors.outline,
                                       fontWeight: FontWeight.bold,
@@ -207,7 +210,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "TOTAL STAYS",
+                                    AppStrings.get(context, 'total_stays_label'),
                                     style: AppTextStyles.labelSmall.copyWith(
                                       color: AppColors.outline,
                                       fontWeight: FontWeight.bold,
@@ -253,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 16),
                       _buildMenuOption(
                         icon: Icons.edit_outlined,
-                        label: "Edit Profile",
+                        label: AppStrings.get(context, 'edit_profile'),
                         onTap: () async {
                           if (_userData != null) {
                             final result = await Navigator.push(
@@ -275,17 +278,31 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       _buildMenuOption(
                         icon: Icons.payments_outlined,
-                        label: "Payment History",
-                        onTap: () {},
+                        label: AppStrings.get(context, 'payment_history'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PaymentHistoryPage(),
+                            ),
+                          );
+                        },
                       ),
                       _buildMenuOption(
                         icon: Icons.history,
-                        label: "Booking History",
-                        onTap: () {},
+                        label: AppStrings.get(context, 'booking_history'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BookingHistoryPage(),
+                            ),
+                          );
+                        },
                       ),
                       _buildMenuOption(
                         icon: Icons.settings_outlined,
-                        label: "Settings",
+                        label: AppStrings.get(context, 'settings'),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -298,7 +315,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 16),
                       _buildMenuOption(
                         icon: Icons.logout,
-                        label: "Logout",
+                        label: AppStrings.get(context, 'logout'),
                         textColor: Colors.red,
                         iconColor: Colors.red,
                         bgColor: Colors.transparent, // or a very light red

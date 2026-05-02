@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/home/pages/side_menu_drawer_page.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/room/pages/rooms_search.dart';
-import 'package:resort_app/features/room/pages/rooms_search_results.dart';
 import 'package:resort_app/features/room/pages/room_details_page.dart';
 import 'package:intl/intl.dart';
 
@@ -66,11 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
       // Keep existing name if fetch fails
     }
   }
-  /// Replaces localhost URLs from the API with the actual device-accessible server URL
-  String _fixImageUrl(String? url) {
-    if (url == null || url.isEmpty) return '';
-    return url.replaceAll('http://localhost:3000', ApiService.serverUrl);
-  }
 
   Future<void> _fetchHomeData() async {
     try {
@@ -82,15 +77,16 @@ class _HomeScreenState extends State<HomeScreen> {
         final cats = List<Map<String, dynamic>>.from(data['categories'] ?? []);
         for (var cat in cats) {
           if (cat['icon_url'] != null) {
-            cat['icon_url'] = _fixImageUrl(cat['icon_url']);
+            cat['icon_url'] = ApiService.fixImageUrl(cat['icon_url']);
           }
         }
 
         // Fix image URLs in popular rooms
-        final rooms = List<Map<String, dynamic>>.from(data['popular_rooms'] ?? []);
+        final rooms =
+            List<Map<String, dynamic>>.from(data['popular_rooms'] ?? []);
         for (var room in rooms) {
           if (room['main_image_url'] != null) {
-            room['main_image_url'] = _fixImageUrl(room['main_image_url']);
+            room['main_image_url'] = ApiService.fixImageUrl(room['main_image_url']);
           }
         }
 
@@ -114,7 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatPrice(dynamic price) {
     if (price == null) return '0';
     final formatter = NumberFormat('#,###', 'vi_VN');
-    return formatter.format(price is int ? price : int.tryParse(price.toString()) ?? 0);
+    return formatter
+        .format(price is int ? price : int.tryParse(price.toString()) ?? 0);
   }
 
   @override
@@ -210,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 radius: 18,
                 backgroundColor: AppColors.surfaceContainerHigh,
                 backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                    ? NetworkImage(_avatarUrl!)
+                    ? NetworkImage(ApiService.fixImageUrl(_avatarUrl!))
                     : const AssetImage("assets/icons/profile.png")
                         as ImageProvider,
               )
@@ -227,14 +224,14 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "WELCOME TO THE HIGHLANDS",
+          AppStrings.get(context, 'welcome'),
           style: AppTextStyles.labelSmall.copyWith(
             color: AppColors.secondary,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          "Hello, $_userName",
+          "${AppStrings.get(context, 'hello')}, $_userName",
           style: AppTextStyles.h2.copyWith(
             color: AppColors.primary,
           ),
@@ -256,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: TextField(
           readOnly: true,
           decoration: InputDecoration(
-            hintText: "Search experiences...",
+            hintText: AppStrings.get(context, 'search_hint'),
             prefixIcon: const Icon(Icons.search),
             filled: true,
             fillColor: AppColors.surfaceContainerHigh,
@@ -273,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ================= BANNER =================
   Widget _buildBanner() {
     if (_isLoadingHome) {
-      return SizedBox(
+      return const SizedBox(
         height: 180,
         child: Center(
           child: CircularProgressIndicator(
@@ -383,13 +380,14 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    'KHUYẾN MÃI',
+                    child: Text(
+                      AppStrings.get(context, 'promotion'),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.white,
                       fontSize: 9,
@@ -431,18 +429,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // The representative categories including 'All'
     final displayCategories = [
-      {'key': 'All', 'label': 'All', 'icon': Icons.apps},
-      {'key': 'Twin', 'label': 'Twin', 'icon': Icons.bed},
-      {'key': 'Double', 'label': 'Double', 'icon': Icons.king_bed},
-      {'key': 'Triple', 'label': 'Triple', 'icon': Icons.bedroom_parent},
-      {'key': 'Villa', 'label': 'Villa', 'icon': Icons.villa},
+      {'key': 'All', 'label': AppStrings.get(context, 'all'), 'icon': Icons.apps},
+      {'key': 'Twin', 'label': AppStrings.get(context, 'twin'), 'icon': Icons.bed},
+      {'key': 'Double', 'label': AppStrings.get(context, 'double'), 'icon': Icons.king_bed},
+      {'key': 'Triple', 'label': AppStrings.get(context, 'triple'), 'icon': Icons.bedroom_parent},
+      {'key': 'Villa', 'label': AppStrings.get(context, 'villa'), 'icon': Icons.villa},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Categories",
+          AppStrings.get(context, 'categories'),
           style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
@@ -478,7 +476,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Icon(
                           iconData,
-                          color: isSelected ? AppColors.onPrimary : AppColors.primary,
+                          color: isSelected
+                              ? AppColors.onPrimary
+                              : AppColors.primary,
                           size: 28,
                         ),
                       ),
@@ -505,12 +505,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // ================= POPULAR =================
   Widget _buildPopular() {
     if (_isLoadingHome) {
-      return Column(
+      return const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Popular Stays", style: AppTextStyles.h3),
-          const SizedBox(height: 12),
-          const Center(
+          Text("Popular Stays", style: AppTextStyles.h3),
+          SizedBox(height: 12),
+          Center(
             child: CircularProgressIndicator(
               color: AppColors.primary,
               strokeWidth: 2,
@@ -523,19 +523,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final filteredRooms = _selectedCategoryKey == 'All'
         ? _popularRooms
         : _popularRooms.where((room) {
-            final catName = (room['category_name'] ?? '').toString().toLowerCase();
+            final catName =
+                (room['category_name'] ?? '').toString().toLowerCase();
             return catName.contains((_selectedCategoryKey ?? '').toLowerCase());
           }).toList();
 
     if (filteredRooms.isEmpty) {
-      return Column(
+      return const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Popular Stays", style: AppTextStyles.h3),
-          const SizedBox(height: 12),
+          Text("Popular Stays", style: AppTextStyles.h3),
+          SizedBox(height: 12),
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Text(
                 'Chưa có phòng nào',
                 style: AppTextStyles.bodySmall,
@@ -549,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Popular Stays", style: AppTextStyles.h3),
+        Text(AppStrings.get(context, 'popular_stays'), style: AppTextStyles.h3),
         const SizedBox(height: 12),
         ...List.generate(
           filteredRooms.length,
@@ -587,9 +588,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(16)),
               child: Image.network(
-                imageUrl ?? '',
+                ApiService.fixImageUrl(imageUrl),
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
@@ -602,13 +604,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       room['name'] ?? 'Unknown Room',
-                      style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.bodyLarge
+                          .copyWith(fontWeight: FontWeight.bold),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -628,7 +632,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(price),
+                      NumberFormat.currency(locale: 'vi_VN', symbol: '₫')
+                          .format(price),
                       style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LocationPage extends StatelessWidget {
@@ -29,7 +30,7 @@ class LocationPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Location",
+          AppStrings.get(context, 'location'),
           style: AppTextStyles.h3.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.onBackground,
@@ -47,7 +48,7 @@ class LocationPage extends StatelessWidget {
                 children: [
                   const SizedBox(height: 24),
                   Text(
-                    "OUR SANCTUARY",
+                    AppStrings.get(context, 'our_sanctuary'),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: AppColors.outline,
                       letterSpacing: 2.0,
@@ -206,7 +207,7 @@ class LocationPage extends StatelessWidget {
                       onPressed: _openGoogleMaps,
                       icon: const Icon(Icons.map_outlined, size: 20),
                       label: Text(
-                        "Open in Google Maps",
+                        AppStrings.get(context, 'open_google_maps'),
                         style: AppTextStyles.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -230,7 +231,7 @@ class LocationPage extends StatelessWidget {
                       onPressed: () {},
                       icon: const Icon(Icons.directions_car_outlined, size: 20),
                       label: Text(
-                        "Request Pickup",
+                        AppStrings.get(context, 'request_pickup'),
                         style: AppTextStyles.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,

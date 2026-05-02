@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
 
 class ContactPage extends StatefulWidget {
@@ -35,7 +36,7 @@ class _ContactPageState extends State<ContactPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Contact",
+          AppStrings.get(context, 'contact'),
           style: AppTextStyles.h3.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.onBackground,
@@ -49,7 +50,7 @@ class _ContactPageState extends State<ContactPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "GET IN TOUCH",
+                    AppStrings.get(context, 'get_in_touch'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.outline,
                   letterSpacing: 2.0,
@@ -67,17 +68,17 @@ class _ContactPageState extends State<ContactPage> {
               ),
               const SizedBox(height: 32),
               _buildContactInfo(
-                label: "PHONE NUMBER",
+                label: AppStrings.get(context, 'phone_number'),
                 value: "+84 (0) 24 3825 0000",
               ),
               const SizedBox(height: 20),
               _buildContactInfo(
-                label: "EMAIL ADDRESS",
+                label: AppStrings.get(context, 'email_address'),
                 value: "hello@thaonguyenresort.vn",
               ),
               const SizedBox(height: 20),
               _buildContactInfo(
-                label: "RESORT ADDRESS",
+                label: AppStrings.get(context, 'resort_address'),
                 value:
                     "Sub-zone 31, Moc Chau Farm Town, Moc Chau District, Son La Province, Vietnam",
               ),
@@ -97,7 +98,7 @@ class _ContactPageState extends State<ContactPage> {
                   onPressed: () {},
                   icon: const Icon(Icons.phone, size: 20),
                   label: Text(
-                    "Call Now",
+                        AppStrings.get(context, 'call_now'),
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -121,7 +122,7 @@ class _ContactPageState extends State<ContactPage> {
                   onPressed: () {},
                   icon: const Icon(Icons.email_outlined, size: 20),
                   label: Text(
-                    "Send Email",
+                        AppStrings.get(context, 'send_email'),
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.onSecondaryContainer,
@@ -149,7 +150,7 @@ class _ContactPageState extends State<ContactPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Inquiry Form",
+                      AppStrings.get(context, 'inquiry_form'),
                       style: AppTextStyles.h3.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.onSurface,
@@ -164,19 +165,19 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const AppLabel(text: "FULL NAME"),
+                    AppLabel(text: AppStrings.get(context, 'full_name').toUpperCase()),
                     _buildTextField(
                       controller: _nameController,
                       hintText: "Thao Nguyen",
                     ),
                     const SizedBox(height: 20),
-                    const AppLabel(text: "EMAIL ADDRESS"),
+                    AppLabel(text: AppStrings.get(context, 'email_address')),
                     _buildTextField(
                       controller: _emailController,
                       hintText: "example@resort.com",
                     ),
                     const SizedBox(height: 20),
-                    const AppLabel(text: "YOUR MESSAGE"),
+                    AppLabel(text: AppStrings.get(context, 'your_message')),
                     _buildTextField(
                       controller: _messageController,
                       hintText: "How can we assist your stay?",
@@ -199,7 +200,7 @@ class _ContactPageState extends State<ContactPage> {
                           // TODO: Submit Inquiry
                         },
                         child: Text(
-                          "Submit Inquiry",
+                            AppStrings.get(context, 'submit_inquiry'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

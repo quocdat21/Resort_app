@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
 import 'package:resort_app/features/profile/pages/profile_page.dart';
 import 'package:resort_app/features/room/pages/rooms_search_results.dart';
@@ -60,26 +61,26 @@ class BottomNav extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
       type: BottomNavigationBarType.fixed,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: "Home",
+          icon: const Icon(Icons.home_outlined),
+          activeIcon: const Icon(Icons.home),
+          label: AppStrings.get(context, 'home'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month_outlined),
-          activeIcon: Icon(Icons.calendar_month),
-          label: "Booking",
+          icon: const Icon(Icons.calendar_month_outlined),
+          activeIcon: const Icon(Icons.calendar_month),
+          label: AppStrings.get(context, 'bookings'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.spa_outlined),
-          activeIcon: Icon(Icons.spa),
-          label: "Services",
+          icon: const Icon(Icons.spa_outlined),
+          activeIcon: const Icon(Icons.spa),
+          label: AppStrings.get(context, 'services'),
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: "Profile",
+          icon: const Icon(Icons.person_outline),
+          activeIcon: const Icon(Icons.person),
+          label: AppStrings.get(context, 'profile'),
         ),
       ],
     );

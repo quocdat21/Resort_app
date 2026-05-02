@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/service/pages/service_list_results.dart';
 
@@ -14,10 +15,7 @@ class ServicesPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Thao Nguyen Resort',
           style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -34,23 +32,23 @@ class ServicesPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildFeaturedHero(),
+            _buildFeaturedHero(context),
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Resort Services',
+                    AppStrings.get(context, 'resort_services'),
                     style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Nourish your soul and senses',
+                    AppStrings.get(context, 'nourish_soul'),
                     style: AppTextStyles.bodyMedium.copyWith(color: AppColors.outline),
                   ),
                   const SizedBox(height: 24),
-                  _buildServiceGrid(),
+                  _buildServiceGrid(context),
                 ],
               ),
             ),
@@ -61,7 +59,7 @@ class ServicesPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturedHero() {
+  Widget _buildFeaturedHero(BuildContext context) {
     return Container(
       height: 220,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -92,7 +90,7 @@ class ServicesPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'EXCLUSIVES',
+                  AppStrings.get(context, 'exclusives'),
                   style: AppTextStyles.labelSmall.copyWith(
                     color: Colors.white70,
                     letterSpacing: 1.2,
@@ -101,7 +99,7 @@ class ServicesPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Curated Experiences',
+                  AppStrings.get(context, 'curated_experiences'),
                   style: AppTextStyles.h2.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -112,36 +110,40 @@ class ServicesPage extends StatelessWidget {
     );
   }
 
-  Widget _buildServiceGrid() {
+  Widget _buildServiceGrid(BuildContext context) {
     final services = [
       {
-        'title': 'Hall',
-        'desc': 'Grand ballroom & conference rooms',
-        'capacity': 'Up to 500 guests',
+        'title': AppStrings.get(context, 'hall'),
+        'apiKey': 'Hall',
+        'desc': AppStrings.get(context, 'hall_desc'),
+        'capacity': AppStrings.get(context, 'hall_cap'),
         'icon': Icons.business_outlined,
         'color': const Color(0xFFE8F5E9),
         'iconColor': const Color(0xFF2E7D32),
       },
       {
-        'title': 'Food',
-        'desc': 'Fine dining & local specialties',
-        'capacity': 'Gourmet experience',
+        'title': AppStrings.get(context, 'food'),
+        'apiKey': 'Food',
+        'desc': AppStrings.get(context, 'food_desc'),
+        'capacity': AppStrings.get(context, 'food_cap'),
         'icon': Icons.restaurant_outlined,
         'color': const Color(0xFFFFF3E0),
         'iconColor': const Color(0xFFEF6C00),
       },
       {
-        'title': 'Event',
-        'desc': 'Weddings, parties & festivals',
-        'capacity': 'Custom arrangements',
+        'title': AppStrings.get(context, 'event'),
+        'apiKey': 'Event',
+        'desc': AppStrings.get(context, 'event_desc'),
+        'capacity': AppStrings.get(context, 'event_cap'),
         'icon': Icons.celebration_outlined,
         'color': const Color(0xFFE3F2FD),
         'iconColor': const Color(0xFF1565C0),
       },
       {
-        'title': 'Other',
-        'desc': 'Guided tours & special activities',
-        'capacity': 'Daily adventures',
+        'title': AppStrings.get(context, 'other'),
+        'apiKey': 'Other',
+        'desc': AppStrings.get(context, 'other_services_desc'),
+        'capacity': AppStrings.get(context, 'other_cap'),
         'icon': Icons.explore_outlined,
         'color': const Color(0xFFF3E5F5),
         'iconColor': const Color(0xFF7B1FA2),
@@ -165,7 +167,7 @@ class ServicesPage extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ServiceListResults(serviceType: service['title'] as String),
+                builder: (context) => ServiceListResults(serviceType: service['apiKey'] as String),
               ),
             );
           },

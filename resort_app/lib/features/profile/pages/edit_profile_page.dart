@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -156,19 +157,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (response['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
+          SnackBar(content: Text(AppStrings.get(context, 'profile_updated'))),
         );
         Navigator.pop(context, true); // return true to refresh
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? 'Update failed')),
+          SnackBar(content: Text(response['message'] ?? AppStrings.get(context, 'update_failed'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.get(context, 'error_occurred'))),
+        );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -190,7 +191,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Edit Profile",
+          AppStrings.get(context, 'edit_profile'),
           style: AppTextStyles.h3.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.onBackground,
@@ -229,7 +230,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       )
                                     : (avatarUrl.isNotEmpty
                                         ? DecorationImage(
-                                            image: NetworkImage(avatarUrl),
+                                            image: NetworkImage(
+                                                ApiService.fixImageUrl(
+                                                    avatarUrl)),
                                             fit: BoxFit.cover,
                                           )
                                         : const DecorationImage(
@@ -261,7 +264,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       GestureDetector(
                         onTap: _pickImage,
                         child: Text(
-                          "CHANGE PHOTO",
+                          AppStrings.get(context, 'change_photo'),
                           style: AppTextStyles.labelSmall.copyWith(
                             color: const Color(0xFF7D6444),
                             fontWeight: FontWeight.bold,
@@ -275,15 +278,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: 32),
 
                 // Form Fields
-                _buildLabel("FULL NAME"),
+                _buildLabel(AppStrings.get(context, 'full_name').toUpperCase()),
                 _buildTextField(
                   controller: _nameController,
                   icon: Icons.person_outline,
-                  validator: (v) => v!.isEmpty ? "Required" : null,
+                  validator: (v) => v!.isEmpty ? AppStrings.get(context, 'required') : null,
                 ),
                 const SizedBox(height: 20),
 
-                _buildLabel("EMAIL ADDRESS"),
+                _buildLabel(AppStrings.get(context, 'email_address').toUpperCase()),
                 _buildTextField(
                   controller: _emailController,
                   icon: Icons.mail_outline,
@@ -294,7 +297,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      "Contact support to change verified email.",
+                      AppStrings.get(context, 'email_change_support'),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.outline,
                         fontSize: 11,
@@ -304,7 +307,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 const SizedBox(height: 20),
 
-                _buildLabel("PHONE NUMBER"),
+                _buildLabel(AppStrings.get(context, 'phone_number').toUpperCase()),
                 _buildTextField(
                   controller: _phoneController,
                   icon: Icons.phone_outlined,
@@ -318,7 +321,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel("DATE OF BIRTH"),
+                          _buildLabel(AppStrings.get(context, 'date_of_birth').toUpperCase()),
                           GestureDetector(
                             onTap: _selectDate,
                             child: AbsorbPointer(
@@ -337,7 +340,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel("GENDER"),
+                          _buildLabel(AppStrings.get(context, 'gender').toUpperCase()),
                           Container(
                             height: 56,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -354,23 +357,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: _selectedGender,
-                                      hint: const Text("Select"),
+                                      hint: Text(AppStrings.get(context, 'select')),
                                       isExpanded: true,
                                       icon: const Icon(
                                           Icons.keyboard_arrow_down,
                                           color: AppColors.outline),
-                                      items: _genders.map((String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(
-                                            value,
-                                            style: AppTextStyles.bodyLarge
-                                                .copyWith(
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
+                                      items: [
+                                        DropdownMenuItem(value: 'Male', child: Text(AppStrings.get(context, 'male'))),
+                                        DropdownMenuItem(value: 'Female', child: Text(AppStrings.get(context, 'female'))),
+                                        DropdownMenuItem(value: 'Other', child: Text(AppStrings.get(context, 'other'))),
+                                      ],
                                       onChanged: (newValue) {
                                         setState(() {
                                           _selectedGender = newValue;
@@ -389,7 +385,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 const SizedBox(height: 20),
 
-                _buildLabel("ADDRESS"),
+                _buildLabel(AppStrings.get(context, 'address').toUpperCase()),
                 _buildTextField(
                   controller: _addressController,
                   icon: Icons.location_on_outlined,
@@ -419,7 +415,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 color: Colors.white, strokeWidth: 2),
                           )
                         : Text(
-                            "Save Changes",
+                            AppStrings.get(context, 'save_changes'),
                             style: AppTextStyles.bodyLarge.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -440,7 +436,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      "Cancel",
+                      AppStrings.get(context, 'cancel'),
                       style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF7D6444),

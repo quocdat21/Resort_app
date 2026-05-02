@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/home/pages/about_resort_page.dart';
 import 'package:resort_app/features/home/pages/contact_page.dart';
 import 'package:resort_app/features/home/pages/location_page.dart';
+import 'package:resort_app/features/booking/pages/booking_history.dart';
+import 'package:resort_app/features/payment/pages/payment_history.dart';
+import 'package:resort_app/features/room/pages/rooms_search_results.dart';
+import 'package:resort_app/features/service/pages/services_page.dart';
 
 class SideMenuDrawerPage extends StatefulWidget {
   const SideMenuDrawerPage({super.key});
@@ -82,7 +88,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                                 backgroundImage:
                                     (_userData?['avatar_url'] != null &&
                                             _userData!['avatar_url'].isNotEmpty)
-                                        ? NetworkImage(_userData!['avatar_url'])
+                                        ? NetworkImage(ApiService.fixImageUrl(_userData!['avatar_url']))
                                         : const AssetImage(
                                                 "assets/icons/profile.png")
                                             as ImageProvider,
@@ -101,7 +107,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                                         color: AppColors.background, width: 2),
                                   ),
                                   child: Text(
-                                    "ELITE",
+                                    AppStrings.get(context, 'elite'),
                                     style: AppTextStyles.labelSmall.copyWith(
                                       color: Colors.white,
                                       fontSize: 9,
@@ -130,7 +136,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "ELITE SANCTUARY MEMBER",
+                        AppStrings.get(context, 'elite_sanctuary_member'),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: const Color(0xFF7D6444),
                           letterSpacing: 1.0,
@@ -142,19 +148,38 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       // Navigation Links
                       _buildNavItem(
                         icon: Icons.home_outlined,
-                        label: "Home",
+                        label: AppStrings.get(context, 'home'),
                         isActive: true,
                         onTap: () => Navigator.pop(context),
                       ),
                       _buildNavItem(
                         icon: Icons.calendar_month_outlined,
-                        label: "Bookings",
-                        onTap: () {},
+                        label: AppStrings.get(context, 'bookings'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) =>
+                                  const RoomsSearchResults(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        },
                       ),
                       _buildNavItem(
                         icon: Icons.spa_outlined,
-                        label: "Services",
-                        onTap: () {},
+                        label: AppStrings.get(context, 'services'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => const ServicesPage(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        },
                       ),
 
                       const Padding(
@@ -164,7 +189,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       ),
 
                       Text(
-                        "MANAGEMENT",
+                        AppStrings.get(context, 'management'),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: AppColors.outline,
                           letterSpacing: 2.0,
@@ -174,19 +199,35 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       const SizedBox(height: 16),
                       _buildNavItem(
                         icon: Icons.history,
-                        label: "Booking History",
-                        onTap: () {},
+                        label: AppStrings.get(context, 'booking_history'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const BookingHistoryPage()),
+                          );
+                        },
                         isSecondary: true,
                       ),
                       _buildNavItem(
                         icon: Icons.payments_outlined,
-                        label: "Payment History",
-                        onTap: () {},
+                        label: AppStrings.get(context, 'payment_history'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const PaymentHistoryPage()),
+                          );
+                        },
                         isSecondary: true,
                       ),
                       _buildNavItem(
                         icon: Icons.notifications_none,
-                        label: "Notifications",
+                        label: AppStrings.get(context, 'notifications'),
                         onTap: () {},
                         isSecondary: true,
                       ),
@@ -194,7 +235,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       const SizedBox(height: 24),
 
                       Text(
-                        "RESORT INFO",
+                        AppStrings.get(context, 'resort_info'),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: AppColors.outline,
                           letterSpacing: 2.0,
@@ -204,7 +245,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       const SizedBox(height: 16),
                       _buildNavItem(
                         icon: Icons.info_outline,
-                        label: "About Resort",
+                        label: AppStrings.get(context, 'about_resort'),
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
@@ -217,7 +258,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       ),
                       _buildNavItem(
                         icon: Icons.map_outlined,
-                        label: "Location / Map",
+                        label: AppStrings.get(context, 'location'),
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
@@ -230,7 +271,7 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       ),
                       _buildNavItem(
                         icon: Icons.help_outline,
-                        label: "Contact",
+                        label: AppStrings.get(context, 'contact_us'),
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(

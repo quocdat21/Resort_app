@@ -8,7 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:resort_app/features/room/pages/rooms_search_results.dart';
 
 class RoomsSearch extends StatefulWidget {
-  const RoomsSearch({super.key});
+  final Map<String, dynamic>? initialFilters;
+  const RoomsSearch({super.key, this.initialFilters});
  
   @override
   State<RoomsSearch> createState() => _RoomsSearchState();
@@ -35,6 +36,37 @@ class _RoomsSearchState extends State<RoomsSearch> {
   void initState() {
     super.initState();
     _loadFilterMeta();
+    _initFromFilters();
+  }
+
+  void _initFromFilters() {
+    final f = widget.initialFilters;
+    if (f == null) return;
+
+    if (f['checkIn'] != null) {
+      _rangeStart = DateFormat('yyyy-MM-dd').parse(f['checkIn']);
+      _focusedDay = _rangeStart!;
+    }
+    if (f['checkOut'] != null) {
+      _rangeEnd = DateFormat('yyyy-MM-dd').parse(f['checkOut']);
+    }
+    if (f['adults'] != null) {
+      _adults = f['adults'] is int ? f['adults'] : int.tryParse(f['adults'].toString()) ?? 0;
+    }
+    if (f['children'] != null) {
+      _children = f['children'] is int ? f['children'] : int.tryParse(f['children'].toString()) ?? 0;
+    }
+    if (f['childAges'] != null && f['childAges'] is List) {
+      _childAges = List<String>.from(f['childAges']);
+    }
+    if (f['zoneId'] != null) {
+      _selectedZoneId = f['zoneId'].toString();
+    }
+    if (f['minPrice'] != null || f['maxPrice'] != null) {
+      double start = (f['minPrice'] ?? 0).toDouble();
+      double end = (f['maxPrice'] ?? _maxPriceDb).toDouble();
+      _priceRange = RangeValues(start, end);
+    }
   }
 
   Future<void> _loadFilterMeta() async {
@@ -99,6 +131,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
             if (_rangeEnd != null) 'checkOut': DateFormat('yyyy-MM-dd').format(_rangeEnd!),
             if (_adults > 0) 'adults': _adults,
             if (_children > 0) 'children': _children,
+            if (_children > 0) 'childAges': _childAges,
             if (_selectedZoneId != null) 'zoneId': _selectedZoneId,
             if (_priceRange.start > 0) 'minPrice': _priceRange.start.round(),
             if (_priceRange.end < _maxPriceDb) 'maxPrice': _priceRange.end.round(),
@@ -280,8 +313,13 @@ class _RoomsSearchState extends State<RoomsSearch> {
   }
 
   Widget _buildCalendar() {
-    final today = DateTime.now();
-    final firstSelectableDay = DateTime(today.year, today.month, today.day);
+    final now = DateTime.now();
+    DateTime firstSelectableDay = DateTime(now.year, now.month, now.day);
+    
+    // If it's past 14:00 (2 PM), users must book from tomorrow
+    if (now.hour >= 14) {
+      firstSelectableDay = firstSelectableDay.add(const Duration(days: 1));
+    }
 
     return Container(
       decoration: BoxDecoration(
