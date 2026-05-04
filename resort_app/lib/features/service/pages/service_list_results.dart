@@ -6,6 +6,8 @@ import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/service/pages/service_details_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 class ServiceListResults extends StatefulWidget {
   final String serviceType;
@@ -88,19 +90,17 @@ class _ServiceListResultsState extends State<ServiceListResults> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child:
-                          CircularProgressIndicator(color: AppColors.primary))
-                  : _error != null
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: _error != null
                       ? Center(
                           child: Text(_error!, style: AppTextStyles.bodyMedium))
-                      : _services.isEmpty
+                      : _services.isEmpty && !_isLoading
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -110,7 +110,9 @@ class _ServiceListResultsState extends State<ServiceListResults> {
                                       color:
                                           AppColors.outline.withOpacity(0.5)),
                                   const SizedBox(height: 16),
-                                  Text(AppStrings.get(context, 'no_results_found'),
+                                  Text(
+                                      AppStrings.get(
+                                          context, 'no_results_found'),
                                       style: AppTextStyles.h3
                                           .copyWith(color: AppColors.outline)),
                                 ],
@@ -122,9 +124,12 @@ class _ServiceListResultsState extends State<ServiceListResults> {
                               itemBuilder: (context, index) =>
                                   _buildServiceCard(_services[index]),
                             ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (_isLoading) const Loading(),
+        ],
       ),
       bottomNavigationBar: const BottomNav(currentIndex: 2),
     );
@@ -220,10 +225,14 @@ class _ServiceListResultsState extends State<ServiceListResults> {
                   borderRadius: BorderRadius.circular(24),
                   child: AspectRatio(
                     aspectRatio: 1.2,
-                    child: Image.network(
-                      ApiService.fixImageUrl(item['image_url']),
+                    child: CachedNetworkImage(
+                      imageUrl: ApiService.fixImageUrl(item['image_url']),
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      httpHeaders: ApiService.imageHeaders,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      errorWidget: (context, url, error) => Container(
                         color: AppColors.surfaceContainerHigh,
                         child: const Icon(Icons.image_not_supported,
                             color: AppColors.outline),

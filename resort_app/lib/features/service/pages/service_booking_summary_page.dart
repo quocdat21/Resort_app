@@ -6,6 +6,7 @@ import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/payment/pages/payment.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ServiceBookingSummaryPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -143,8 +144,8 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
     final double subtotal =
         isFixedPriceType ? basePrice : basePrice * _peopleCount;
 
-    const double serviceFee = 12000; // Mock service fee
-    final double finalTotal = subtotal + serviceFee - _discountAmount;
+    final double taxAmount = subtotal * 0.1;
+    final double finalTotal = subtotal + taxAmount - _discountAmount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBF9),
@@ -185,7 +186,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
                   _buildPeopleSection(service['type']),
                   const SizedBox(height: 28),
                   _buildPriceSummaryCard(service['name'] ?? 'Service',
-                      service['type'], basePrice, serviceFee, finalTotal),
+                      service['type'], basePrice, taxAmount, finalTotal),
                   const SizedBox(height: 24),
                   const Text(
                     'DISCOUNT CODE',
@@ -199,7 +200,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
                   const SizedBox(height: 8),
                   _buildPromoInput(),
                   const SizedBox(height: 32),
-                  _buildConfirmButton(finalTotal),
+                  _buildConfirmButton(finalTotal, taxAmount),
                   const SizedBox(height: 16),
                   const Center(
                     child: Text(
@@ -253,7 +254,10 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
         borderRadius: BorderRadius.circular(20),
         image: imageUrl != null
             ? DecorationImage(
-                image: NetworkImage(imageUrl),
+                image: CachedNetworkImageProvider(
+                  ApiService.fixImageUrl(imageUrl),
+                  headers: ApiService.imageHeaders,
+                ),
                 fit: BoxFit.cover,
               )
             : const DecorationImage(
@@ -439,7 +443,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
   }
 
   Widget _buildPriceSummaryCard(String serviceName, dynamic type,
-      double basePrice, double fee, double total) {
+      double basePrice, double tax, double total) {
     String qtyLabel = 'x$_peopleCount';
     if (type == 'Hall' || type == 'Event') {
       qtyLabel = '';
@@ -460,7 +464,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
           _summaryRow('$serviceName $qtyLabel',
               '${_formatPrice(basePrice * (type == 'Hall' || type == 'Event' ? 1 : _peopleCount))} VND'),
           const SizedBox(height: 12),
-          _summaryRow('Service Fee', '${_formatPrice(fee)} VND'),
+          _summaryRow('Thuế dịch vụ (10%)', '${_formatPrice(tax)} VND'),
           if (_discountAmount > 0) ...[
             const SizedBox(height: 12),
             _summaryRow('Discount (${_appliedVoucher?['code']})',
@@ -515,7 +519,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F3F1),
+        color: AppColors.surfaceContainerHigh.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -535,9 +539,11 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
           ElevatedButton(
             onPressed: _isApplyingPromo ? null : _applyPromo,
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _appliedVoucher != null ? Colors.green : darkGreen,
-              foregroundColor: Colors.white,
+              backgroundColor: _appliedVoucher != null
+                  ? Colors.green
+                  : const Color(0xFFDCC19F),
+              foregroundColor:
+                  _appliedVoucher != null ? Colors.white : AppColors.primary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -548,17 +554,17 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
+                        strokeWidth: 2, color: AppColors.primary))
                 : Text(_appliedVoucher != null ? 'APPLIED' : 'APPLY',
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: AppTextStyles.labelSmall
+                        .copyWith(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildConfirmButton(double finalTotal) {
+  Widget _buildConfirmButton(double finalTotal, double taxAmount) {
     return SizedBox(
       width: double.infinity,
       height: 64,
@@ -569,11 +575,13 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
             MaterialPageRoute(
               builder: (context) => PaymentPage(
                 bookingData: {
+                  'type': 'service', // Explicitly set type
                   'service': widget.bookingData['service'],
                   'package': widget.bookingData['package'],
                   'date': _selectedDate,
                   'guests': _peopleCount,
                   'discount': _discountAmount,
+                  'tax_amount': taxAmount,
                   'total_amount': finalTotal,
                   'appliedVoucher': _appliedVoucher,
                   'userId': _userId,

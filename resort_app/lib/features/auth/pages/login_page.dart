@@ -10,6 +10,7 @@ import 'package:resort_app/features/auth/pages/register_page.dart';
 import 'package:resort_app/features/home/pages/home_page.dart';
 import 'package:resort_app/features/auth/pages/verify_page.dart';
 import 'package:resort_app/core/constants/dev_credentials.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 // --- MÀN HÌNH ĐĂNG NHẬP ---
 class LoginScreen extends StatefulWidget {
@@ -39,10 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       final email = _emailController.text.trim();
       if (email.isEmpty) {
-        _emailError = 'Vui lòng nhập email hoặc số điện thoại.';
+        _emailError = AppStrings.get(context, 'login_error_email_empty');
         isValid = false;
       } else if (!_emailRegex.hasMatch(email) && !_phoneRegex.hasMatch(email)) {
-        _emailError = 'Email hoặc số điện thoại không đúng định dạng.';
+        _emailError = AppStrings.get(context, 'login_error_email_invalid');
         isValid = false;
       } else {
         _emailError = null;
@@ -50,10 +51,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final password = _passwordController.text;
       if (password.isEmpty) {
-        _passwordError = 'Vui lòng nhập mật khẩu.';
+        _passwordError = AppStrings.get(context, 'login_error_password_empty');
         isValid = false;
       } else if (password.length < 8) {
-        _passwordError = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        _passwordError = AppStrings.get(context, 'login_error_password_short');
         isValid = false;
       } else {
         _passwordError = null;
@@ -102,43 +103,45 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: AppColors.background,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              title: const Text("Xác thực tài khoản", style: AppTextStyles.h3),
-              content: const Text(
-                "Tài khoản của bạn chưa được xác thực.\nVui lòng xác thực tài khoản để tiếp tục.",
-                style: AppTextStyles.bodyMedium,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("Hủy",
-                      style: AppTextStyles.labelSmall
-                          .copyWith(color: AppColors.secondary)),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close dialog
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VerifyEmailPage(
-                          email: _emailController.text.trim(),
-                          autoSendOtp: true,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Text("Xác thực ngay",
-                      style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ],
+          title: Text(AppStrings.get(context, 'verify_account_title'),
+              style: AppTextStyles.h3),
+          content: Text(
+            AppStrings.get(context, 'verify_account_msg'),
+            style: AppTextStyles.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppStrings.get(context, 'cancel'),
+                  style: AppTextStyles.labelSmall
+                      .copyWith(color: AppColors.secondary)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VerifyEmailPage(
+                      email: _emailController.text.trim(),
+                      autoSendOtp: true,
+                    ),
+                  ),
+                );
+              },
+              child: Text(AppStrings.get(context, 'verify_now'),
+                  style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ],
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'Đăng nhập thất bại.'),
+              content: Text(result['message'] ??
+                  AppStrings.get(context, 'login_failed')),
               backgroundColor: AppColors.error,
             ),
           );
@@ -149,8 +152,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       setState(() => _isGlobalLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không thể kết nối đến server. Vui lòng thử lại.'),
+        SnackBar(
+          content: Text(AppStrings.get(context, 'cannot_connect_server')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -245,18 +248,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     _buildLogo(),
                     const SizedBox(height: 10),
-                    const Text("Welcome Back", style: AppTextStyles.h2),
-                    const Text(
-                      "Enter your credentials to access your sanctuary.",
+                    Text(AppStrings.get(context, 'welcome_back'),
+                        style: AppTextStyles.h2),
+                    Text(
+                      AppStrings.get(context, 'login_subtitle'),
                       style: AppTextStyles.bodyMedium,
                     ),
                     const SizedBox(height: 32),
-                    const AppLabel(text: "PHONE NUMBER OR EMAIL"),
+                    AppLabel(text: AppStrings.get(context, 'phone_email_label')),
                     TextField(
                       controller: _emailController,
                       style: AppTextStyles.bodyMedium
                           .copyWith(color: AppColors.onSurface),
-                      decoration: _inputStyle("e.g., Example@email.com",
+                      decoration: _inputStyle(AppStrings.get(context, 'email_hint'),
                           suffixIcon: const Icon(Icons.person, size: 20),
                           errorText: _emailError),
                       onChanged: (_) {
@@ -273,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: AppTextStyles.bodyMedium
                           .copyWith(color: AppColors.onSurface),
                       decoration: _inputStyle(
-                        "Enter password",
+                        AppStrings.get(context, 'password_hint'),
                         suffixIcon: _showPasswordIcon
                             ? IconButton(
                                 icon: Icon(
@@ -346,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: AppTextStyles.bodyLarge
                       .copyWith(color: Colors.white70, letterSpacing: 2)),
               const SizedBox(height: 16),
-              Text("Experience the mist-veiled sanctuary.",
+              Text(AppStrings.get(context, 'onboarding1_desc'),
                   style: AppTextStyles.h1
                       .copyWith(color: Colors.white, fontSize: 32))
             ]))
@@ -419,7 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
               elevation: 10,
               shadowColor: AppColors.primary.withOpacity(0.2)),
           onPressed: _handleLogin,
-          child: Text("Login",
+          child: Text(AppStrings.get(context, 'login'),
               style: AppTextStyles.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold, color: Colors.white))));
   Widget _buildGoogleButton() => SizedBox(
@@ -443,7 +447,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                "Login with Google",
+                AppStrings.get(context, 'login_with_google'),
                 style: AppTextStyles.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600, color: AppColors.onSurface),
               )
@@ -456,7 +460,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Divider(color: AppColors.outlineVariant.withOpacity(0.3))),
         const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text("OR CONTINUE WITH", style: AppTextStyles.labelSmall)),
+            child: Text("HOẶC", style: AppTextStyles.labelSmall)),
         Expanded(
             child: Divider(color: AppColors.outlineVariant.withOpacity(0.3)))
       ]);
@@ -465,9 +469,9 @@ class _LoginScreenState extends State<LoginScreen> {
           text: TextSpan(
             style: AppTextStyles.bodyMedium,
             children: [
-              const TextSpan(text: "Don't have an account? "),
+              TextSpan(text: AppStrings.get(context, 'no_account')),
               TextSpan(
-                text: "Register",
+                text: AppStrings.get(context, 'register'),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -523,7 +527,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildPasswordLabel() => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const AppLabel(text: "PASSWORD"),
+          AppLabel(text: AppStrings.get(context, 'password_label')),
           TextButton(
             onPressed: () {
               Navigator.push(
@@ -536,7 +540,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
-                "Forgot password?",
+                AppStrings.get(context, 'forgot_password'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.secondary,
                   letterSpacing: 0,

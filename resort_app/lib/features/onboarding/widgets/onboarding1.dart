@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class Onboarding1 extends StatelessWidget {
   final VoidCallback onNext;
@@ -70,7 +71,7 @@ class Onboarding1 extends StatelessWidget {
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Text(
-                          "Skip",
+                          AppStrings.get(context, 'skip'),
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.onPrimary,
                             fontWeight: FontWeight.w600,
@@ -85,8 +86,8 @@ class Onboarding1 extends StatelessWidget {
 
                 // Title
                 RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
+                  text: TextSpan(
+                    style: const TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 44,
                       fontWeight: FontWeight.w900,
@@ -94,12 +95,12 @@ class Onboarding1 extends StatelessWidget {
                     ),
                     children: [
                       TextSpan(
-                        text: "Welcome to\n",
-                        style: TextStyle(color: AppColors.onPrimary),
+                        text: AppStrings.get(context, 'onboarding1_title1'),
+                        style: const TextStyle(color: AppColors.onPrimary),
                       ),
                       TextSpan(
-                        text: "Thao Nguyen\nResort",
-                        style: TextStyle(
+                        text: AppStrings.get(context, 'onboarding1_title2'),
+                        style: const TextStyle(
                           color: AppColors.onPrimaryContainer,
                           fontStyle: FontStyle.italic,
                         ),
@@ -111,7 +112,7 @@ class Onboarding1 extends StatelessWidget {
 
                 // Description
                 Text(
-                  "Experience the mist-veiled sanctuary of Moc Chau, where the lush tea hills meet eco-luxury comfort.",
+                  AppStrings.get(context, 'onboarding1_desc'),
                   style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.onPrimary,
                     height: 1.5,
@@ -137,7 +138,7 @@ class Onboarding1 extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Next",
+                          AppStrings.get(context, 'next'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

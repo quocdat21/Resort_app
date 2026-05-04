@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../booking/pages/booking_detail.dart';
 
@@ -45,17 +46,23 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
 
   @override
   Widget build(BuildContext context) {
-    final String roomName = widget.bookingData['name'] ?? 'Forest View Suite';
-    final String imageUrl = widget.bookingData['main_image_url'] ?? '';
-    final String checkInStr = widget.bookingData['checkIn'] ?? '';
+    final bool isService = widget.bookingData['service'] != null;
+    final String itemName = isService 
+        ? (widget.bookingData['service']['name'] ?? 'Service')
+        : (widget.bookingData['name'] ?? 'Forest View Suite');
+    final String imageUrl = isService 
+        ? (widget.bookingData['service']['image_url'] ?? '')
+        : (widget.bookingData['main_image_url'] ?? '');
+    final String checkInStr = widget.bookingData['checkIn'] ?? widget.bookingData['date']?.toString() ?? '';
     final String checkOutStr = widget.bookingData['checkOut'] ?? '';
 
-    int nights = 3;
-    if (checkInStr.isNotEmpty && checkOutStr.isNotEmpty) {
+    int nights = isService ? 1 : 3;
+    if (!isService && checkInStr.isNotEmpty && checkOutStr.isNotEmpty) {
       try {
         final start = DateTime.parse(checkInStr);
         final end = DateTime.parse(checkOutStr);
         nights = end.difference(start).inDays;
+        if (nights <= 0) nights = 1;
         // ignore: empty_catches
       } catch (e) {}
     }
@@ -205,11 +212,24 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                           ClipRRect(
                             borderRadius: BorderRadius.circular(16),
                             child: imageUrl.isNotEmpty
-                                ? Image.network(
-                                    ApiService.fixImageUrl(imageUrl),
+                                ? CachedNetworkImage(
+                                    imageUrl: ApiService.fixImageUrl(imageUrl),
                                     width: 80,
                                     height: 80,
                                     fit: BoxFit.cover,
+                                    httpHeaders: ApiService.imageHeaders,
+                                    placeholder: (context, url) => const Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                      width: 80,
+                                      height: 80,
+                                      color: Colors.grey.shade200,
+                                      child: const Icon(Icons.hotel_rounded,
+                                          color: Colors.grey),
+                                    ),
                                   )
                                 : Container(
                                     width: 80,
@@ -225,7 +245,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  roomName,
+                                  itemName,
                                   style: AppTextStyles.bodyLarge.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87,
@@ -233,7 +253,9 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Thao Nguyen Resort • $nights Nights',
+                                  isService 
+                                      ? 'Thao Nguyen Resort • Service'
+                                      : 'Thao Nguyen Resort • $nights Nights',
                                   style: AppTextStyles.bodySmall.copyWith(
                                     color: Colors.grey.shade600,
                                   ),

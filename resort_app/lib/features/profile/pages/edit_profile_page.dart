@@ -5,6 +5,8 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -162,14 +164,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
         Navigator.pop(context, true); // return true to refresh
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? AppStrings.get(context, 'update_failed'))),
+          SnackBar(
+              content: Text(response['message'] ??
+                  AppStrings.get(context, 'update_failed'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.get(context, 'error_occurred'))),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.get(context, 'error_occurred'))),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -198,257 +202,286 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                // Avatar
-                Center(
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _pickImage,
-                        child: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.surfaceContainerHighest,
-                                border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.1),
-                                    width: 4),
-                                image: _pickedImage != null
-                                    ? DecorationImage(
-                                        image: FileImage(_pickedImage!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : (avatarUrl.isNotEmpty
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Avatar
+                    Center(
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.surfaceContainerHighest,
+                                    border: Border.all(
+                                        color:
+                                            AppColors.primary.withOpacity(0.1),
+                                        width: 4),
+                                    image: _pickedImage != null
                                         ? DecorationImage(
-                                            image: NetworkImage(
-                                                ApiService.fixImageUrl(
-                                                    avatarUrl)),
+                                            image: FileImage(_pickedImage!),
                                             fit: BoxFit.cover,
                                           )
-                                        : const DecorationImage(
-                                            image: AssetImage(
-                                                "assets/icons/profile.png"),
-                                            fit: BoxFit.cover,
-                                          )),
-                              ),
-                            ),
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: AppColors.surface, width: 2),
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: _pickImage,
-                        child: Text(
-                          AppStrings.get(context, 'change_photo'),
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: const Color(0xFF7D6444),
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Form Fields
-                _buildLabel(AppStrings.get(context, 'full_name').toUpperCase()),
-                _buildTextField(
-                  controller: _nameController,
-                  icon: Icons.person_outline,
-                  validator: (v) => v!.isEmpty ? AppStrings.get(context, 'required') : null,
-                ),
-                const SizedBox(height: 20),
-
-                _buildLabel(AppStrings.get(context, 'email_address').toUpperCase()),
-                _buildTextField(
-                  controller: _emailController,
-                  icon: Icons.mail_outline,
-                  readOnly: true,
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      AppStrings.get(context, 'email_change_support'),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.outline,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                _buildLabel(AppStrings.get(context, 'phone_number').toUpperCase()),
-                _buildTextField(
-                  controller: _phoneController,
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel(AppStrings.get(context, 'date_of_birth').toUpperCase()),
-                          GestureDetector(
-                            onTap: _selectDate,
-                            child: AbsorbPointer(
-                              child: _buildTextField(
-                                controller: _dobController,
-                                icon: Icons.calendar_today_outlined,
-                                hintText: "YYYY-MM-DD",
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLabel(AppStrings.get(context, 'gender').toUpperCase()),
-                          Container(
-                            height: 56,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.people_outline,
-                                    color: AppColors.outline),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedGender,
-                                      hint: Text(AppStrings.get(context, 'select')),
-                                      isExpanded: true,
-                                      icon: const Icon(
-                                          Icons.keyboard_arrow_down,
-                                          color: AppColors.outline),
-                                      items: [
-                                        DropdownMenuItem(value: 'Male', child: Text(AppStrings.get(context, 'male'))),
-                                        DropdownMenuItem(value: 'Female', child: Text(AppStrings.get(context, 'female'))),
-                                        DropdownMenuItem(value: 'Other', child: Text(AppStrings.get(context, 'other'))),
-                                      ],
-                                      onChanged: (newValue) {
-                                        setState(() {
-                                          _selectedGender = newValue;
-                                        });
-                                      },
-                                    ),
+                                        : (avatarUrl.isNotEmpty
+                                            ? DecorationImage(
+                                                image:
+                                                    CachedNetworkImageProvider(
+                                                        ApiService.fixImageUrl(
+                                                            avatarUrl),
+                                                        headers: ApiService
+                                                            .imageHeaders),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : const DecorationImage(
+                                                image: AssetImage(
+                                                    "assets/icons/profile.png"),
+                                                fit: BoxFit.cover,
+                                              )),
+                                  ),
+                                ),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: AppColors.surface, width: 2),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 16,
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Text(
+                              AppStrings.get(context, 'change_photo'),
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: const Color(0xFF7D6444),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 32),
+
+                    // Form Fields
+                    _buildLabel(
+                        AppStrings.get(context, 'full_name').toUpperCase()),
+                    _buildTextField(
+                      controller: _nameController,
+                      icon: Icons.person_outline,
+                      validator: (v) => v!.isEmpty
+                          ? AppStrings.get(context, 'required')
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+
+                    _buildLabel(
+                        AppStrings.get(context, 'email_address').toUpperCase()),
+                    _buildTextField(
+                      controller: _emailController,
+                      icon: Icons.mail_outline,
+                      readOnly: true,
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          AppStrings.get(context, 'email_change_support'),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.outline,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    _buildLabel(
+                        AppStrings.get(context, 'phone_number').toUpperCase()),
+                    _buildTextField(
+                      controller: _phoneController,
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel(
+                                  AppStrings.get(context, 'date_of_birth')
+                                      .toUpperCase()),
+                              GestureDetector(
+                                onTap: _selectDate,
+                                child: AbsorbPointer(
+                                  child: _buildTextField(
+                                    controller: _dobController,
+                                    icon: Icons.calendar_today_outlined,
+                                    hintText: "YYYY-MM-DD",
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel(AppStrings.get(context, 'gender')
+                                  .toUpperCase()),
+                              Container(
+                                height: 56,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLowest,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.people_outline,
+                                        color: AppColors.outline),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _selectedGender,
+                                          hint: Text(AppStrings.get(
+                                              context, 'select')),
+                                          isExpanded: true,
+                                          icon: const Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: AppColors.outline),
+                                          items: [
+                                            DropdownMenuItem(
+                                                value: 'Male',
+                                                child: Text(AppStrings.get(
+                                                    context, 'male'))),
+                                            DropdownMenuItem(
+                                                value: 'Female',
+                                                child: Text(AppStrings.get(
+                                                    context, 'female'))),
+                                            DropdownMenuItem(
+                                                value: 'Other',
+                                                child: Text(AppStrings.get(
+                                                    context, 'other'))),
+                                          ],
+                                          onChanged: (newValue) {
+                                            setState(() {
+                                              _selectedGender = newValue;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    _buildLabel(
+                        AppStrings.get(context, 'address').toUpperCase()),
+                    _buildTextField(
+                      controller: _addressController,
+                      icon: Icons.location_on_outlined,
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Buttons
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: _isLoading ? null : _saveChanges,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              )
+                            : Text(
+                                AppStrings.get(context, 'save_changes'),
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF7D6444),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          AppStrings.get(context, 'cancel'),
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF7D6444),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
-                const SizedBox(height: 20),
-
-                _buildLabel(AppStrings.get(context, 'address').toUpperCase()),
-                _buildTextField(
-                  controller: _addressController,
-                  icon: Icons.location_on_outlined,
-                ),
-
-                const SizedBox(height: 48),
-
-                // Buttons
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: _isLoading ? null : _saveChanges,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
-                          )
-                        : Text(
-                            AppStrings.get(context, 'save_changes'),
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF7D6444),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      AppStrings.get(context, 'cancel'),
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF7D6444),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
-        ),
+          if (_isLoading) const Loading(),
+        ],
       ),
     );
   }

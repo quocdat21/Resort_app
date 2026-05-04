@@ -9,6 +9,8 @@ import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/room/pages/rooms_search.dart';
 import 'package:resort_app/features/room/pages/room_details_page.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -125,38 +127,43 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         backgroundColor: AppColors.surface,
         drawer: const SideMenuDrawerPage(),
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: RefreshIndicator(
-                  color: AppColors.primary,
-                  onRefresh: _fetchHomeData,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        _buildWelcome(),
-                        const SizedBox(height: 16),
-                        _buildSearch(),
-                        const SizedBox(height: 20),
-                        _buildBanner(),
-                        const SizedBox(height: 20),
-                        _buildCategories(),
-                        const SizedBox(height: 20),
-                        _buildPopular(),
-                        const SizedBox(height: 100),
-                      ],
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: _fetchHomeData,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            _buildWelcome(),
+                            const SizedBox(height: 16),
+                            _buildSearch(),
+                            const SizedBox(height: 20),
+                            _buildBanner(),
+                            const SizedBox(height: 20),
+                            _buildCategories(),
+                            const SizedBox(height: 20),
+                            _buildPopular(),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+            if (_isLoadingHome) const Loading(),
+          ],
         ),
         bottomNavigationBar: const BottomNav(currentIndex: 0),
       ),
@@ -207,7 +214,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 radius: 18,
                 backgroundColor: AppColors.surfaceContainerHigh,
                 backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                    ? NetworkImage(ApiService.fixImageUrl(_avatarUrl!))
+                    ? CachedNetworkImageProvider(
+                        ApiService.fixImageUrl(_avatarUrl!),
+                        headers: ApiService.imageHeaders)
                     : const AssetImage("assets/icons/profile.png")
                         as ImageProvider,
               )
@@ -427,8 +436,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SizedBox.shrink();
     }
 
-    // The representative categories including 'All'
-    final displayCategories = [
+    // Use hardcoded categories as requested, ignoring API icons
+    final List<Map<String, dynamic>> finalCategories = [
       {'key': 'All', 'label': AppStrings.get(context, 'all'), 'icon': Icons.apps},
       {'key': 'Twin', 'label': AppStrings.get(context, 'twin'), 'icon': Icons.bed},
       {'key': 'Double', 'label': AppStrings.get(context, 'double'), 'icon': Icons.king_bed},
@@ -445,14 +454,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 90,
+          height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: displayCategories.length,
+            itemCount: finalCategories.length,
             itemBuilder: (_, i) {
-              final cat = displayCategories[i];
-              final iconData = cat['icon'] as IconData;
-
+              final cat = finalCategories[i];
               final isSelected = _selectedCategoryKey == cat['key'];
 
               return GestureDetector(
@@ -475,10 +482,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               : AppColors.surfaceContainerHigh.withOpacity(0.5),
                         ),
                         child: Icon(
-                          iconData,
-                          color: isSelected
-                              ? AppColors.onPrimary
-                              : AppColors.primary,
+                          cat['icon'] as IconData? ?? Icons.apps,
+                          color: isSelected ? AppColors.onPrimary : AppColors.primary,
                           size: 28,
                         ),
                       ),
@@ -523,9 +528,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final filteredRooms = _selectedCategoryKey == 'All'
         ? _popularRooms
         : _popularRooms.where((room) {
-            final catName =
-                (room['category_name'] ?? '').toString().toLowerCase();
-            return catName.contains((_selectedCategoryKey ?? '').toLowerCase());
+            final catName = (room['category_name'] ?? '').toString().toLowerCase();
+            final roomName = (room['name'] ?? '').toString().toLowerCase();
+            final searchKey = (_selectedCategoryKey ?? '').toLowerCase();
+            
+            return catName.contains(searchKey) || roomName.contains(searchKey);
           }).toList();
 
     if (filteredRooms.isEmpty) {
@@ -590,12 +597,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ClipRRect(
               borderRadius:
                   const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: Image.network(
-                ApiService.fixImageUrl(imageUrl),
+              child: CachedNetworkImage(
+                imageUrl: ApiService.fixImageUrl(imageUrl),
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                httpHeaders: ApiService.imageHeaders,
+                placeholder: (context, url) => Container(
+                  width: 120,
+                  color: AppColors.surfaceContainerHigh,
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
                   width: 120,
                   color: AppColors.surfaceContainerHigh,
                   child: const Icon(Icons.hotel),

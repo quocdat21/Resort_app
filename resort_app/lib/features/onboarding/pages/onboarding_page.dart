@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/features/auth/pages/login_page.dart';
+import 'package:resort_app/core/services/api_service.dart';
 import '../widgets/onboarding1.dart';
 import '../widgets/onboarding2.dart';
 import '../widgets/onboarding3.dart';
@@ -38,7 +39,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
   }
 
-  void _navigateToLogin() {
+  void _navigateToLogin() async {
+    await ApiService.markOnboardingSeen();
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),

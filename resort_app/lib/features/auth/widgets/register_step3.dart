@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class Step3Form extends StatefulWidget {
   final String fullName;
@@ -30,9 +31,9 @@ class _Step3FormState extends State<Step3Form> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Final Review",
-            style: TextStyle(
+          Text(
+            AppStrings.get(context, 'final_review'),
+            style: const TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 48,
               fontWeight: FontWeight.w900,
@@ -41,8 +42,8 @@ class _Step3FormState extends State<Step3Form> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Please ensure all details are correct\nbefore finalizing your membership.",
+          Text(
+            AppStrings.get(context, 'final_review_subtitle'),
             style: AppTextStyles.bodyLarge,
           ),
           const SizedBox(height: 40),
@@ -52,7 +53,7 @@ class _Step3FormState extends State<Step3Form> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "PERSONAL DETAILS",
+                AppStrings.get(context, 'personal_details'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.secondary,
                   letterSpacing: 1.5,
@@ -66,7 +67,7 @@ class _Step3FormState extends State<Step3Form> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  "Edit",
+                  AppStrings.get(context, 'edit'),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -88,12 +89,12 @@ class _Step3FormState extends State<Step3Form> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("FULL NAME", style: AppTextStyles.labelSmall),
+                Text(AppStrings.get(context, 'full_name_label'), style: AppTextStyles.labelSmall),
                 const SizedBox(height: 8),
                 Text(
                   widget.fullName.isNotEmpty
                       ? widget.fullName
-                      : "Nguyen Minh Tam",
+                      : "---",
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
@@ -101,12 +102,12 @@ class _Step3FormState extends State<Step3Form> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text("EMAIL ADDRESS", style: AppTextStyles.labelSmall),
+                Text(AppStrings.get(context, 'email_address_label'), style: AppTextStyles.labelSmall),
                 const SizedBox(height: 8),
                 Text(
                   widget.email.isNotEmpty
                       ? widget.email
-                      : "tam.nguyen@forestsanctuary.vn",
+                      : "---",
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
@@ -155,18 +156,17 @@ class _Step3FormState extends State<Step3Form> {
                     style: AppTextStyles.bodyMedium
                         .copyWith(color: AppColors.onSurfaceVariant),
                     children: [
-                      const TextSpan(text: "I agree to the "),
+                      TextSpan(text: AppStrings.get(context, 'agree_to_terms')),
                       TextSpan(
-                        text: "Terms of Sanctuary",
+                        text: AppStrings.get(context, 'terms_of_sanctuary'),
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
                           decoration: TextDecoration.underline,
                         ),
                       ),
-                      const TextSpan(
-                          text:
-                              " and\nacknowledge the privacy policy\nregarding forest conservation."),
+                      TextSpan(
+                          text: AppStrings.get(context, 'and_acknowledge')),
                     ],
                   ),
                 ),
@@ -193,7 +193,7 @@ class _Step3FormState extends State<Step3Form> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Submit",
+                    AppStrings.get(context, 'submit'),
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

@@ -6,6 +6,8 @@ import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/room/pages/room_edit_booking_page.dart';
 import 'package:resort_app/features/room/pages/room_add_services_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 class RoomDetailsPage extends StatefulWidget {
   final Map<String, dynamic> room;
@@ -118,6 +120,7 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
 
           // Bottom Bar
           _buildBottomActionBar(),
+          if (_isLoading) const Loading(),
         ],
       ),
     );
@@ -158,10 +161,14 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                   itemBuilder: (context, index) {
                     return GestureDetector(
                       onTap: () => _openFullScreenImage(allImages, index),
-                      child: Image.network(
-                        allImages[index],
+                      child: CachedNetworkImage(
+                        imageUrl: allImages[index],
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        httpHeaders: ApiService.imageHeaders,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (context, url, error) => Container(
                           color: AppColors.surfaceContainerHigh,
                           child: const Icon(Icons.hotel,
                               size: 64, color: AppColors.outline),
@@ -395,10 +402,15 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                       child: iconUrl != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                ApiService.fixImageUrl(iconUrl),
+                              child: CachedNetworkImage(
+                                imageUrl: ApiService.fixImageUrl(iconUrl),
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
+                                httpHeaders: ApiService.imageHeaders,
+                                placeholder: (context, url) => const Center(
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 1),
+                                ),
+                                errorWidget: (context, url, error) => const Icon(
                                   Icons.check_circle_outline,
                                   size: 18,
                                   color: AppColors.secondary,
@@ -1421,9 +1433,17 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                 child: InteractiveViewer(
                   minScale: 1.0,
                   maxScale: 3.0,
-                  child: Image.network(
-                    widget.images[index],
+                  child: CachedNetworkImage(
+                    imageUrl: widget.images[index],
                     fit: BoxFit.contain,
+                    httpHeaders: ApiService.imageHeaders,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (context, url, error) => const Icon(
+                        Icons.broken_image,
+                        color: Colors.white,
+                        size: 50),
                   ),
                 ),
               );

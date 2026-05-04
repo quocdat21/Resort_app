@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/services/api_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class EditBookingPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -44,7 +46,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
       try {
         DateTime checkIn = DateFormat('yyyy-MM-dd').parse(checkInStr);
         DateTime checkOut = DateFormat('yyyy-MM-dd').parse(checkOutStr);
-        
+
         // If the current booking start is before the first selectable day (e.g. today but it's past 14h)
         // We push it to the first selectable day
         if (checkIn.isBefore(firstSelectableDay)) {
@@ -54,7 +56,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
             checkOut = checkIn.add(const Duration(days: 1));
           }
         }
-        
+
         _rangeStart = checkIn;
         _rangeEnd = checkOut;
         _focusedDay = _rangeStart ?? firstSelectableDay;
@@ -146,7 +148,10 @@ class _EditBookingPageState extends State<EditBookingPage> {
         color: AppColors.surfaceContainerHigh,
         image: imageUrl != null
             ? DecorationImage(
-                image: NetworkImage(imageUrl),
+                image: CachedNetworkImageProvider(
+                  ApiService.fixImageUrl(imageUrl),
+                  headers: ApiService.imageHeaders,
+                ),
                 fit: BoxFit.cover,
               )
             : null,
@@ -246,7 +251,9 @@ class _EditBookingPageState extends State<EditBookingPage> {
       child: TableCalendar(
         firstDay: firstSelectableDay,
         lastDay: DateTime.utc(2030, 12, 31),
-        focusedDay: _focusedDay.isBefore(firstSelectableDay) ? firstSelectableDay : _focusedDay,
+        focusedDay: _focusedDay.isBefore(firstSelectableDay)
+            ? firstSelectableDay
+            : _focusedDay,
         rangeStartDay: _rangeStart,
         rangeEndDay: _rangeEnd,
         rangeSelectionMode: RangeSelectionMode.enforced,
@@ -283,7 +290,6 @@ class _EditBookingPageState extends State<EditBookingPage> {
     );
   }
 
-
   Widget _buildTotalSummary() {
     int nights = 0;
     if (_rangeStart != null && _rangeEnd != null) {
@@ -294,7 +300,8 @@ class _EditBookingPageState extends State<EditBookingPage> {
 
     int extraFeePerNight = 0;
     int under6Count = 0;
-    final List<dynamic> selectedRooms = widget.bookingData['selectedRoomNumberIds'] ?? [];
+    final List<dynamic> selectedRooms =
+        widget.bookingData['selectedRoomNumberIds'] ?? [];
     int roomCount = selectedRooms.length > 0 ? selectedRooms.length : 1;
     int freeUnder6Limit = roomCount * 2;
 

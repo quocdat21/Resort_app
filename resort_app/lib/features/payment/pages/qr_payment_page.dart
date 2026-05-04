@@ -9,6 +9,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class QRPaymentPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -35,6 +38,7 @@ class _QRPaymentPageState extends State<QRPaymentPage> {
   Timer? _statusPollingTimer;
   bool _isExpiring = false;
   final NumberFormat _currencyFormat = NumberFormat('#,###', 'vi_VN');
+  final GlobalKey _qrKey = GlobalKey();
 
   @override
   void initState() {
@@ -212,20 +216,27 @@ class _QRPaymentPageState extends State<QRPaymentPage> {
       // Request permission
       final status = await Permission.photos.request();
       if (status.isGranted || status.isLimited) {
-        // Download image
-        final response = await http.get(Uri.parse(_getQrUrl()));
-        if (response.statusCode == 200) {
+        // Find the boundary
+        final boundary = _qrKey.currentContext?.findRenderObject()
+            as RenderRepaintBoundary?;
+        if (boundary == null) return;
+
+        // Capture the widget as image
+        final image = await boundary.toImage(pixelRatio: 3.0);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        
+        if (byteData != null) {
           final result = await ImageGallerySaver.saveImage(
-            Uint8List.fromList(response.bodyBytes),
+            byteData.buffer.asUint8List(),
             quality: 100,
-            name: "QR_Payment_${_currentOrderCode}",
+            name: "Payment_Info_${_currentOrderCode}",
           );
-          
+
           if (mounted) {
             if (result['isSuccess']) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Đã lưu mã QR vào thư viện ảnh'),
+                  content: Text('Đã lưu thông tin thanh toán vào thư viện ảnh'),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -290,122 +301,143 @@ class _QRPaymentPageState extends State<QRPaymentPage> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               children: [
-                const SizedBox(height: 8),
-                Text(
-                  'Thao Nguyen Resort',
-                  style: AppTextStyles.h2.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // QR Container Card
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                        color: AppColors.surfaceContainerHigh, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          ApiService.fixImageUrl(_getQrUrl()),
-                          height: 240,
-                          width: 240,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const SizedBox(
-                              height: 240,
-                              width: 240,
-                              child: Center(
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2)),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Amount Display (Reduced Size)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'SỐ TIỀN CẦN THANH TOÁN',
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.primary.withOpacity(0.6),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9, // Slightly smaller label
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${_currencyFormat.format(widget.amount)} VND',
-                              style: AppTextStyles.h3.copyWith(
-                                // Changed h1 -> h3
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Payment Content One-Liner (Reduced Size, No Copy)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade100),
+                // RepaintBoundary to capture this specific part
+                RepaintBoundary(
+                  key: _qrKey,
+                  child: Container(
+                    color: Colors.white, // Ensure white background for capture
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Thao Nguyen Resort',
+                          style: AppTextStyles.h2.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Nội dung chuyển khoản: ',
-                                style: AppTextStyles.bodySmall
-                                    .copyWith(color: Colors.grey.shade600),
-                              ),
-                              Text(
-                                _currentOrderCode,
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                  letterSpacing: 0.5,
-                                ),
+                        ),
+                        const SizedBox(height: 24),
+                        // QR Container Card
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                                color: AppColors.surfaceContainerHigh,
+                                width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 24,
+                                offset: const Offset(0, 12),
                               ),
                             ],
                           ),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 20),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: CachedNetworkImage(
+                                  imageUrl: ApiService.fixImageUrl(_getQrUrl()),
+                                  height: 240,
+                                  width: 240,
+                                  fit: BoxFit.contain,
+                                  httpHeaders: ApiService.imageHeaders,
+                                  placeholder: (context, url) => const SizedBox(
+                                    height: 240,
+                                    width: 240,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const SizedBox(
+                                    height: 240,
+                                    width: 240,
+                                    child: Center(
+                                      child: Icon(Icons.qr_code_2,
+                                          size: 100, color: AppColors.primary),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Amount Display (Reduced Size)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'SỐ TIỀN CẦN THANH TOÁN',
+                                      style: AppTextStyles.labelSmall.copyWith(
+                                        color:
+                                            AppColors.primary.withOpacity(0.6),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 9, // Slightly smaller label
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${_currencyFormat.format(widget.amount)} VND',
+                                      style: AppTextStyles.h3.copyWith(
+                                        // Changed h1 -> h3
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Payment Content One-Liner (Reduced Size, No Copy)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border:
+                                        Border.all(color: Colors.grey.shade100),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Nội dung chuyển khoản: ',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                            color: Colors.grey.shade600),
+                                      ),
+                                      Text(
+                                        _currentOrderCode,
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 

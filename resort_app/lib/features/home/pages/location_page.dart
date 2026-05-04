@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/localization/app_strings.dart';
+import 'package:resort_app/core/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class LocationPage extends StatelessWidget {
   const LocationPage({super.key});
@@ -98,9 +100,18 @@ class LocationPage extends StatelessWidget {
                       children: [
                         // Map Image Background
                         Positioned.fill(
-                          child: Image.network(
-                            mapImageUrl,
+                          child: CachedNetworkImage(
+                            imageUrl: mapImageUrl,
                             fit: BoxFit.cover,
+                            httpHeaders: ApiService.imageHeaders,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: AppColors.surfaceContainerHigh,
+                              child: const Icon(Icons.map,
+                                  color: AppColors.outline),
+                            ),
                           ),
                         ),
                         // Center Pin Overlay

@@ -354,10 +354,10 @@ class _PaymentPageState extends State<PaymentPage> {
         service['type'] == 'Hall' || service['type'] == 'Event';
 
     final double itemPrice = isFixedPriceType ? basePrice : basePrice * qty;
-    const double extraFee = 12000; // Mock Service Fee
+    final double taxAmount = itemPrice * 0.1;
     final double discount =
         double.tryParse(data['discount']?.toString() ?? '0') ?? 0;
-    final double subtotal = itemPrice + extraFee;
+    final double subtotal = itemPrice + taxAmount;
     final double totalAmount = subtotal - discount;
 
     String qtyLabel = 'x$qty';
@@ -398,7 +398,7 @@ class _PaymentPageState extends State<PaymentPage> {
           _buildSummaryRow(subLabel, _currencyFormat.format(itemPrice)),
           const SizedBox(height: 12),
           _buildSummaryRow(
-              'Phí dịch vụ & Tiện ích', _currencyFormat.format(extraFee)),
+              'Thuế dịch vụ (10%)', _currencyFormat.format(taxAmount)),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Divider(height: 1, color: AppColors.surfaceContainerHigh),
@@ -569,6 +569,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         // Calculate total amount again for safety
                         final data = widget.bookingData;
                         final bool isService = data.containsKey('service');
+                        final bool isFixedPriceType = isService && (data['service']['type'] == 'Hall' || data['service']['type'] == 'Event');
                         double amount = 0;
 
                         if (isService) {
@@ -577,16 +578,13 @@ class _PaymentPageState extends State<PaymentPage> {
                           final double basePrice = double.tryParse(
                                   package['price']?.toString() ?? '0') ??
                               0;
-                          final bool isFixedPriceType =
-                              data['service']['type'] == 'Hall' ||
-                                  data['service']['type'] == 'Event';
                           final double itemPrice =
                               isFixedPriceType ? basePrice : basePrice * qty;
-                          const double extraFee = 12000;
+                          final double taxAmount = itemPrice * 0.1;
                           final double discount = double.tryParse(
                                   data['discount']?.toString() ?? '0') ??
                               0;
-                          amount = itemPrice + extraFee - discount;
+                          amount = itemPrice + taxAmount - discount;
                         } else {
                           // Room calculation logic (simplified or extracted)
                           // For now, use total_amount passed from summary page if available
@@ -640,21 +638,27 @@ class _PaymentPageState extends State<PaymentPage> {
                             : selectedRoomNumberIds.length;
                         final double roomCharge =
                             basePrice * calculatedNights * roomCount;
-                        final double taxAmount =
-                            (roomCharge + totalExtraFee) * 0.1;
+                        final double taxAmount = isService 
+                            ? ((isFixedPriceType ? basePrice : basePrice * (data['guests'] ?? 1)) * 0.1)
+                            : ((roomCharge + totalExtraFee) * 0.1);
 
                         // Call backend to create booking
                         final response = await ApiService.post(
                             '/payments/create',
                             _sanitizeMap({
                               ...data,
-                              'userId': data['userId'] ??
-                                  _userId ??
-                                  1, // Get from data first, then state, then fallback
+                              'userId': data['userId'] ?? _userId ?? 1,
                               'type': isService ? 'service' : 'room',
+                              'adults': isService ? (data['guests'] ?? 1) : (data['adults'] ?? 1),
                               'totalAmount': amount,
                               'taxAmount': taxAmount,
                               'extraFee': totalExtraFee,
+                              'discountAmount': double.tryParse(data['discount']?.toString() ?? '0') ?? 0,
+                              'paymentMethod': _selectedMethod,
+                              'voucherId': data['voucherId'] ?? data['appliedVoucher']?['id'],
+                              'selectedServices': data['selectedServices'] ?? data['services'] ?? [],
+                              'selectedRoomNumberIds': data['selectedRoomNumberIds'] ?? data['roomNumberIds'] ?? [],
+                              'base_price': data['base_price'] ?? 0,
                             }));
 
                         if (response['success']) {
@@ -666,6 +670,7 @@ class _PaymentPageState extends State<PaymentPage> {
                                 builder: (context) => QRPaymentPage(
                                   bookingData: {
                                     ...data,
+                                    'type': isService ? 'service' : 'room',
                                     'taxAmount': taxAmount,
                                     'extraFee': totalExtraFee,
                                     'totalAmount': amount,
@@ -768,7 +773,11 @@ class _PaymentPageState extends State<PaymentPage> {
             .where((e) => e != null)
             .toList();
       } else if (_isEncodable(value)) {
-        sanitized[key] = value;
+        if (value is DateTime) {
+          sanitized[key] = value.toIso8601String();
+        } else {
+          sanitized[key] = value;
+        }
       }
     });
     return sanitized;
@@ -780,7 +789,8 @@ class _PaymentPageState extends State<PaymentPage> {
         value is num ||
         value is bool ||
         value is Map ||
-        value is List) {
+        value is List ||
+        value is DateTime) {
       return true;
     }
     return false;

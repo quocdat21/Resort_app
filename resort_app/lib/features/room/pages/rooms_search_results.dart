@@ -7,6 +7,8 @@ import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/room/pages/room_details_page.dart';
 import 'package:resort_app/features/room/pages/rooms_search.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 class RoomsSearchResults extends StatefulWidget {
   final Map<String, dynamic>? filters;
@@ -140,13 +142,18 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildSearchHeader(),
-            Expanded(child: _buildBody()),
-          ],
-        ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildSearchHeader(),
+                Expanded(child: _buildBody()),
+              ],
+            ),
+          ),
+          if (_isLoading) const Loading(),
+        ],
       ),
       bottomNavigationBar: const BottomNav(currentIndex: 1),
     );
@@ -315,7 +322,9 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
             radius: 18,
             backgroundColor: AppColors.surfaceContainerHigh,
             backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                ? NetworkImage(ApiService.fixImageUrl(_avatarUrl!))
+                ? CachedNetworkImageProvider(
+                    ApiService.fixImageUrl(_avatarUrl!),
+                    headers: ApiService.imageHeaders)
                 : const AssetImage('assets/icons/profile.png') as ImageProvider,
           ),
         ],
@@ -714,11 +723,14 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: imageUrl != null
-                        ? Image.network(
-                            ApiService.fixImageUrl(imageUrl),
+                        ? CachedNetworkImage(
+                            imageUrl: ApiService.fixImageUrl(imageUrl),
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
+                            httpHeaders: ApiService.imageHeaders,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            errorWidget: (context, url, error) => Container(
                               color: AppColors.surfaceContainerHigh,
                               child: const Icon(Icons.hotel,
                                   size: 48, color: AppColors.outline),

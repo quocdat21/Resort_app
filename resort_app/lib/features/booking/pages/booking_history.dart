@@ -7,6 +7,8 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import 'booking_detail.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/widgets/loading.dart';
 
 class BookingHistoryPage extends StatefulWidget {
   const BookingHistoryPage({super.key});
@@ -109,9 +111,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+      body: Stack(
+        children: [
+          _error != null
               ? _buildErrorState()
               : TabBarView(
                   controller: _tabController,
@@ -128,6 +130,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                         .toList()),
                   ],
                 ),
+          if (_isLoading) const Loading(),
+        ],
+      ),
     );
   }
 
@@ -232,8 +237,23 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: imageUrl != null
-                          ? Image.network(ApiService.fixImageUrl(imageUrl), fit: BoxFit.cover)
-                          : Container(color: Colors.grey.shade100, child: const Icon(Icons.image, color: Colors.grey)),
+                          ? CachedNetworkImage(
+                              imageUrl: ApiService.fixImageUrl(imageUrl),
+                              fit: BoxFit.cover,
+                              httpHeaders: ApiService.imageHeaders,
+                              placeholder: (context, url) => const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey.shade100,
+                                child: const Icon(Icons.image,
+                                    color: Colors.grey),
+                              ),
+                            )
+                          : Container(
+                              color: Colors.grey.shade100,
+                              child: const Icon(Icons.image, color: Colors.grey)),
                     ),
                   ),
                   // Info

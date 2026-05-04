@@ -4,6 +4,7 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 import 'package:resort_app/features/room/pages/rooms_search_results.dart';
 
@@ -170,59 +171,62 @@ class _RoomsSearchState extends State<RoomsSearch> {
           ),
         ],
       ),
-      body: _isLoadingMeta
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionHeader('YOUR STAY', 'Check-in & Out'),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('YOUR STAY', 'Check-in & Out'),
+                const SizedBox(height: 16),
+                _buildDateDisplay(),
+                const SizedBox(height: 16),
+                _buildCalendar(),
+                const SizedBox(height: 32),
+                _buildSectionHeader('CAPACITY', 'Number of Guests'),
+                const SizedBox(height: 16),
+                _buildGuestCounter('Adults', 'Ages 13 or above', _adults,
+                    (val) => setState(() => _adults = val)),
+                const SizedBox(height: 16),
+                _buildGuestCounter('Children', 'Ages 2 - 12', _children, (val) {
+                  setState(() {
+                    _children = val;
+                    if (_childAges.length < _children) {
+                      _childAges.addAll(List.generate(
+                          _children - _childAges.length,
+                          (_) => '< 6 years old'));
+                    } else if (_childAges.length > _children) {
+                      _childAges = _childAges.sublist(0, _children);
+                    }
+                  });
+                }),
+                if (_children > 0) ...[
                   const SizedBox(height: 16),
-                  _buildDateDisplay(),
-                  const SizedBox(height: 16),
-                  _buildCalendar(),
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionHeader('CAPACITY', 'Number of Guests'),
-                  const SizedBox(height: 16),
-                  _buildGuestCounter('Adults', 'Ages 13 or above', _adults, (val) => setState(() => _adults = val)),
-                  const SizedBox(height: 16),
-                  _buildGuestCounter('Children', 'Ages 2 - 12', _children, (val) {
-                    setState(() {
-                      _children = val;
-                      if (_childAges.length < _children) {
-                        _childAges.addAll(List.generate(_children - _childAges.length, (_) => '< 6 years old'));
-                      } else if (_childAges.length > _children) {
-                        _childAges = _childAges.sublist(0, _children);
-                      }
-                    });
-                  }),
-                  if (_children > 0) ...[
-                    const SizedBox(height: 16),
-                    _buildChildAgeSelectors(),
-                  ],
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionHeader('LOCATION', 'Zone'),
-                  const SizedBox(height: 16),
-                  _buildZoneSelector(),
-                  const SizedBox(height: 32),
-                  
-                  _buildSectionHeader(
-                    'INVESTMENT',
-                    'Price Range',
-                    trailing: '${NumberFormat('#,###').format(_priceRange.start.round())} - ${NumberFormat('#,###').format(_priceRange.end.round())} VND',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildPriceRangeSelector(),
-                  const SizedBox(height: 40),
-                  
-                  _buildSearchButton(),
-                  const SizedBox(height: 24),
+                  _buildChildAgeSelectors(),
                 ],
-              ),
+                const SizedBox(height: 32),
+                _buildSectionHeader('LOCATION', 'Zone'),
+                const SizedBox(height: 16),
+                _buildZoneSelector(),
+                const SizedBox(height: 32),
+                _buildSectionHeader(
+                  'INVESTMENT',
+                  'Price Range',
+                  trailing:
+                      '${NumberFormat('#,###').format(_priceRange.start.round())} - ${NumberFormat('#,###').format(_priceRange.end.round())} VND',
+                ),
+                const SizedBox(height: 16),
+                _buildPriceRangeSelector(),
+                const SizedBox(height: 40),
+                _buildSearchButton(),
+                const SizedBox(height: 24),
+              ],
             ),
+          ),
+          if (_isLoadingMeta) const Loading(),
+        ],
+      ),
     );
   }
 

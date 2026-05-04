@@ -5,6 +5,7 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:resort_app/features/home/pages/about_resort_page.dart';
 import 'package:resort_app/features/home/pages/contact_page.dart';
 import 'package:resort_app/features/home/pages/location_page.dart';
@@ -80,43 +81,17 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 36,
-                                backgroundColor: AppColors.surfaceContainerHigh,
-                                backgroundImage:
-                                    (_userData?['avatar_url'] != null &&
-                                            _userData!['avatar_url'].isNotEmpty)
-                                        ? NetworkImage(ApiService.fixImageUrl(_userData!['avatar_url']))
-                                        : const AssetImage(
-                                                "assets/icons/profile.png")
-                                            as ImageProvider,
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                        0xFF7D6444), // Brownish color for ELITE
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                        color: AppColors.background, width: 2),
-                                  ),
-                                  child: Text(
-                                    AppStrings.get(context, 'elite'),
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          CircleAvatar(
+                            radius: 36,
+                            backgroundColor: AppColors.surfaceContainerHigh,
+                            backgroundImage: (_userData?['avatar_url'] != null &&
+                                    _userData!['avatar_url'].isNotEmpty)
+                                ? CachedNetworkImageProvider(
+                                    ApiService.fixImageUrl(
+                                        _userData!['avatar_url']),
+                                    headers: ApiService.imageHeaders)
+                                : const AssetImage("assets/icons/profile.png")
+                                    as ImageProvider,
                           ),
                         ],
                       ),
@@ -132,15 +107,6 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                         email,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        AppStrings.get(context, 'elite_sanctuary_member'),
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: const Color(0xFF7D6444),
-                          letterSpacing: 1.0,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 32),

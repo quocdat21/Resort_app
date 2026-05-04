@@ -5,6 +5,7 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/localization/app_strings.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/service/pages/service_booking_summary_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ServiceDetailsPage extends StatefulWidget {
   final Map<String, dynamic> service;
@@ -102,8 +103,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         image: DecorationImage(
-          image:
-              NetworkImage(ApiService.fixImageUrl(widget.service['image_url'])),
+          image: CachedNetworkImageProvider(
+              ApiService.fixImageUrl(widget.service['image_url']),
+              headers: ApiService.imageHeaders),
           fit: BoxFit.cover,
         ),
       ),
@@ -455,11 +457,15 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
             onTap: () => _openFullScreenGallery(allImages, 0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.network(
-                allImages[0],
+              child: CachedNetworkImage(
+                imageUrl: allImages[0],
                 height: 220,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                httpHeaders: ApiService.imageHeaders,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                errorWidget: (context, url, error) => Container(
                   color: AppColors.surfaceContainerHigh,
                   child: const Icon(Icons.image, color: AppColors.outline),
                 ),
@@ -478,12 +484,16 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                   onTap: () => _openFullScreenGallery(allImages, 1),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      allImages[1],
+                    child: CachedNetworkImage(
+                      imageUrl: allImages[1],
                       height: 104,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
+                      httpHeaders: ApiService.imageHeaders,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      errorWidget: (context, url, error) =>
                           Container(color: AppColors.surfaceContainerHigh),
                     ),
                   ),
@@ -505,12 +515,17 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
-                                child: Image.network(
-                                  allImages[2],
+                                child: CachedNetworkImage(
+                                  imageUrl: allImages[2],
                                   height: 104,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
+                                  httpHeaders: ApiService.imageHeaders,
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ),
+                                  errorWidget: (context, url, error) =>
                                       Container(
                                           color:
                                               AppColors.surfaceContainerHigh),
@@ -815,11 +830,15 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 child: InteractiveViewer(
                   minScale: 1.0,
                   maxScale: 4.0,
-                  child: Image.network(
-                    widget.images[index],
+                  child: CachedNetworkImage(
+                    imageUrl: widget.images[index],
                     fit: BoxFit.contain,
                     width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => const Center(
+                    httpHeaders: ApiService.imageHeaders,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (context, url, error) => const Center(
                       child: Icon(Icons.broken_image,
                           color: Colors.white54, size: 64),
                     ),

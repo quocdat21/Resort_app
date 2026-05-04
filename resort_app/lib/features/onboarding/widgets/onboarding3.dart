@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class Onboarding3 extends StatelessWidget {
   final VoidCallback onGetStarted;
@@ -96,7 +97,7 @@ class Onboarding3 extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              "Seamless\nExperience",
+                              AppStrings.get(context, 'onboarding3_title'),
                               textAlign: TextAlign.center,
                               style: AppTextStyles.h1.copyWith(
                                 fontSize: 28,
@@ -106,7 +107,7 @@ class Onboarding3 extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              "Book your stay and pay securely with\nMoMo in just a few taps.",
+                              AppStrings.get(context, 'onboarding3_desc'),
                               textAlign: TextAlign.center,
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.onSurfaceVariant,
@@ -133,7 +134,7 @@ class Onboarding3 extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "Get Started",
+                                      AppStrings.get(context, 'get_started'),
                                       style: AppTextStyles.bodyLarge.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,

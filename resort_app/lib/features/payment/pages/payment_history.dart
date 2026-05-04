@@ -5,6 +5,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/services/api_service.dart';
 import '../../booking/pages/booking_detail.dart';
+import '../../../core/widgets/loading.dart';
 
 class PaymentHistoryPage extends StatefulWidget {
   const PaymentHistoryPage({super.key});
@@ -101,10 +102,9 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary))
-          : RefreshIndicator(
+      body: Stack(
+        children: [
+          RefreshIndicator(
               onRefresh: _loadHistory,
               color: AppColors.primary,
               child: SingleChildScrollView(
@@ -158,7 +158,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
 
                     const SizedBox(height: 32),
 
-                    if (filtered.isEmpty)
+                    if (filtered.isEmpty && !_isLoading)
                       Center(
                         child: Column(
                           children: [
@@ -199,6 +199,9 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
                 ),
               ),
             ),
+          if (_isLoading) const Loading(),
+        ],
+      ),
     );
   }
 

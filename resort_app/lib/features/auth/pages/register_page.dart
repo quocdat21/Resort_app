@@ -4,6 +4,7 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/core/widgets/loading.dart';
 import 'package:resort_app/features/auth/pages/verify_page.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 import '../widgets/register_step1.dart';
 import '../widgets/register_step2.dart';
@@ -75,65 +76,70 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: _previousStep,
-        ),
-        centerTitle: true,
-        title: Text(
-          "STEP $_currentStep OF 3",
-          style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.onBackground,
-            letterSpacing: 2.0,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
+            onPressed: _previousStep,
           ),
-        ),
-      ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                  child: _buildProgressBar(_currentStep),
-                ),
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      Step1Form(
-                        fullNameController: _fullNameController,
-                        emailController: _emailController,
-                        phoneController: _phoneController,
-                        onNext: _nextStep,
-                        onLoginTap: () => Navigator.pop(context),
-                      ),
-                      Step2Form(
-                        passwordController: _passwordController,
-                        confirmPasswordController: _confirmPasswordController,
-                        onNext: _nextStep,
-                      ),
-                      Step3Form(
-                        fullName: _fullNameController.text,
-                        email: _emailController.text,
-                        onEdit: () => _goToStep(1),
-                        onSubmit: _handleRegister,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          centerTitle: true,
+          title: Text(
+            AppStrings.get(context, 'step_x_of_3')
+                .replaceAll('{step}', _currentStep.toString()),
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.onBackground,
+              letterSpacing: 2.0,
             ),
           ),
-          if (_isLoading) const Loading(),
-        ],
+        ),
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 8.0),
+                    child: _buildProgressBar(_currentStep),
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        Step1Form(
+                          fullNameController: _fullNameController,
+                          emailController: _emailController,
+                          phoneController: _phoneController,
+                          onNext: _nextStep,
+                          onLoginTap: () => Navigator.pop(context),
+                        ),
+                        Step2Form(
+                          passwordController: _passwordController,
+                          confirmPasswordController: _confirmPasswordController,
+                          onNext: _nextStep,
+                        ),
+                        Step3Form(
+                          fullName: _fullNameController.text,
+                          email: _emailController.text,
+                          onEdit: () => _goToStep(1),
+                          onSubmit: _handleRegister,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_isLoading) const Loading(),
+          ],
+        ),
       ),
     );
   }
@@ -165,7 +171,8 @@ class _RegisterPageState extends State<RegisterPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? 'Đăng ký thất bại.'),
+            content: Text(result['message'] ??
+                AppStrings.get(context, 'register_failed')),
             backgroundColor: AppColors.error,
           ),
         );
@@ -174,8 +181,8 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không thể kết nối đến server.'),
+        SnackBar(
+          content: Text(AppStrings.get(context, 'cannot_connect_server')),
           backgroundColor: AppColors.error,
         ),
       );

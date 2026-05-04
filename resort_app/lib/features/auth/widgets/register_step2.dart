@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class Step2Form extends StatefulWidget {
   final TextEditingController passwordController;
@@ -56,23 +57,23 @@ class _Step2FormState extends State<Step2Form> {
       final confirm = widget.confirmPasswordController.text;
 
       if (password.isEmpty) {
-        _passwordError = 'Vui lòng nhập mật khẩu.';
+        _passwordError = AppStrings.get(context, 'register_error_password_empty');
         isValid = false;
       } else if (!_has8Chars) {
-        _passwordError = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        _passwordError = AppStrings.get(context, 'register_error_password_short');
         isValid = false;
       } else if (!_hasSpecialSymbol) {
-        _passwordError = 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.';
+        _passwordError = AppStrings.get(context, 'register_error_password_special');
         isValid = false;
       } else {
         _passwordError = null;
       }
 
       if (confirm.isEmpty) {
-        _confirmError = 'Vui lòng xác nhận mật khẩu.';
+        _confirmError = AppStrings.get(context, 'register_error_confirm_empty');
         isValid = false;
       } else if (!_passwordsMatch) {
-        _confirmError = 'Mật khẩu xác nhận không khớp.';
+        _confirmError = AppStrings.get(context, 'register_error_confirm_mismatch');
         isValid = false;
       } else {
         _confirmError = null;
@@ -132,9 +133,9 @@ class _Step2FormState extends State<Step2Form> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Secure your\nstay.",
-            style: TextStyle(
+          Text(
+            AppStrings.get(context, 'secure_your_stay'),
+            style: const TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 48,
               fontWeight: FontWeight.w900,
@@ -143,14 +144,14 @@ class _Step2FormState extends State<Step2Form> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Choose a password to protect your account\nand bookings.",
+          Text(
+            AppStrings.get(context, 'password_subtitle'),
             style: AppTextStyles.bodyLarge,
           ),
           const SizedBox(height: 40),
 
           // PASSWORD
-          const AppLabel(text: "PASSWORD"),
+          AppLabel(text: AppStrings.get(context, 'password_label')),
           TextField(
             controller: widget.passwordController,
             obscureText: _obscurePassword,
@@ -173,13 +174,13 @@ class _Step2FormState extends State<Step2Form> {
           const SizedBox(height: 24),
 
           // CONFIRM PASSWORD
-          const AppLabel(text: "CONFIRM PASSWORD"),
+          AppLabel(text: AppStrings.get(context, 'confirm_password_label')),
           TextField(
             controller: widget.confirmPasswordController,
             obscureText: _obscureConfirmPassword,
             style: AppTextStyles.bodyMedium
                 .copyWith(color: AppColors.onSurface, fontSize: 16),
-            decoration: _inputStyle("Re-enter password",
+            decoration: _inputStyle(AppStrings.get(context, 're_enter_password_hint'),
                     errorText: _confirmError)
                 .copyWith(
               suffixIcon: IconButton(
@@ -200,12 +201,12 @@ class _Step2FormState extends State<Step2Form> {
           Row(
             children: [
               _buildValidationChip(
-                label: "8+ Characters",
+                label: AppStrings.get(context, 'char_8_plus'),
                 isValid: _has8Chars,
               ),
               const SizedBox(width: 12),
               _buildValidationChip(
-                label: "Special symbol",
+                label: AppStrings.get(context, 'special_symbol'),
                 isValid: _hasSpecialSymbol,
               ),
             ],
@@ -227,7 +228,7 @@ class _Step2FormState extends State<Step2Form> {
               ),
               onPressed: _handleNext,
               child: Text(
-                "Next",
+                AppStrings.get(context, 'next'),
                 style: AppTextStyles.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -242,7 +243,7 @@ class _Step2FormState extends State<Step2Form> {
             child: TextButton(
               onPressed: () {},
               child: Text(
-                "SAVE FOR LATER",
+                AppStrings.get(context, 'save_for_later'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.secondary,
                   letterSpacing: 2.0,

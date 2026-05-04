@@ -5,6 +5,7 @@ import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/payment/pages/payment.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class BookingSummaryPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -196,12 +197,16 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
               s['image_url'] != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        ApiService.fixImageUrl(s['image_url']),
+                      child: CachedNetworkImage(
+                        imageUrl: ApiService.fixImageUrl(s['image_url']),
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        httpHeaders: ApiService.imageHeaders,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 1),
+                        ),
+                        errorWidget: (context, url, error) => Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
@@ -278,7 +283,10 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
         borderRadius: BorderRadius.circular(24),
         image: imageUrl != null
             ? DecorationImage(
-                image: NetworkImage(ApiService.fixImageUrl(imageUrl)),
+                image: CachedNetworkImageProvider(
+                  ApiService.fixImageUrl(imageUrl),
+                  headers: ApiService.imageHeaders,
+                ),
                 fit: BoxFit.cover,
               )
             : const DecorationImage(
@@ -633,11 +641,14 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
       child: ElevatedButton(
         onPressed: () {
           final dataToPass = Map<String, dynamic>.from(widget.bookingData);
+          dataToPass['type'] = 'room'; 
           dataToPass['discount'] = _discountAmount;
           dataToPass['total_amount'] = finalTotal;
           dataToPass['appliedVoucher'] = _appliedVoucher;
-          dataToPass['services'] = widget.bookingData[
-              'selectedServices']; // Map to expected key in PaymentPage
+          dataToPass['voucherId'] = _appliedVoucher?['id'];
+          // Use original keys for backend compatibility
+          dataToPass['selectedServices'] = widget.bookingData['selectedServices'];
+          dataToPass['selectedRoomNumberIds'] = widget.bookingData['selectedRoomNumberIds'];
 
           Navigator.push(
             context,

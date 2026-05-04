@@ -4,6 +4,8 @@ import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:intl/intl.dart';
 import 'package:resort_app/features/room/pages/room_booking_summary_page.dart';
 import 'package:resort_app/core/services/api_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/widgets/loading.dart';
 
 class SelectServicesPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -226,6 +228,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
             ),
           ),
           _buildBottomActionBar(),
+          if (_isLoading) const Loading(),
         ],
       ),
     );
@@ -266,12 +269,16 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: mainImage != null
-                ? Image.network(
-                    ApiService.fixImageUrl(mainImage),
+                ? CachedNetworkImage(
+                    imageUrl: ApiService.fixImageUrl(mainImage),
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    httpHeaders: ApiService.imageHeaders,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (context, url, error) => Container(
                       width: 80,
                       height: 80,
                       color: AppColors.surfaceContainerHigh,
@@ -351,12 +358,16 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
           if (service['image_url'] != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                ApiService.fixImageUrl(service['image_url']),
+            child: CachedNetworkImage(
+                imageUrl: ApiService.fixImageUrl(service['image_url']),
                 width: 48,
                 height: 48,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                httpHeaders: ApiService.imageHeaders,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 1),
+                ),
+                errorWidget: (context, url, error) => Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(

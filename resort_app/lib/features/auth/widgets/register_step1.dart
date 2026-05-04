@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/widgets/app_label.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class Step1Form extends StatefulWidget {
   final TextEditingController fullNameController;
@@ -84,10 +85,10 @@ class _Step1FormState extends State<Step1Form> {
       // Validate Full Name
       final name = widget.fullNameController.text.trim();
       if (name.isEmpty) {
-        _fullNameError = 'Vui lòng nhập họ tên.';
+        _fullNameError = AppStrings.get(context, 'register_error_name_empty');
         isValid = false;
       } else if (!_nameRegex.hasMatch(name)) {
-        _fullNameError = 'Họ tên chỉ chứa chữ cái và dấu cách.';
+        _fullNameError = AppStrings.get(context, 'register_error_name_invalid');
         isValid = false;
       } else {
         _fullNameError = null;
@@ -96,10 +97,10 @@ class _Step1FormState extends State<Step1Form> {
       // Validate Email
       final email = widget.emailController.text.trim();
       if (email.isEmpty) {
-        _emailError = 'Vui lòng nhập email.';
+        _emailError = AppStrings.get(context, 'register_error_email_empty');
         isValid = false;
       } else if (!_emailRegex.hasMatch(email)) {
-        _emailError = 'Email không đúng định dạng.';
+        _emailError = AppStrings.get(context, 'register_error_email_invalid');
         isValid = false;
       } else {
         _emailError = null;
@@ -108,10 +109,10 @@ class _Step1FormState extends State<Step1Form> {
       // Validate Phone
       final phone = widget.phoneController.text.trim();
       if (phone.isEmpty) {
-        _phoneError = 'Vui lòng nhập số điện thoại.';
+        _phoneError = AppStrings.get(context, 'register_error_phone_empty');
         isValid = false;
       } else if (!_phoneRegex.hasMatch(phone)) {
-        _phoneError = 'SĐT phải bắt đầu bằng 0 hoặc +84, gồm 10 số.';
+        _phoneError = AppStrings.get(context, 'register_error_phone_invalid');
         isValid = false;
       } else {
         _phoneError = null;
@@ -133,9 +134,9 @@ class _Step1FormState extends State<Step1Form> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Create\nAccount",
-            style: TextStyle(
+          Text(
+            AppStrings.get(context, 'create_account'),
+            style: const TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 48,
               fontWeight: FontWeight.w900,
@@ -144,43 +145,41 @@ class _Step1FormState extends State<Step1Form> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Begin your journey into the Moc Chau sanctuary. Your forest hideaway awaits.",
+          Text(
+            AppStrings.get(context, 'register_subtitle'),
             style: AppTextStyles.bodyLarge,
           ),
           const SizedBox(height: 40),
 
           // Full Name
-          const AppLabel(text: "FULL NAME"),
+          AppLabel(text: AppStrings.get(context, 'full_name_label')),
           TextField(
             controller: widget.fullNameController,
+            autofocus: true,
             // Dùng TextInputType.text để tránh xung đột với bộ gõ tiếng Việt
             keyboardType: TextInputType.text,
             enableIMEPersonalizedLearning: true,
             style: AppTextStyles.bodyMedium
                 .copyWith(color: AppColors.onSurface, fontSize: 16),
             decoration:
-                _inputStyle("Enter Full Name", errorText: _fullNameError),
+                _inputStyle(AppStrings.get(context, 'full_name_hint'), errorText: _fullNameError),
             onChanged: (_) {
               if (_fullNameError != null) {
-                // Dùng post-frame callback để không gián đoạn quá trình composing
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) setState(() => _fullNameError = null);
-                });
+                setState(() => _fullNameError = null);
               }
             },
           ),
           const SizedBox(height: 24),
 
           // Email
-          const AppLabel(text: "EMAIL ADDRESS"),
+          AppLabel(text: AppStrings.get(context, 'email_address_label')),
           TextField(
             controller: widget.emailController,
             keyboardType: TextInputType.emailAddress,
             style: AppTextStyles.bodyMedium
                 .copyWith(color: AppColors.onSurface, fontSize: 16),
             decoration:
-                _inputStyle("Example@email.com", errorText: _emailError),
+                _inputStyle(AppStrings.get(context, 'email_hint'), errorText: _emailError),
             onChanged: (_) {
               if (_emailError != null) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -192,13 +191,13 @@ class _Step1FormState extends State<Step1Form> {
           const SizedBox(height: 24),
 
           // Phone Number
-          const AppLabel(text: "PHONE NUMBER"),
+          AppLabel(text: AppStrings.get(context, 'phone_number_label')),
           TextField(
             controller: widget.phoneController,
             keyboardType: TextInputType.phone,
             style: AppTextStyles.bodyMedium
                 .copyWith(color: AppColors.onSurface, fontSize: 16),
-            decoration: _inputStyle("+84 000 000 000", errorText: _phoneError),
+            decoration: _inputStyle(AppStrings.get(context, 'phone_hint'), errorText: _phoneError),
             onChanged: (_) {
               if (_phoneError != null) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -224,7 +223,7 @@ class _Step1FormState extends State<Step1Form> {
               ),
               onPressed: _handleNext,
               child: Text(
-                "NEXT",
+                AppStrings.get(context, 'next').toUpperCase(),
                 style: AppTextStyles.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -243,9 +242,9 @@ class _Step1FormState extends State<Step1Form> {
                   color: AppColors.onSurfaceVariant,
                 ),
                 children: [
-                  const TextSpan(text: "Already have an account? "),
+                  TextSpan(text: AppStrings.get(context, 'already_have_account')),
                   TextSpan(
-                    text: "LOG IN",
+                    text: AppStrings.get(context, 'log_in'),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,

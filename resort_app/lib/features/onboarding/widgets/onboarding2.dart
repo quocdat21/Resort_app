@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class Onboarding2 extends StatelessWidget {
   final VoidCallback onNext;
@@ -96,7 +97,7 @@ class Onboarding2 extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              "Luxury in Harmony\nwith Nature",
+                              AppStrings.get(context, 'onboarding2_title'),
                               textAlign: TextAlign.center,
                               style: AppTextStyles.h1.copyWith(
                                 fontSize: 28,
@@ -106,7 +107,7 @@ class Onboarding2 extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              "Enjoy world-class services amidst green\nlandscapes.",
+                              AppStrings.get(context, 'onboarding2_desc'),
                               textAlign: TextAlign.center,
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.onSurfaceVariant,
@@ -130,7 +131,7 @@ class Onboarding2 extends StatelessWidget {
                                 ),
                                 onPressed: onNext,
                                 child: Text(
-                                  "NEXT",
+                                  AppStrings.get(context, 'next').toUpperCase(),
                                   style: AppTextStyles.bodyLarge.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
