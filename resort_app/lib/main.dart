@@ -4,11 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/localization/language_cubit.dart';
+import 'package:resort_app/features/auth/pages/login_page.dart';
+import 'package:resort_app/features/home/pages/home_page.dart';
+import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/onboarding/pages/onboarding_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async {
   // Đảm bảo các dịch vụ của Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load .env file
+  await dotenv.load(fileName: ".env");
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -65,9 +72,56 @@ class MyApp extends StatelessWidget {
           ),
 
           // 4. Trang sẽ hiển thị đầu tiên khi mở App
-          home: const OnboardingPage(),
+          home: const InitialWrapper(),
         );
       },
     );
+  }
+}
+
+class InitialWrapper extends StatefulWidget {
+  const InitialWrapper({super.key});
+
+  @override
+  State<InitialWrapper> createState() => _InitialWrapperState();
+}
+
+class _InitialWrapperState extends State<InitialWrapper> {
+  Widget? _initialHome;
+
+  @override
+  void initState() {
+    super.initState();
+    _determineInitialHome();
+  }
+
+  Future<void> _determineInitialHome() async {
+    final hasSeenOnboarding = await ApiService.hasSeenOnboarding();
+    final token = await ApiService.getToken();
+    final user = await ApiService.getUser();
+
+    if (mounted) {
+      setState(() {
+        if (!hasSeenOnboarding) {
+          _initialHome = const OnboardingPage();
+        } else if (token != null && user != null) {
+          _initialHome = HomeScreen(userName: user['full_name'] ?? 'Traveler');
+        } else {
+          _initialHome = const LoginScreen();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_initialHome == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    return _initialHome!;
   }
 }

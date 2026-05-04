@@ -1,26 +1,50 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  // Đổi thành IP máy bạn nếu chạy trên thiết bị thật
-  // Android emulator: 10.0.2.2
-  // iOS simulator / thiết bị thật cùng wifi: dùng IP máy (vd: 192.168.1.x)
-  // static const String baseUrl = 'http://192.168.0.23:3000/api';
-  // static const String serverUrl = 'http://192.168.0.23:3000';
-  static const String baseUrl =
-      'https://bootleg-uncooked-broiling.ngrok-free.dev/api';
-  static const String serverUrl =
-      'https://bootleg-uncooked-broiling.ngrok-free.dev';
+  static String get baseUrl => dotenv.env['API_URL'] ?? 'http://localhost:3000/api';
+  static String get serverUrl => dotenv.env['SERVER_URL'] ?? 'http://localhost:3000';
+
+  static const Map<String, String> _headers = {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+  };
+
+  /// For CachedNetworkImage
+  static Map<String, String> get imageHeaders => {
+        'ngrok-skip-browser-warning': 'true',
+        'User-Agent': 'FlutterApp',
+      };
 
   /// Replaces localhost URLs from the API with the actual device-accessible server URL
   static String fixImageUrl(String? url) {
     if (url == null || url.isEmpty) return '';
-    if (url.startsWith('http')) {
-      return url.replaceAll('http://localhost:3000', serverUrl);
+    
+    // Aggressive replacement for any localhost/127.0.0.1 variation
+    String fixedUrl = url;
+    final List<String> localHosts = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://10.0.2.2:3000',
+      'localhost:3000',
+      '127.0.0.1:3000',
+    ];
+    
+    for (var host in localHosts) {
+      if (fixedUrl.contains(host)) {
+        fixedUrl = fixedUrl.replaceFirst(host, serverUrl);
+      }
     }
-    // Handle relative paths if any
-    return '$serverUrl${url.startsWith('/') ? '' : '/'}$url';
+    
+    if (fixedUrl.startsWith('http')) {
+      return fixedUrl;
+    }
+    
+    // Handle relative paths (e.g. /uploads/...)
+    final cleanPath = fixedUrl.startsWith('/') ? fixedUrl.substring(1) : fixedUrl;
+    return '$serverUrl/$cleanPath';
   }
 
   // ==================== HOME ====================
@@ -29,7 +53,7 @@ class ApiService {
   static Future<Map<String, dynamic>> fetchHomeData() async {
     final response = await http.get(
       Uri.parse('$baseUrl/home'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
     );
     return jsonDecode(response.body);
   }
@@ -72,7 +96,7 @@ class ApiService {
         .replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
     );
     return jsonDecode(response.body);
   }
@@ -88,7 +112,7 @@ class ApiService {
         .replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
     );
     return jsonDecode(response.body);
   }
@@ -113,7 +137,7 @@ class ApiService {
         Uri.parse('$baseUrl/rooms').replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
     );
     return jsonDecode(response.body);
   }
@@ -136,7 +160,7 @@ class ApiService {
         Uri.parse('$baseUrl/services').replace(queryParameters: queryParams);
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
     );
     return jsonDecode(response.body);
   }
@@ -145,7 +169,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getFilterMeta() async {
     final response = await http.get(
       Uri.parse('$baseUrl/rooms/filter-meta'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
     );
     return jsonDecode(response.body);
   }
@@ -158,7 +182,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/vouchers/validate'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({
         'code': code,
         'orderValue': orderValue,
@@ -177,7 +201,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({'email': email, 'password': password}),
     );
     return jsonDecode(response.body);
@@ -192,7 +216,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/register'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({
         'full_name': fullName,
         'email': email,
@@ -212,7 +236,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/verify-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({'email': email, 'otp': otp, 'type': type}),
     );
     return jsonDecode(response.body);
@@ -225,7 +249,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/resend-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({'email': email, 'type': type}),
     );
     return jsonDecode(response.body);
@@ -237,7 +261,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/forgot-password'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({'email': email}),
     );
     return jsonDecode(response.body);
@@ -250,7 +274,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/reset-password'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({
         'reset_token': resetToken,
         'new_password': newPassword,
@@ -267,7 +291,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$baseUrl/auth/me'),
       headers: {
-        'Content-Type': 'application/json',
+        ..._headers,
         'Authorization': 'Bearer $token',
       },
     );
@@ -285,6 +309,7 @@ class ApiService {
     if (avatarPath != null) {
       final request = http.MultipartRequest('PUT', uri);
       request.headers['Authorization'] = 'Bearer $token';
+      request.headers['ngrok-skip-browser-warning'] = 'true';
 
       // Thêm các fields khác
       request.fields.addAll(data);
@@ -300,7 +325,7 @@ class ApiService {
       final response = await http.put(
         uri,
         headers: {
-          'Content-Type': 'application/json',
+          ..._headers,
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode(data),
@@ -319,12 +344,25 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
     await prefs.setString('user_data', jsonEncode(user));
+    await prefs.setInt('login_timestamp', DateTime.now().millisecondsSinceEpoch);
   }
 
-  /// Lấy token đã lưu
+  /// Kiểm tra và lấy token đã lưu (hết hạn sau 7 ngày)
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    final token = prefs.getString('auth_token');
+    final loginTimestamp = prefs.getInt('login_timestamp');
+
+    if (token != null && loginTimestamp != null) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+      if (now - loginTimestamp > sevenDaysInMs) {
+        // Session expired
+        await clearSession();
+        return null;
+      }
+    }
+    return token;
   }
 
   /// Lấy thông tin user đã lưu
@@ -342,6 +380,19 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('user_data');
+    await prefs.remove('login_timestamp');
+  }
+
+  /// Đánh dấu đã xem onboarding
+  static Future<void> markOnboardingSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_onboarding', true);
+  }
+
+  /// Kiểm tra đã xem onboarding chưa
+  static Future<bool> hasSeenOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('has_seen_onboarding') ?? false;
   }
 
   // ==================== GENERIC METHODS ====================
@@ -352,7 +403,7 @@ class ApiService {
     final response = await http.post(
       Uri.parse('$baseUrl$endpoint'),
       headers: {
-        'Content-Type': 'application/json',
+        ..._headers,
         if (token != null) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode(body, toEncodable: (item) {
@@ -368,7 +419,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$baseUrl$endpoint'),
       headers: {
-        'Content-Type': 'application/json',
+        ..._headers,
         if (token != null) 'Authorization': 'Bearer $token',
       },
     );
