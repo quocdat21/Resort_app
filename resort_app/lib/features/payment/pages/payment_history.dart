@@ -70,7 +70,8 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
     final Map<String, List<dynamic>> groups = {};
     for (var p in payments) {
       final date = DateTime.tryParse(p['created_at'] ?? '') ?? DateTime.now();
-      final monthStr = DateFormat('MMMM yyyy').format(date).toUpperCase();
+      final locale = Localizations.localeOf(context).languageCode;
+      final monthStr = DateFormat.yMMMM(locale).format(date).toUpperCase();
       if (!groups.containsKey(monthStr)) {
         groups[monthStr] = [];
       }
@@ -233,10 +234,12 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
         double.tryParse(p['amount']?.toString() ?? '0') ?? 0.0;
     final DateTime date =
         DateTime.tryParse(p['created_at'] ?? '') ?? DateTime.now();
-    final String dateStr =
-        DateFormat('MMM dd, hh:mm a').format(date).toUpperCase();
+    final locale = Localizations.localeOf(context).languageCode;
+    final String dateStr = locale == 'vi'
+        ? DateFormat('dd/MM/yyyy, HH:mm').format(date)
+        : DateFormat('MMM dd, hh:mm a').format(date).toUpperCase();
     final String itemName =
-        p['item_name'] ?? (type == 'room' ? 'Accommodation' : 'Service');
+        p['item_name'] ?? (type == 'room' ? AppStrings.get(context, 'accommodation') : AppStrings.get(context, 'services'));
     final String ref = p['booking_code'] ?? 'REF-UNKNOWN';
 
     Color statusColor = Colors.green;
@@ -344,7 +347,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    status,
+                    _getLocalizedStatus(context, status),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: statusColor,
                       fontSize: 8,
@@ -358,5 +361,22 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
         ),
       ),
     );
+  }
+
+  String _getLocalizedStatus(BuildContext context, String status) {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return AppStrings.get(context, 'paid_status');
+      case 'refunded':
+        return AppStrings.get(context, 'refunded_status');
+      case 'pending':
+        return AppStrings.get(context, 'pending').toUpperCase();
+      case 'failed':
+        return AppStrings.get(context, 'failed_status');
+      case 'cancelled':
+        return AppStrings.get(context, 'cancelled').toUpperCase();
+      default:
+        return status;
+    }
   }
 }

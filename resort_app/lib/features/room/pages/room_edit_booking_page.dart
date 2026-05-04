@@ -5,6 +5,7 @@ import 'package:resort_app/core/services/api_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class EditBookingPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -72,7 +73,8 @@ class _EditBookingPageState extends State<EditBookingPage> {
     if (providedAges is List) {
       _childAges = List<String>.from(providedAges);
     } else {
-      _childAges = List.generate(_children, (_) => '< 6 years old');
+      _childAges = List.generate(
+          _children, (_) => AppStrings.get(context, 'age_less_6'));
     }
 
     _basePrice = (widget.bookingData['base_price'] is int)
@@ -96,7 +98,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Edit Booking',
+          AppStrings.get(context, 'edit_booking'),
           style: AppTextStyles.h3
               .copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
         ),
@@ -109,7 +111,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
           children: [
             _buildCurrentReservationCard(),
             const SizedBox(height: 32),
-            _buildSectionLabel('SELECT DATES'),
+            _buildSectionLabel(AppStrings.get(context, 'select_dates').toUpperCase()),
             const SizedBox(height: 16),
             _buildDateDisplay(),
             const SizedBox(height: 16),
@@ -175,7 +177,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CURRENT RESERVATION',
+                  AppStrings.get(context, 'current_reservation').toUpperCase(),
                   style: AppTextStyles.labelSmall
                       .copyWith(color: Colors.white70, fontSize: 10),
                 ),
@@ -203,10 +205,10 @@ class _EditBookingPageState extends State<EditBookingPage> {
       ),
       child: Row(
         children: [
-          Expanded(child: _dateItem('CHECK-IN', _rangeStart)),
+          Expanded(child: _dateItem(AppStrings.get(context, 'check_in').toUpperCase(), _rangeStart)),
           Container(
               width: 1, height: 40, color: AppColors.surfaceContainerHigh),
-          Expanded(child: _dateItem('CHECK-OUT', _rangeEnd)),
+          Expanded(child: _dateItem(AppStrings.get(context, 'check_out').toUpperCase(), _rangeEnd)),
         ],
       ),
     );
@@ -222,7 +224,9 @@ class _EditBookingPageState extends State<EditBookingPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          date != null ? DateFormat('MMM dd, yyyy').format(date) : 'Select',
+          date != null
+              ? DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(date)
+              : AppStrings.get(context, 'select'),
           style: AppTextStyles.bodyMedium
               .copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
         ),
@@ -249,6 +253,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
         ],
       ),
       child: TableCalendar(
+        locale: Localizations.localeOf(context).languageCode,
         firstDay: firstSelectableDay,
         lastDay: DateTime.utc(2030, 12, 31),
         focusedDay: _focusedDay.isBefore(firstSelectableDay)
@@ -306,14 +311,14 @@ class _EditBookingPageState extends State<EditBookingPage> {
     int freeUnder6Limit = roomCount * 2;
 
     for (String ageStr in _childAges) {
-      if (ageStr == '< 6 years old') {
+      if (ageStr == AppStrings.get(context, 'age_less_6')) {
         under6Count++;
         if (under6Count > freeUnder6Limit) {
           extraFeePerNight += 200000;
         }
-      } else if (ageStr == '6 - 12 years old') {
+      } else if (ageStr == AppStrings.get(context, 'age_6_12')) {
         extraFeePerNight += 200000;
-      } else if (ageStr == '> 12 years old') {
+      } else if (ageStr == AppStrings.get(context, 'age_more_12')) {
         extraFeePerNight += 400000;
       }
     }
@@ -335,7 +340,8 @@ class _EditBookingPageState extends State<EditBookingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Room Charge${nights > 0 ? ' ($nights nights)' : ''}',
+              Text(
+                  '${AppStrings.get(context, 'room_charge')}${nights > 0 ? ' ($nights ${AppStrings.get(context, 'nights')})' : ''}',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: AppColors.outline)),
               Text(
@@ -350,7 +356,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text('Children Extra Fee',
+                  child: Text(AppStrings.get(context, 'children_extra_fee'),
                       style: AppTextStyles.bodySmall
                           .copyWith(color: AppColors.outline)),
                 ),
@@ -365,7 +371,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text('Taxes & Fees (10%)',
+                child: Text(AppStrings.get(context, 'service_fee_taxes'),
                     style: AppTextStyles.bodySmall
                         .copyWith(color: AppColors.outline)),
               ),
@@ -382,7 +388,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text('Total',
+                child: Text(AppStrings.get(context, 'total'),
                     style: AppTextStyles.h3.copyWith(
                         fontWeight: FontWeight.bold, color: AppColors.primary)),
               ),
@@ -396,7 +402,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
             ],
           ),
           const SizedBox(height: 12),
-          Text('*Children extra fee includes breakfast.',
+          Text(AppStrings.get(context, 'extra_fee_breakfast_note'),
               style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.outline,
                   fontStyle: FontStyle.italic,
@@ -414,7 +420,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
         onPressed: () {
           if (_rangeStart == null || _rangeEnd == null) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Vui lòng chọn ngày Check-in, Check-out!'),
+                content: Text(AppStrings.get(context, 'select_dates_error')),
                 backgroundColor: AppColors.error));
             return;
           }
@@ -435,7 +441,7 @@ class _EditBookingPageState extends State<EditBookingPage> {
           elevation: 8,
         ),
         child: Text(
-          'Update Booking',
+          AppStrings.get(context, 'update_booking'),
           style: AppTextStyles.bodyLarge.copyWith(
             fontWeight: FontWeight.bold,
             color: Colors.white,

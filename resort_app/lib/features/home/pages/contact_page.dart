@@ -59,7 +59,7 @@ class _ContactPageState extends State<ContactPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                "We're here to help\nyou find your\npeace.",
+                AppStrings.get(context, 'contact_headline'),
                 style: AppTextStyles.h1.copyWith(
                   color: AppColors.primary,
                   height: 1.1,
@@ -158,7 +158,7 @@ class _ContactPageState extends State<ContactPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Leave a message and our concierge will contact you shortly.",
+                      AppStrings.get(context, 'inquiry_form_subtitle'),
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.onSurfaceVariant,
                         height: 1.5,
@@ -180,7 +180,7 @@ class _ContactPageState extends State<ContactPage> {
                     AppLabel(text: AppStrings.get(context, 'your_message')),
                     _buildTextField(
                       controller: _messageController,
-                      hintText: "How can we assist your stay?",
+                      hintText: AppStrings.get(context, 'message_hint'),
                       maxLines: 4,
                     ),
                     const SizedBox(height: 32),

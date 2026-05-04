@@ -6,6 +6,7 @@ import 'package:resort_app/features/room/pages/room_booking_summary_page.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class SelectServicesPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -191,7 +192,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Select Services',
+          AppStrings.get(context, 'select_services'),
           style: AppTextStyles.h3
               .copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
         ),
@@ -213,7 +214,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     child: Text(
-                      'Không có dịch vụ nào khả dụng.',
+                      AppStrings.get(context, 'no_services_available'),
                       style: AppTextStyles.bodyMedium
                           .copyWith(color: AppColors.outline),
                     ),
@@ -242,18 +243,19 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
     final int adults = search['adults'] ?? 1;
     final int children = search['children'] ?? 0;
 
-    String dates = 'Chưa chọn ngày';
+    String dates = AppStrings.get(context, 'no_dates_selected');
     if (checkInStr != null && checkOutStr != null) {
       try {
         final checkInDate = DateFormat('yyyy-MM-dd').parse(checkInStr);
         final checkOutDate = DateFormat('yyyy-MM-dd').parse(checkOutStr);
+        final locale = Localizations.localeOf(context).languageCode;
         dates =
-            '${DateFormat('MMM dd').format(checkInDate)} - ${DateFormat('MMM dd').format(checkOutDate)}';
+            '${DateFormat.MMMd(locale).format(checkInDate)} - ${DateFormat.MMMd(locale).format(checkOutDate)}';
       } catch (_) {}
     }
 
-    String guests = '$adults Adults';
-    if (children > 0) guests += ', $children Children';
+    String guests = AppStrings.get(context, 'adults_count').replaceAll('{n}', adults.toString());
+    if (children > 0) guests += ', ${AppStrings.get(context, 'children_count').replaceAll('{n}', children.toString())}';
 
     final String? mainImage = search['main_image_url'];
 
@@ -407,7 +409,9 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'From ${NumberFormat('#,###').format(service['price'])} VND / ${service['unit']}',
+                  AppStrings.get(context, 'from_price_unit')
+                      .replaceAll('{price}', NumberFormat('#,###').format(service['price']))
+                      .replaceAll('{unit}', service['unit']),
                   style: AppTextStyles.bodySmall.copyWith(
                       fontWeight: FontWeight.bold, color: AppColors.secondary),
                 ),
@@ -535,7 +539,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'STAY SUMMARY',
+            AppStrings.get(context, 'stay_summary_title'),
             style: AppTextStyles.labelSmall.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 1.1,
@@ -543,22 +547,26 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _summaryRow('Room Charge ($roomCount room × $nights nights)',
+          _summaryRow(
+              AppStrings.get(context, 'room_charge_n_nights')
+                  .replaceAll('{n_rooms}', roomCount.toString())
+                  .replaceAll('{n_nights}', nights.toString()),
               '${NumberFormat('#,###').format(roomCharge)} VND'),
           if (selectedRoomNumberStrings.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _summaryRow('Room Numbers', selectedRoomNumberStrings.join(', ')),
+            _summaryRow(AppStrings.get(context, 'room_numbers'),
+                selectedRoomNumberStrings.join(', ')),
           ],
           if (totalExtraFee > 0) ...[
             const SizedBox(height: 12),
-            _summaryRow('Children Extra Fee',
+            _summaryRow(AppStrings.get(context, 'children_extra_fee'),
                 '${NumberFormat('#,###').format(totalExtraFee)} VND'),
           ],
           const SizedBox(height: 12),
-          _summaryRow('Services Total',
+          _summaryRow(AppStrings.get(context, 'services_total'),
               '${NumberFormat('#,###').format(_totalServices)} VND'),
           const SizedBox(height: 12),
-          _summaryRow('Service Fee & Taxes (10%)',
+          _summaryRow(AppStrings.get(context, 'service_fee_tax'),
               '${NumberFormat('#,###').format(tax)} VND'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -568,7 +576,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total',
+                AppStrings.get(context, 'total'),
                 style: AppTextStyles.h3.copyWith(
                     fontWeight: FontWeight.bold, color: AppColors.primary),
               ),
@@ -616,7 +624,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('FINAL AMOUNT',
+                Text(AppStrings.get(context, 'final_amount'),
                     style: AppTextStyles.labelSmall.copyWith(
                         fontSize: 9,
                         color: AppColors.outline,
@@ -665,7 +673,7 @@ class _SelectServicesPageState extends State<SelectServicesPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Continue',
+                      AppStrings.get(context, 'continue'),
                       style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

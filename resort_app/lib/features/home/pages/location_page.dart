@@ -59,7 +59,7 @@ class LocationPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "Moc Chau, Son La,\nVietnam",
+                    AppStrings.get(context, 'location_headline'),
                     style: AppTextStyles.h1.copyWith(
                       color: AppColors.primary,
                       height: 1.1,
@@ -68,7 +68,7 @@ class LocationPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Nestled in the misty highlands of Northern Vietnam, surrounded by verdant tea hills and blooming plum blossoms.",
+                    AppStrings.get(context, 'location_desc'),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.onSurfaceVariant,
                       height: 1.5,
@@ -171,7 +171,7 @@ class LocationPage extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Highland Access",
+                                        AppStrings.get(context, 'highland_access'),
                                         style:
                                             AppTextStyles.bodyMedium.copyWith(
                                           fontWeight: FontWeight.bold,
@@ -179,7 +179,7 @@ class LocationPage extends StatelessWidget {
                                         ),
                                       ),
                                       Text(
-                                        "4 hours from Hanoi",
+                                        AppStrings.get(context, 'travel_time'),
                                         style: AppTextStyles.bodySmall.copyWith(
                                           color: AppColors.onSurfaceVariant,
                                         ),

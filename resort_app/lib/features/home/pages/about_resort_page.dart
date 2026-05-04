@@ -34,7 +34,7 @@ class AboutResortPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "PREMIUM ECO-LUXURY",
+                AppStrings.get(context, 'premium_eco_luxury'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.outline,
                   letterSpacing: 2.0,
@@ -61,7 +61,7 @@ class AboutResortPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                "A sanctuary carved into the emerald slopes of the Moc Chau highlands, where the mist of the morning meets the luxury of intentional design.",
+                AppStrings.get(context, 'resort_tagline'),
                 style: AppTextStyles.bodyLarge.copyWith(
                   fontStyle: FontStyle.italic,
                   color: AppColors.onSurfaceVariant,
@@ -78,7 +78,7 @@ class AboutResortPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  "Our philosophy centers on \"The Digital Conservatory\" — a belief that modern living should coexist harmoniously with the organic world. At Thao Nguyen Resort, we've replaced rigid boundaries with flowing spaces and sustainable materials that reflect the verdant landscape of northern Vietnam.\n\nExperience the quiet prestige of the highlands, where every detail is curated to provide a sanctuary from the digital noise of the outside world.",
+                  AppStrings.get(context, 'resort_philosophy'),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.onSurfaceVariant,
                     height: 1.6,
@@ -90,30 +90,27 @@ class AboutResortPage extends StatelessWidget {
               // Feature 1
               _buildFeatureCard(
                 icon: Icons.park_outlined,
-                title: "Nature-inspired design",
-                description:
-                    "Architecture that breathes with the mountains, utilizing local wood and stone to mirror the natural terrain.",
+                title: AppStrings.get(context, 'nature_inspired_title'),
+                description: AppStrings.get(context, 'nature_inspired_desc'),
               ),
               const SizedBox(height: 16),
               // Feature 2
               _buildFeatureCard(
                 icon: Icons.verified_user_outlined,
-                title: "Premium services",
-                description:
-                    "Bespoke concierge care and world-class culinary experiences that celebrate highland heritage.",
+                title: AppStrings.get(context, 'premium_services_title'),
+                description: AppStrings.get(context, 'premium_services_desc'),
               ),
               const SizedBox(height: 16),
               // Feature 3
               _buildFeatureCard(
                 icon: Icons.spa_outlined,
-                title: "Peaceful atmosphere",
-                description:
-                    "Quiet zones and meditation spaces designed to restore your inner rhythm and clarity.",
+                title: AppStrings.get(context, 'peaceful_atmosphere_title'),
+                description: AppStrings.get(context, 'peaceful_atmosphere_desc'),
               ),
 
               const SizedBox(height: 48),
               Text(
-                "AMENITIES OVERVIEW",
+                AppStrings.get(context, 'amenities_overview'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.outline,
                   letterSpacing: 2.0,
@@ -136,7 +133,7 @@ class AboutResortPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Infinity Forest Pool",
+                          AppStrings.get(context, 'infinity_pool'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -144,7 +141,7 @@ class AboutResortPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Heated mountain-spring water",
+                          AppStrings.get(context, 'infinity_pool_desc'),
                           style: AppTextStyles.bodySmall.copyWith(
                             color: Colors.white.withOpacity(0.8),
                           ),
@@ -173,7 +170,7 @@ class AboutResortPage extends StatelessWidget {
                               color: AppColors.onSurfaceVariant, size: 24),
                           const SizedBox(height: 12),
                           Text(
-                            "Organic Dining",
+                            AppStrings.get(context, 'organic_dining'),
                             style: AppTextStyles.bodyMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.onSurface,
@@ -198,7 +195,7 @@ class AboutResortPage extends StatelessWidget {
                               color: AppColors.onSurfaceVariant, size: 24),
                           const SizedBox(height: 12),
                           Text(
-                            "Highland Spa",
+                            AppStrings.get(context, 'highland_spa'),
                             style: AppTextStyles.bodyMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.onSurface,
@@ -221,7 +218,7 @@ class AboutResortPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Complimentary Mountain Biking",
+                      AppStrings.get(context, 'mountain_biking'),
                       style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.onSecondaryContainer,

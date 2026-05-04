@@ -221,7 +221,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "ACCOUNT PREFERENCES",
+                        AppStrings.get(context, 'account_preferences'),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: AppColors.outline,
                           letterSpacing: 1.5,

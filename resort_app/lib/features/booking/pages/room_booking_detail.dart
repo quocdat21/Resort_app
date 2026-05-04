@@ -45,8 +45,8 @@ class RoomBookingDetailPage extends StatelessWidget {
 
     // Crucial: Get real room count and room numbers from API
     final List<dynamic> roomNumbers = data['room_numbers'] ?? [];
-    final int roomCount = roomNumbers.isNotEmpty 
-        ? roomNumbers.length 
+    final int roomCount = roomNumbers.isNotEmpty
+        ? roomNumbers.length
         : (data['selectedRoomNumberIds'] as List?)?.length ?? 1;
 
     print('DEBUG: Room numbers for detail: $roomNumbers, Count: $roomCount');
@@ -176,10 +176,14 @@ class RoomBookingDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTimeInfo('CHECK-IN',
-                  _formatDisplayDate(checkInStr, true, isCheckIn: true)),
-              _buildTimeInfo('CHECK-OUT',
-                  _formatDisplayDate(checkOutStr, true, isCheckOut: true)),
+              _buildTimeInfo(
+                  AppStrings.get(context, 'check_in').toUpperCase(),
+                  _formatDisplayDate(context, checkInStr, true,
+                      isCheckIn: true)),
+              _buildTimeInfo(
+                  AppStrings.get(context, 'check_out').toUpperCase(),
+                  _formatDisplayDate(context, checkOutStr, true,
+                      isCheckOut: true)),
             ],
           ),
         ],
@@ -276,7 +280,8 @@ class RoomBookingDetailPage extends StatelessWidget {
                           children: [
                             const Padding(
                               padding: EdgeInsets.only(top: 2),
-                              child: Icon(Icons.meeting_room_outlined, size: 16, color: Color(0xFF2D472B)),
+                              child: Icon(Icons.meeting_room_outlined,
+                                  size: 16, color: Color(0xFF2D472B)),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -284,7 +289,7 @@ class RoomBookingDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Số phòng:',
+                                    '${AppStrings.get(context, 'room_number_label')}:',
                                     style: AppTextStyles.bodySmall.copyWith(
                                       color: Colors.grey.shade500,
                                       fontWeight: FontWeight.bold,
@@ -329,8 +334,8 @@ class RoomBookingDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-            Icons.add_shopping_cart_outlined, 'Dịch vụ đặt kèm'),
+        _buildSectionHeader(Icons.add_shopping_cart_outlined,
+            AppStrings.get(context, 'extra_services_included')),
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
@@ -358,7 +363,8 @@ class RoomBookingDetailPage extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              service['name'] ?? 'Dịch vụ',
+                              service['name'] ??
+                                  AppStrings.get(context, 'services'),
                               style: AppTextStyles.bodyMedium
                                   .copyWith(fontWeight: FontWeight.w600),
                             ),
@@ -463,12 +469,16 @@ class RoomBookingDetailPage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildPriceRow(AppStrings.get(context, 'check_in'),
-                  _formatDisplayDate(checkInStr, true, isCheckIn: true),
+              _buildPriceRow(
+                  AppStrings.get(context, 'check_in'),
+                  _formatDisplayDate(context, checkInStr, true,
+                      isCheckIn: true),
                   isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow(AppStrings.get(context, 'check_out'),
-                  _formatDisplayDate(checkOutStr, true, isCheckOut: true),
+              _buildPriceRow(
+                  AppStrings.get(context, 'check_out'),
+                  _formatDisplayDate(context, checkOutStr, true,
+                      isCheckOut: true),
                   isBoldValue: true),
               const SizedBox(height: 12),
               _buildPriceRow(AppStrings.get(context, 'rooms'), itemName,
@@ -493,27 +503,29 @@ class RoomBookingDetailPage extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
               if (servicesTotal > 0) ...[
-                _buildPriceRow(
-                    'Services Total', currencyFormat.format(servicesTotal),
+                _buildPriceRow(AppStrings.get(context, 'services_total_label'),
+                    currencyFormat.format(servicesTotal),
                     isBoldValue: true),
                 const SizedBox(height: 12),
               ],
-              _buildPriceRow(
-                  'Service Fee & Taxes (10%)', currencyFormat.format(taxToShow),
+              _buildPriceRow(AppStrings.get(context, 'service_tax_label'),
+                  currencyFormat.format(taxToShow),
                   isBoldValue: true),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child:
                     Divider(height: 1, color: AppColors.surfaceContainerHigh),
               ),
-              _buildPriceRow(
-                  'Tổng cộng', currencyFormat.format(calculatedSubtotal)),
+              _buildPriceRow(AppStrings.get(context, 'total'),
+                  currencyFormat.format(calculatedSubtotal)),
               if (discount > 0) ...[
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Discount',
+                    Text(
+                        AppStrings.get(context, 'discount_label')
+                            .replaceAll('{code}', ''),
                         style: AppTextStyles.bodyMedium
                             .copyWith(color: Colors.red)),
                     Text('-${currencyFormat.format(discount)}',
@@ -684,12 +696,16 @@ class RoomBookingDetailPage extends StatelessWidget {
     );
   }
 
-  String _formatDisplayDate(String dateStr, bool includeTime,
+  String _formatDisplayDate(
+      BuildContext context, String dateStr, bool includeTime,
       {bool isCheckIn = false, bool isCheckOut = false}) {
     if (dateStr.isEmpty) return 'N/A';
     try {
       final date = DateTime.parse(dateStr);
-      final String dateFormatted = DateFormat('dd MMM yyyy').format(date);
+      final locale = Localizations.localeOf(context).languageCode;
+      final String dateFormatted = locale == 'vi'
+          ? DateFormat('dd/MM/yyyy').format(date)
+          : DateFormat.yMMMd(locale).format(date);
       if (includeTime) {
         if (isCheckIn) return '$dateFormatted (14:00)';
         if (isCheckOut) return '$dateFormatted (12:00)';

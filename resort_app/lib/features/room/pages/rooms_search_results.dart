@@ -9,6 +9,7 @@ import 'package:resort_app/features/room/pages/room_details_page.dart';
 import 'package:resort_app/features/room/pages/rooms_search.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/features/profile/pages/profile_page.dart';
 
 class RoomsSearchResults extends StatefulWidget {
   final Map<String, dynamic>? filters;
@@ -118,7 +119,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Không thể kết nối đến server: $e';
+        _error = '${AppStrings.get(context, 'error_connecting_server')}: $e';
         _isLoading = false;
       });
     }
@@ -133,7 +134,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
       parts.add('${f['checkIn']} → ${f['checkOut']}');
     }
     if (f['adults'] != null && f['adults'] > 0) {
-      parts.add('${f['adults']} ${AppStrings.get(context, 'adults')}');
+      parts.add(AppStrings.get(context, 'adults_count')
+          .replaceAll('{n}', f['adults'].toString()));
     }
     return parts.join(' • ');
   }
@@ -240,7 +242,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Found $_totalRooms Sanctuaries',
+              AppStrings.get(context, 'found_n_sanctuaries')
+                  .replaceAll('{n}', _totalRooms.toString()),
               style: AppTextStyles.h2.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
@@ -318,14 +321,25 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
             ),
           ),
           const SizedBox(width: 12),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                ? CachedNetworkImageProvider(
-                    ApiService.fixImageUrl(_avatarUrl!),
-                    headers: ApiService.imageHeaders)
-                : const AssetImage('assets/icons/profile.png') as ImageProvider,
+          GestureDetector(
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const ProfilePage(),
+                  transitionDuration: Duration.zero,
+                ),
+              );
+            },
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: AppColors.surfaceContainerHigh,
+              backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                  ? CachedNetworkImageProvider(
+                      ApiService.fixImageUrl(_avatarUrl!),
+                      headers: ApiService.imageHeaders)
+                  : const AssetImage('assets/icons/profile.png') as ImageProvider,
+            ),
           ),
         ],
       ),
@@ -380,7 +394,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                     child: Text(
                       hasActiveFilter
                           ? activeLabels.join(' • ').toUpperCase()
-                          : 'FILTER',
+                          : AppStrings.get(context, 'filter'),
                       style: AppTextStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
@@ -418,7 +432,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'PRICE',
+                    AppStrings.get(context, 'price'),
                     style: AppTextStyles.labelSmall.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -479,7 +493,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Filters',
+                              AppStrings.get(context, 'filters'),
                               style: AppTextStyles.h3.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primary),
@@ -493,7 +507,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                                   });
                                 },
                                 child: Text(
-                                  'Clear All',
+                                  AppStrings.get(context, 'clear_all'),
                                   style: AppTextStyles.bodySmall.copyWith(
                                     color: AppColors.error,
                                     fontWeight: FontWeight.bold,
@@ -515,7 +529,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                         children: [
                           // ── ROOM TYPE SECTION ──
                           Text(
-                            'ROOM TYPE',
+                            AppStrings.get(context, 'room_type'),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.bold,
@@ -525,7 +539,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                           const SizedBox(height: 12),
                           _buildFilterOption(
                             icon: Icons.hotel,
-                            label: 'All Room Types',
+                            label: AppStrings.get(context, 'all_room_types'),
                             isSelected: tempFilterType == null,
                             onTap: () {
                               setSheetState(() => tempFilterType = null);
@@ -546,7 +560,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
 
                           // ── ZONE SECTION ──
                           Text(
-                            'ZONE',
+                            AppStrings.get(context, 'zone').toUpperCase(),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.bold,
@@ -556,7 +570,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                           const SizedBox(height: 12),
                           _buildFilterOption(
                             icon: Icons.location_on_outlined,
-                            label: 'All Zones',
+                            label: AppStrings.get(context, 'all_zones'),
                             isSelected: tempZoneId == null,
                             onTap: () {
                               setSheetState(() => tempZoneId = null);
@@ -603,7 +617,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                           elevation: 0,
                         ),
                         child: Text(
-                          'Apply Filters',
+                          AppStrings.get(context, 'apply_filters'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.1,
@@ -697,7 +711,7 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
     final String zoneName = room['zone_name'] ?? 'Resort';
     final String categoryName = room['category_name'] ?? '';
     final String shortDesc =
-        '${sizeSqm}m² • $capacityAdults Adults${capacityChildren > 0 ? ' + $capacityChildren Children' : ''} • $categoryName';
+        '${sizeSqm}m² • ${AppStrings.get(context, 'adults_count').replaceAll('{n}', capacityAdults.toString())}${capacityChildren > 0 ? ' + ${AppStrings.get(context, 'children_count').replaceAll('{n}', capacityChildren.toString())}' : ''} • $categoryName';
 
     return GestureDetector(
       onTap: () {
@@ -780,7 +794,8 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '$availableCount LEFT',
+                        AppStrings.get(context, 'left_count')
+                            .replaceAll('{n}', availableCount.toString()),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: Colors.white,
                           fontSize: 9,

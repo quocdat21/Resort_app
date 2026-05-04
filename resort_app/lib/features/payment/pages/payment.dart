@@ -5,6 +5,7 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:resort_app/features/payment/pages/qr_payment_page.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class PaymentPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -73,7 +74,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 _buildRoomSummaryCard(data),
               const SizedBox(height: 32),
               Text(
-                'SELECT PAYMENT METHOD',
+                AppStrings.get(context, 'select_payment_method'),
                 style: AppTextStyles.labelSmall.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -83,15 +84,15 @@ class _PaymentPageState extends State<PaymentPage> {
               const SizedBox(height: 16),
               _buildPaymentMethodItem(
                 id: 'BANK_TRANSFER',
-                title: 'Chuyển khoản ngân hàng',
-                subtitle: 'Instant Local Transfer',
+                title: AppStrings.get(context, 'bank_transfer'),
+                subtitle: AppStrings.get(context, 'instant_local_transfer'),
                 icon: Icons.account_balance_outlined,
                 isSelected: _selectedMethod == 'BANK_TRANSFER',
                 isComingSoon: false,
               ),
               _buildPaymentMethodItem(
                 id: 'VNPAY',
-                title: 'e-wallet',
+                title: AppStrings.get(context, 'e_wallet'),
                 subtitle: 'MoMo, VNPAY, ZaloPay',
                 icon: Icons.account_balance_wallet_outlined,
                 isSelected: _selectedMethod == 'VNPAY',
@@ -99,7 +100,7 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
               _buildPaymentMethodItem(
                 id: 'CREDIT_CARD',
-                title: 'CREDIT CARD',
+                title: AppStrings.get(context, 'credit_card'),
                 subtitle: 'Visa, Mastercard, JCB',
                 icon: Icons.credit_card_outlined,
                 isSelected: _selectedMethod == 'CREDIT_CARD',
@@ -107,14 +108,14 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
               _buildPaymentMethodItem(
                 id: 'CASH',
-                title: 'cash',
-                subtitle: 'Pay at front desk',
+                title: AppStrings.get(context, 'cash_label'),
+                subtitle: AppStrings.get(context, 'pay_at_front_desk'),
                 icon: Icons.payments_outlined,
                 isSelected: _selectedMethod == 'CASH',
                 isComingSoon: true,
               ),
               const SizedBox(height: 32),
-              const Center(
+              Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -122,7 +123,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         size: 14, color: Color(0xFFA0A0A0)),
                     SizedBox(width: 8),
                     Text(
-                      'SECURE ENCRYPTED CHECKOUT',
+                      AppStrings.get(context, 'secure_checkout'),
                       style: TextStyle(
                         color: Color(0xFFA0A0A0),
                         fontSize: 10,
@@ -143,6 +144,7 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Widget _buildRoomSummaryCard(Map<String, dynamic> data) {
+    final locale = Localizations.localeOf(context).languageCode;
     final room = data['room'] ?? data;
     final checkIn = data['checkIn'] is DateTime
         ? data['checkIn'] as DateTime?
@@ -230,7 +232,7 @@ class _PaymentPageState extends State<PaymentPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'STAY SUMMARY',
+            AppStrings.get(context, 'stay_summary_title'),
             style: AppTextStyles.labelSmall.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 1.1,
@@ -241,41 +243,49 @@ class _PaymentPageState extends State<PaymentPage> {
 
           // Dates
           if (checkIn != null && checkOut != null) ...[
-            _buildSummaryRow(
-                'Check-in', '${dateFormat.format(checkIn)} (14:00)'),
+            _buildSummaryRow(AppStrings.get(context, 'check_in'),
+                '${DateFormat.yMMMd(locale).format(checkIn)} (14:00)'),
             const SizedBox(height: 8),
-            _buildSummaryRow(
-                'Check-out', '${dateFormat.format(checkOut)} (12:00)'),
+            _buildSummaryRow(AppStrings.get(context, 'check_out'),
+                '${DateFormat.yMMMd(locale).format(checkOut)} (12:00)'),
             const SizedBox(height: 16),
           ],
 
           // Room Details
-          _buildSummaryRow('Room', room['name'] ?? 'Room'),
+          _buildSummaryRow(
+              AppStrings.get(context, 'room_label'), room['name'] ?? 'Room'),
           const SizedBox(height: 8),
-          _buildSummaryRow('Quantity', '$roomCount phòng ($nights đêm)'),
+          _buildSummaryRow(
+              AppStrings.get(context, 'quantity'),
+              AppStrings.get(context, 'n_rooms_m_nights')
+                  .replaceAll('{n}', roomCount.toString())
+                  .replaceAll('{m}', nights.toString())),
           if (selectedRoomNumberStrings.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              'Room Number: ${selectedRoomNumberStrings.join(', ')}',
+              AppStrings.get(context, 'room_number_label')
+                  .replaceAll('{n}', selectedRoomNumberStrings.join(', ')),
               style: AppTextStyles.bodySmall
                   .copyWith(color: const Color(0xFFA0A0A0)),
             ),
           ],
           const SizedBox(height: 8),
-          _buildSummaryRow('Room Price', _currencyFormat.format(roomCharge)),
+          _buildSummaryRow(AppStrings.get(context, 'room_price_label'),
+              _currencyFormat.format(roomCharge)),
           const SizedBox(height: 8),
-          _buildSummaryRow('Guests', '$adults Adults, $children Children'),
+          _buildSummaryRow(AppStrings.get(context, 'num_guests'),
+              '${AppStrings.get(context, 'adults_count').replaceAll('{n}', adults.toString())}, ${AppStrings.get(context, 'children_count').replaceAll('{n}', children.toString())}'),
 
           if (totalExtraFee > 0) ...[
             const SizedBox(height: 8),
-            _buildSummaryRow(
-                'Children Extra Fee', _currencyFormat.format(totalExtraFee)),
+            _buildSummaryRow(AppStrings.get(context, 'children_extra_fee'),
+                _currencyFormat.format(totalExtraFee)),
           ],
 
           if (services.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              'SELECTED SERVICES',
+              AppStrings.get(context, 'selected_services_title'),
               style: AppTextStyles.labelSmall.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 10,
@@ -295,22 +305,22 @@ class _PaymentPageState extends State<PaymentPage> {
             }).toList(),
           ],
           const SizedBox(height: 8),
-          _buildSummaryRow(
-              'Service Fee & Taxes (10%)', _currencyFormat.format(tax)),
+          _buildSummaryRow(AppStrings.get(context, 'service_tax_label'),
+              _currencyFormat.format(tax)),
 
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Divider(height: 1, color: AppColors.surfaceContainerHigh),
           ),
-          _buildSummaryRow(
-              'Total', _currencyFormat.format(totalBeforeDiscount)),
+          _buildSummaryRow(AppStrings.get(context, 'total'),
+              _currencyFormat.format(totalBeforeDiscount)),
           if (discount > 0) ...[
             const SizedBox(height: 12),
             _buildSummaryRow(
                 data['appliedVoucher'] != null &&
                         data['appliedVoucher']['discount_type'] == 'percentage'
-                    ? 'Discount (${data['appliedVoucher']['discount_value']}%)'
-                    : 'Discount',
+                    ? '${AppStrings.get(context, 'discount_code')} (${data['appliedVoucher']['discount_value']}%)'
+                    : AppStrings.get(context, 'discount_code'),
                 '-${_currencyFormat.format(discount)}',
                 isDiscount: true),
           ],
@@ -320,7 +330,7 @@ class _PaymentPageState extends State<PaymentPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Total Amount',
+                  AppStrings.get(context, 'total_amount_label'),
                   style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold, color: AppColors.primary),
                 ),
@@ -385,7 +395,7 @@ class _PaymentPageState extends State<PaymentPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'STAY SUMMARY',
+            AppStrings.get(context, 'stay_summary_title'),
             style: AppTextStyles.labelSmall.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 1.1,
@@ -397,20 +407,21 @@ class _PaymentPageState extends State<PaymentPage> {
           const SizedBox(height: 24),
           _buildSummaryRow(subLabel, _currencyFormat.format(itemPrice)),
           const SizedBox(height: 12),
-          _buildSummaryRow(
-              'Thuế dịch vụ (10%)', _currencyFormat.format(taxAmount)),
+          _buildSummaryRow(AppStrings.get(context, 'service_tax_label'),
+              _currencyFormat.format(taxAmount)),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Divider(height: 1, color: AppColors.surfaceContainerHigh),
           ),
-          _buildSummaryRow('Total', _currencyFormat.format(subtotal)),
+          _buildSummaryRow(AppStrings.get(context, 'total'),
+              _currencyFormat.format(subtotal)),
           if (discount > 0) ...[
             const SizedBox(height: 12),
             _buildSummaryRow(
                 data['appliedVoucher'] != null &&
                         data['appliedVoucher']['discount_type'] == 'percentage'
-                    ? 'Giảm giá (${data['appliedVoucher']['discount_value']}%)'
-                    : 'Giảm giá',
+                    ? '${AppStrings.get(context, 'discount_code')} (${data['appliedVoucher']['discount_value']}%)'
+                    : AppStrings.get(context, 'discount_code'),
                 '-${_currencyFormat.format(discount)}',
                 isDiscount: true),
           ],
@@ -420,7 +431,7 @@ class _PaymentPageState extends State<PaymentPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Total Amount',
+                  AppStrings.get(context, 'total_amount_label'),
                   style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold, color: AppColors.primary),
                 ),
@@ -529,7 +540,9 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                   ),
                   Text(
-                    isComingSoon ? 'Coming Soon' : subtitle,
+                    isComingSoon
+                        ? AppStrings.get(context, 'coming_soon')
+                        : subtitle,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: const Color(0xFFA0A0A0),
                     ),
@@ -569,7 +582,9 @@ class _PaymentPageState extends State<PaymentPage> {
                         // Calculate total amount again for safety
                         final data = widget.bookingData;
                         final bool isService = data.containsKey('service');
-                        final bool isFixedPriceType = isService && (data['service']['type'] == 'Hall' || data['service']['type'] == 'Event');
+                        final bool isFixedPriceType = isService &&
+                            (data['service']['type'] == 'Hall' ||
+                                data['service']['type'] == 'Event');
                         double amount = 0;
 
                         if (isService) {
@@ -638,8 +653,11 @@ class _PaymentPageState extends State<PaymentPage> {
                             : selectedRoomNumberIds.length;
                         final double roomCharge =
                             basePrice * calculatedNights * roomCount;
-                        final double taxAmount = isService 
-                            ? ((isFixedPriceType ? basePrice : basePrice * (data['guests'] ?? 1)) * 0.1)
+                        final double taxAmount = isService
+                            ? ((isFixedPriceType
+                                    ? basePrice
+                                    : basePrice * (data['guests'] ?? 1)) *
+                                0.1)
                             : ((roomCharge + totalExtraFee) * 0.1);
 
                         // Call backend to create booking
@@ -649,15 +667,25 @@ class _PaymentPageState extends State<PaymentPage> {
                               ...data,
                               'userId': data['userId'] ?? _userId ?? 1,
                               'type': isService ? 'service' : 'room',
-                              'adults': isService ? (data['guests'] ?? 1) : (data['adults'] ?? 1),
+                              'adults': isService
+                                  ? (data['guests'] ?? 1)
+                                  : (data['adults'] ?? 1),
                               'totalAmount': amount,
                               'taxAmount': taxAmount,
                               'extraFee': totalExtraFee,
-                              'discountAmount': double.tryParse(data['discount']?.toString() ?? '0') ?? 0,
+                              'discountAmount': double.tryParse(
+                                      data['discount']?.toString() ?? '0') ??
+                                  0,
                               'paymentMethod': _selectedMethod,
-                              'voucherId': data['voucherId'] ?? data['appliedVoucher']?['id'],
-                              'selectedServices': data['selectedServices'] ?? data['services'] ?? [],
-                              'selectedRoomNumberIds': data['selectedRoomNumberIds'] ?? data['roomNumberIds'] ?? [],
+                              'voucherId': data['voucherId'] ??
+                                  data['appliedVoucher']?['id'],
+                              'selectedServices': data['selectedServices'] ??
+                                  data['services'] ??
+                                  [],
+                              'selectedRoomNumberIds':
+                                  data['selectedRoomNumberIds'] ??
+                                      data['roomNumberIds'] ??
+                                      [],
                               'base_price': data['base_price'] ?? 0,
                             }));
 
@@ -687,7 +715,8 @@ class _PaymentPageState extends State<PaymentPage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                   content: Text(response['message'] ??
-                                      'Failed to create booking')),
+                                      AppStrings.get(
+                                          context, 'failed_create_booking'))),
                             );
                           }
                         }
@@ -722,7 +751,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     const Icon(Icons.verified_user_outlined, size: 18),
                     const SizedBox(width: 12),
                     Text(
-                      'Pay Now',
+                      AppStrings.get(context, 'pay_now'),
                       style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -737,15 +766,13 @@ class _PaymentPageState extends State<PaymentPage> {
           const SizedBox(height: 16),
           RichText(
             textAlign: TextAlign.center,
-            text: const TextSpan(
+            text: TextSpan(
               style: TextStyle(color: Color(0xFFA0A0A0), fontSize: 10),
               children: [
+                TextSpan(text: AppStrings.get(context, 'pay_now_agreement')),
                 TextSpan(
-                    text:
-                        'By clicking "Pay Now", you agree to Thao Nguyen Resort\'s '),
-                TextSpan(
-                  text: 'Terms of Use',
-                  style: TextStyle(
+                  text: AppStrings.get(context, 'terms_of_use'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.underline,
                   ),

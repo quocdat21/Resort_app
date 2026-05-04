@@ -24,13 +24,14 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
   @override
   void initState() {
     super.initState();
-    
+
     final now = DateTime.now();
     DateTime initialDate = now;
     if (now.hour >= 14) {
-      initialDate = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+      initialDate =
+          DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
     }
-    
+
     _selectedDate = initialDate;
     _generateWeekDates(initialDate);
   }
@@ -247,20 +248,24 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: _buildPackageCard(
                   idx,
-                  price['price_type'] == 'full_day'
-                      ? AppStrings.get(context, 'full_day_pkg')
-                      : price['price_type'] == 'half_day'
-                          ? AppStrings.get(context, 'half_day_pkg')
-                          : AppStrings.get(context, 'standard_unit'),
+                  widget.service['type'] == 'Hall'
+                      ? (price['price_type'] == 'full_day'
+                          ? AppStrings.get(context, 'full_day_pkg')
+                          : price['price_type'] == 'half_day'
+                              ? AppStrings.get(context, 'half_day_pkg')
+                              : AppStrings.get(context, 'standard_unit'))
+                      : AppStrings.get(context, 'service_packages'),
                   '${_formatPrice(price['price'])} VND',
-                  price['unit'] != null
-                      ? '${AppStrings.get(context, 'per')} ${price['unit']}'
-                      : 'Standard rate',
+                  widget.service['type'] == 'Hall'
+                      ? (price['unit'] != null
+                          ? '${AppStrings.get(context, 'per')} ${price['unit']}'
+                          : 'Standard rate')
+                      : '',
                   [
                     price['description'] ??
                         'Exclusive service at Thao Nguyen Resort'
                   ],
-                  isMostLoved: idx == 0,
+                  isMostLoved: widget.service['type'] == 'Hall' && idx == 0,
                 ),
               );
             })
@@ -341,17 +346,19 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: AppTextStyles.h3.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary),
-                      ),
-                      Text(
-                        subtitle,
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.outline),
-                      ),
+                      if (title.isNotEmpty)
+                        Text(
+                          title,
+                          style: AppTextStyles.h3.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary),
+                        ),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          subtitle,
+                          style: AppTextStyles.bodySmall
+                              .copyWith(color: AppColors.outline),
+                        ),
                     ],
                   ),
                 ),
@@ -672,7 +679,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                 child: Row(
                   children: [
                     Text(
-                      DateFormat('MMMM yyyy').format(_selectedDate),
+                      DateFormat.yMMMM(Localizations.localeOf(context).languageCode).format(_selectedDate),
                       style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.secondary,
                           fontWeight: FontWeight.bold),
@@ -719,7 +726,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        DateFormat('EEE').format(date).toUpperCase(),
+                        DateFormat.E(Localizations.localeOf(context).languageCode).format(date).toUpperCase(),
                         style: TextStyle(
                           color:
                               isSelected ? Colors.white70 : AppColors.outline,
@@ -756,7 +763,9 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
 
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate.isBefore(firstSelectableDay) ? firstSelectableDay : _selectedDate,
+      initialDate: _selectedDate.isBefore(firstSelectableDay)
+          ? firstSelectableDay
+          : _selectedDate,
       firstDate: firstSelectableDay,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {

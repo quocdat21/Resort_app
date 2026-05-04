@@ -4,19 +4,19 @@ const dashboardController = {
   getOverview: async (req, res) => {
     try {
       // 1. STATS (Current 30 days vs Previous 30 days)
-      
+
       const getStatsForPeriod = async (daysOffset, daysDuration) => {
         // daysOffset: how many days ago the period ends
         // daysDuration: how many days the period lasts
         const end = `DATE_SUB(NOW(), INTERVAL ${daysOffset} DAY)`;
         const start = `DATE_SUB(NOW(), INTERVAL ${daysOffset + daysDuration} DAY)`;
-        
+
         const [revenue] = await pool.execute(`SELECT SUM(amount) as total FROM Payments WHERE status = 'success' AND payment_date > ${start} AND payment_date <= ${end}`);
         const [bookings] = await pool.execute(`SELECT COUNT(*) as total FROM Bookings WHERE created_at > ${start} AND created_at <= ${end}`);
         const [users] = await pool.execute(`SELECT COUNT(*) as total FROM Users WHERE created_at > ${start} AND created_at <= ${end}`);
         const [services] = await pool.execute(`SELECT COUNT(*) as total FROM Bookings WHERE type = 'service' AND created_at > ${start} AND created_at <= ${end}`);
         const [payments] = await pool.execute(`SELECT COUNT(*) as total FROM Payments WHERE status = 'success' AND payment_date > ${start} AND payment_date <= ${end}`);
-        
+
         return {
           revenue: revenue[0].total || 0,
           bookings: bookings[0].total || 0,
@@ -89,7 +89,7 @@ const dashboardController = {
         FROM Bookings
         GROUP BY status
       `);
-      
+
       const statusColors = {
         'Confirmed': '#10b981',
         'Pending': '#3b82f6',
@@ -104,7 +104,7 @@ const dashboardController = {
       // 4. ROOM OCCUPANCY CHART (Last 7 days)
       const occupancyChart = [];
       const [[{ totalRoomsCount }]] = await pool.execute("SELECT COUNT(*) as totalRoomsCount FROM Room_Numbers WHERE status != 'Hidden'");
-      
+
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -123,7 +123,7 @@ const dashboardController = {
 
         const occupied = occupiedResult[0].occupiedCount || 0;
         const rate = totalRoomsCount > 0 ? Math.round((occupied / totalRoomsCount) * 100) : 0;
-        
+
         occupancyChart.push({
           name: dayLabel,
           rate: rate,
@@ -145,7 +145,7 @@ const dashboardController = {
           END as roomOrService
         FROM Bookings b
         LEFT JOIN Users u ON b.user_id = u.id
-        ORDER BY b.id ASC
+        ORDER BY b.id DESC
         LIMIT 5
       `);
 
@@ -153,7 +153,7 @@ const dashboardController = {
       const [latestPayments] = await pool.execute(`
         SELECT id, 'SePay' as method, amount, status
         FROM Payments
-        ORDER BY id ASC
+        ORDER BY id DESC
         LIMIT 5
       `);
 

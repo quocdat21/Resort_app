@@ -3,6 +3,7 @@ import 'package:resort_app/core/services/api_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 import '../../booking/pages/booking_detail.dart';
 
@@ -124,7 +125,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
               const SizedBox(height: 25),
 
               Text(
-                'Booking Confirmed!',
+                AppStrings.get(context, 'booking_confirmed'),
                 style: AppTextStyles.h1.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w900,
@@ -133,7 +134,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
               ),
               const SizedBox(height: 12),
               Text(
-                'Your sanctuary awaits.',
+                AppStrings.get(context, 'sanctuary_awaits'),
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: Colors.grey.shade600,
                   letterSpacing: 0.5,
@@ -169,7 +170,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'RESERVATION ID',
+                                AppStrings.get(context, 'reservation_id_label'),
                                 style: AppTextStyles.labelSmall.copyWith(
                                   color: Colors.brown.shade400,
                                   fontWeight: FontWeight.bold,
@@ -194,7 +195,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              'PAID',
+                              AppStrings.get(context, 'paid_status'),
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: Colors.green.shade700,
                                 fontWeight: FontWeight.bold,
@@ -254,8 +255,8 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                                 const SizedBox(height: 4),
                                 Text(
                                   isService 
-                                      ? 'Thao Nguyen Resort • Service'
-                                      : 'Thao Nguyen Resort • $nights Nights',
+                                      ? AppStrings.get(context, 'resort_service_label')
+                                      : AppStrings.get(context, 'resort_nights_label').replaceAll('{n}', nights.toString()),
                                   style: AppTextStyles.bodySmall.copyWith(
                                     color: Colors.grey.shade600,
                                   ),
@@ -300,7 +301,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                           elevation: 0,
                         ),
                         child: Text(
-                          'View Booking',
+                          AppStrings.get(context, 'view_booking_btn'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -323,7 +324,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                               borderRadius: BorderRadius.circular(18)),
                         ),
                         child: Text(
-                          'Back to Home',
+                          AppStrings.get(context, 'back_to_home_btn'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
@@ -344,7 +345,7 @@ class _PaymentConfirmPageState extends State<PaymentConfirmPage>
                       size: 14, color: Colors.grey.shade400),
                   const SizedBox(width: 8),
                   Text(
-                    'SECURE RESERVATION SYSTEM',
+                    AppStrings.get(context, 'secure_reservation_system'),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.grey.shade400,
                       fontSize: 10,

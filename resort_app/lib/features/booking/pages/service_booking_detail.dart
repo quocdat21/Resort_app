@@ -141,7 +141,7 @@ class ServiceBookingDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          _buildTimeInfo('SERVICE DATE', _formatDisplayDate(serviceDateStr, false)),
+          _buildTimeInfo(AppStrings.get(context, 'service_booking_date').toUpperCase(), _formatDisplayDate(context, serviceDateStr, false)),
         ],
       ),
     );
@@ -151,7 +151,7 @@ class ServiceBookingDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(Icons.spa_outlined, 'Service Details'),
+        _buildSectionHeader(Icons.spa_outlined, AppStrings.get(context, 'service_details')),
         const SizedBox(height: 16),
         InkWell(
           onTap: () {
@@ -263,30 +263,29 @@ class ServiceBookingDetailPage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildPriceRow('Ngày dịch vụ', _formatDisplayDate(serviceDateStr, false), isBoldValue: true),
+              _buildPriceRow(AppStrings.get(context, 'service_booking_date'), _formatDisplayDate(context, serviceDateStr, false), isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow('Dịch vụ', itemName, isBoldValue: true),
+              _buildPriceRow(AppStrings.get(context, 'services'), itemName, isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow('Số lượng', 'x$qty', isBoldValue: true),
+              _buildPriceRow(AppStrings.get(context, 'quantity'), 'x$qty', isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow('Đơn giá', currencyFormat.format(servicePrice), isBoldValue: true),
+              _buildPriceRow(AppStrings.get(context, 'unit_price'), currencyFormat.format(servicePrice), isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow('Thành tiền', currencyFormat.format(subtotal), isBoldValue: true),
+              _buildPriceRow(AppStrings.get(context, 'amount_label'), currencyFormat.format(subtotal), isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow('Thuế dịch vụ (10%)', currencyFormat.format(taxAmount), isBoldValue: true),
+              _buildPriceRow(AppStrings.get(context, 'service_tax_label'), currencyFormat.format(taxAmount), isBoldValue: true),
               
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Divider(height: 1, color: AppColors.surfaceContainerHigh),
               ),
-
-              _buildPriceRow('Tổng cộng', currencyFormat.format(calculatedSubtotal)),
+              _buildPriceRow(AppStrings.get(context, 'total'), currencyFormat.format(calculatedSubtotal)),
               if (discount > 0) ...[
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Discount', style: AppTextStyles.bodyMedium.copyWith(color: Colors.red)),
+                    Text(AppStrings.get(context, 'discount_label').replaceAll('{code}', ''), style: AppTextStyles.bodyMedium.copyWith(color: Colors.red)),
                     Text('-${currencyFormat.format(discount)}', style: AppTextStyles.bodyMedium.copyWith(color: Colors.red, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -395,11 +394,14 @@ class ServiceBookingDetailPage extends StatelessWidget {
     );
   }
 
-  String _formatDisplayDate(String dateStr, bool includeTime) {
+  String _formatDisplayDate(BuildContext context, String dateStr, bool includeTime) {
     if (dateStr.isEmpty) return 'N/A';
     try {
       final date = DateTime.parse(dateStr);
-      final String dateFormatted = DateFormat('dd MMM yyyy').format(date);
+      final locale = Localizations.localeOf(context).languageCode;
+      final String dateFormatted = locale == 'vi'
+          ? DateFormat('dd/MM/yyyy').format(date)
+          : DateFormat.yMMMd(locale).format(date);
       if (includeTime) return '$dateFormatted (${DateFormat('HH:mm').format(date)})';
       return dateFormatted;
     } catch (e) { return dateStr; }

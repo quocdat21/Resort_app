@@ -13,6 +13,7 @@ import 'package:resort_app/features/booking/pages/booking_history.dart';
 import 'package:resort_app/features/payment/pages/payment_history.dart';
 import 'package:resort_app/features/room/pages/rooms_search_results.dart';
 import 'package:resort_app/features/service/pages/services_page.dart';
+import 'package:resort_app/features/profile/pages/profile_page.dart';
 
 class SideMenuDrawerPage extends StatefulWidget {
   const SideMenuDrawerPage({super.key});
@@ -81,17 +82,29 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CircleAvatar(
-                            radius: 36,
-                            backgroundColor: AppColors.surfaceContainerHigh,
-                            backgroundImage: (_userData?['avatar_url'] != null &&
-                                    _userData!['avatar_url'].isNotEmpty)
-                                ? CachedNetworkImageProvider(
-                                    ApiService.fixImageUrl(
-                                        _userData!['avatar_url']),
-                                    headers: ApiService.imageHeaders)
-                                : const AssetImage("assets/icons/profile.png")
-                                    as ImageProvider,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context); // Close drawer
+                              Navigator.pushReplacement(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder: (_, __, ___) => const ProfilePage(),
+                                  transitionDuration: Duration.zero,
+                                ),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 36,
+                              backgroundColor: AppColors.surfaceContainerHigh,
+                              backgroundImage: (_userData?['avatar_url'] != null &&
+                                      _userData!['avatar_url'].isNotEmpty)
+                                  ? CachedNetworkImageProvider(
+                                      ApiService.fixImageUrl(
+                                          _userData!['avatar_url']),
+                                      headers: ApiService.imageHeaders)
+                                  : const AssetImage("assets/icons/profile.png")
+                                      as ImageProvider,
+                            ),
                           ),
                         ],
                       ),

@@ -6,6 +6,7 @@ import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/payment/pages/payment.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class BookingSummaryPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -81,7 +82,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(res['message'] ?? 'Áp dụng mã thành công'),
+                content: Text(res['message'] ?? AppStrings.get(context, 'voucher_applied_msg')),
                 backgroundColor: Colors.green),
           );
         }
@@ -94,7 +95,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(res['message'] ?? 'Mã không hợp lệ'),
+                content: Text(res['message'] ?? AppStrings.get(context, 'invalid_voucher_msg')),
                 backgroundColor: AppColors.error),
           );
         }
@@ -103,8 +104,8 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
       setState(() => _isApplyingPromo = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Lỗi kết nối server'),
+          SnackBar(
+              content: Text(AppStrings.get(context, 'error_connecting_server')),
               backgroundColor: AppColors.error),
         );
       }
@@ -130,7 +131,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Review Booking',
+          AppStrings.get(context, 'review_booking'),
           style: AppTextStyles.h3
               .copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
         ),
@@ -151,16 +152,16 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                   _buildTravelersSection(),
                   if (services.isNotEmpty) ...[
                     const SizedBox(height: 32),
-                    _buildSectionTitle('SELECTED SERVICES'),
+                    _buildSectionTitle(AppStrings.get(context, 'selected_services_title')),
                     const SizedBox(height: 16),
                     _buildServicesSection(services),
                   ],
                   const SizedBox(height: 32),
-                  _buildSectionTitle('PRICE BREAKDOWN'),
+                  _buildSectionTitle(AppStrings.get(context, 'price_breakdown')),
                   const SizedBox(height: 16),
                   _buildPriceBreakdownCard(finalTotal),
                   const SizedBox(height: 24),
-                  _buildSectionTitle('DISCOUNT CODE'),
+                  _buildSectionTitle(AppStrings.get(context, 'discount_code')),
                   const SizedBox(height: 8),
                   _buildPromoInput(),
                   const SizedBox(height: 40),
@@ -241,7 +242,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                     ),
                     if (s['type'] == 'counter')
                       Text(
-                        'Quantity: $qty',
+                        '${AppStrings.get(context, 'quantity')}: $qty',
                         style: AppTextStyles.bodySmall
                             .copyWith(color: AppColors.outline),
                       ),
@@ -313,7 +314,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'SELECTED RETREAT',
+                  AppStrings.get(context, 'selected_retreat'),
                   style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.white70,
                       fontSize: 10,
@@ -345,16 +346,17 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
       try {
         final ci = DateTime.parse(checkInStr);
         final co = DateTime.parse(checkOutStr);
-        checkIn = DateFormat('MMM dd, yyyy').format(ci);
-        checkOut = DateFormat('MMM dd, yyyy').format(co);
+        final locale = Localizations.localeOf(context).languageCode;
+        checkIn = DateFormat.yMMMd(locale).format(ci);
+        checkOut = DateFormat.yMMMd(locale).format(co);
       } catch (_) {}
     }
 
     return Row(
       children: [
-        Expanded(child: _buildInfoBox('CHECK-IN', checkIn, 'from 2:00 PM')),
+        Expanded(child: _buildInfoBox(AppStrings.get(context, 'check_in').toUpperCase(), checkIn, AppStrings.get(context, 'from_2pm'))),
         const SizedBox(width: 12),
-        Expanded(child: _buildInfoBox('CHECK-OUT', checkOut, 'until 12:00 PM')),
+        Expanded(child: _buildInfoBox(AppStrings.get(context, 'check_out').toUpperCase(), checkOut, AppStrings.get(context, 'until_12pm'))),
       ],
     );
   }
@@ -392,8 +394,8 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
     final int children = data['children'] ?? 0;
     final List<int> rooms = List<int>.from(data['selectedRoomNumberIds'] ?? []);
 
-    String travelers = '$adults Adults';
-    if (children > 0) travelers += ', $children Children';
+    String travelers = AppStrings.get(context, 'adults_count').replaceAll('{n}', adults.toString());
+    if (children > 0) travelers += ', ${AppStrings.get(context, 'children_count').replaceAll('{n}', children.toString())}';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -408,14 +410,14 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('TRAVELERS & ACCOMMODATION',
+                Text(AppStrings.get(context, 'travelers_accommodation'),
                     style: AppTextStyles.labelSmall.copyWith(
                         fontSize: 9,
                         color: AppColors.outline,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text(
-                    '$travelers • ${rooms.length} Room${rooms.length > 1 ? 's' : ''}',
+                    '$travelers • ${rooms.length} ${rooms.length > 1 ? AppStrings.get(context, 'n_rooms_count_plural').replaceAll('{n}', '') : AppStrings.get(context, 'n_rooms_count').replaceAll('{n}', '')}',
                     style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.bold, color: AppColors.primary)),
               ],
@@ -499,7 +501,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'STAY SUMMARY',
+            AppStrings.get(context, 'stay_summary_title'),
             style: AppTextStyles.labelSmall.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 1.1,
@@ -507,29 +509,35 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _summaryRow('Room Charge ($roomCount room × $nights nights)',
+          _summaryRow(
+              AppStrings.get(context, 'room_charge_n_nights')
+                  .replaceAll('{n_rooms}', roomCount.toString())
+                  .replaceAll('{n_nights}', nights.toString()),
               '${NumberFormat('#,###').format(roomCharge)} VND'),
           if (selectedRoomNumberStrings.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _summaryRow('Room Numbers', selectedRoomNumberStrings.join(', ')),
+            _summaryRow(AppStrings.get(context, 'room_numbers'),
+                selectedRoomNumberStrings.join(', ')),
           ],
           if (totalExtraFee > 0) ...[
             const SizedBox(height: 12),
-            _summaryRow('Children Extra Fee',
+            _summaryRow(AppStrings.get(context, 'children_extra_fee'),
                 '${NumberFormat('#,###').format(totalExtraFee)} VND'),
           ],
           const SizedBox(height: 12),
-          _summaryRow('Services Total',
+          _summaryRow(AppStrings.get(context, 'services_total'),
               '${NumberFormat('#,###').format(servicesTotal)} VND'),
           const SizedBox(height: 12),
-          _summaryRow('Service Fee & Taxes (10%)',
+          _summaryRow(AppStrings.get(context, 'service_fee_tax'),
               '${NumberFormat('#,###').format(tax)} VND'),
           if (_discountAmount > 0) ...[
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Discount (${_appliedVoucher?['code']})',
+                Text(
+                    AppStrings.get(context, 'discount_label')
+                        .replaceAll('{code}', _appliedVoucher?['code'] ?? ''),
                     style: AppTextStyles.bodyMedium
                         .copyWith(color: AppColors.secondary)),
                 Text('- ${NumberFormat('#,###').format(_discountAmount)} VND',
@@ -547,7 +555,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text('Total Amount',
+                child: Text(AppStrings.get(context, 'total_amount_label'),
                     style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold, color: AppColors.primary)),
               ),
@@ -598,8 +606,8 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           Expanded(
             child: TextField(
               controller: _promoController,
-              decoration: const InputDecoration(
-                hintText: 'Enter code',
+              decoration: InputDecoration(
+                hintText: AppStrings.get(context, 'enter_code'),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -625,7 +633,10 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
                     height: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: AppColors.primary))
-                : Text(_appliedVoucher != null ? 'APPLIED' : 'APPLY',
+                : Text(
+                    _appliedVoucher != null
+                        ? AppStrings.get(context, 'applied')
+                        : AppStrings.get(context, 'apply'),
                     style: AppTextStyles.labelSmall
                         .copyWith(fontWeight: FontWeight.bold)),
           ),
@@ -674,7 +685,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Continue',
+              AppStrings.get(context, 'continue'),
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -692,7 +703,7 @@ class _BookingSummaryPageState extends State<BookingSummaryPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Text(
-        'By tapping "Pay Now" you agree to Thao Nguyen Resort\'s Terms of Service and Cancellation Policy.',
+        AppStrings.get(context, 'terms_disclaimer'),
         textAlign: TextAlign.center,
         style: AppTextStyles.bodySmall
             .copyWith(fontSize: 10, color: AppColors.outline, height: 1.5),

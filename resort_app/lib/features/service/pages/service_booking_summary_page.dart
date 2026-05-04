@@ -7,6 +7,7 @@ import 'package:resort_app/features/navigation/bottomNav.dart';
 import 'package:resort_app/features/payment/pages/payment.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 class ServiceBookingSummaryPage extends StatefulWidget {
   final Map<String, dynamic> bookingData;
@@ -95,7 +96,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(res['message'] ?? 'Áp dụng mã thành công'),
+                content: Text(res['message'] ?? AppStrings.get(context, 'voucher_applied_msg')),
                 backgroundColor: Colors.green),
           );
         }
@@ -108,7 +109,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(res['message'] ?? 'Mã không hợp lệ'),
+                content: Text(res['message'] ?? AppStrings.get(context, 'invalid_voucher_msg')),
                 backgroundColor: AppColors.error),
           );
         }
@@ -117,8 +118,8 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
       setState(() => _isApplyingPromo = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Lỗi kết nối server'),
+          SnackBar(
+              content: Text(AppStrings.get(context, 'server_error_msg')),
               backgroundColor: AppColors.error),
         );
       }
@@ -188,9 +189,9 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
                   _buildPriceSummaryCard(service['name'] ?? 'Service',
                       service['type'], basePrice, taxAmount, finalTotal),
                   const SizedBox(height: 24),
-                  const Text(
-                    'DISCOUNT CODE',
-                    style: TextStyle(
+                  Text(
+                    AppStrings.get(context, 'discount_code'),
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: darkGreen,
@@ -202,10 +203,10 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
                   const SizedBox(height: 32),
                   _buildConfirmButton(finalTotal, taxAmount),
                   const SizedBox(height: 16),
-                  const Center(
+                  Center(
                     child: Text(
-                      'SECURE PAYMENT POWERED BY SANCTUARYPAY',
-                      style: TextStyle(
+                      AppStrings.get(context, 'secure_payment_msg'),
+                      style: const TextStyle(
                         color: Color(0xFFA0A0A0),
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -347,13 +348,13 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ngày đặt dịch vụ',
+                AppStrings.get(context, 'service_booking_date'),
                 style: AppTextStyles.bodySmall
                     .copyWith(color: const Color(0xFFA0A0A0)),
               ),
               const SizedBox(height: 4),
               Text(
-                DateFormat('EEEE, d MMMM yyyy').format(_selectedDate),
+                DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).languageCode).format(_selectedDate),
                 style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF1D2120)),
@@ -368,12 +369,12 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
   Widget _buildPeopleSection(dynamic type) {
     if (type == 'Hall' || type == 'Event') return const SizedBox.shrink();
 
-    String label = 'Số lượng';
-    String desc = 'Vui lòng chọn số lượng';
+    String label = AppStrings.get(context, 'quantity');
+    String desc = AppStrings.get(context, 'choose_room_instruction');
 
     if (type == 'Food') {
-      label = 'Số suất';
-      desc = 'Vui lòng chọn số suất ăn';
+      label = AppStrings.get(context, 'num_portions');
+      desc = AppStrings.get(context, 'select_portions_instruction');
     }
 
     return Row(
@@ -464,10 +465,10 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
           _summaryRow('$serviceName $qtyLabel',
               '${_formatPrice(basePrice * (type == 'Hall' || type == 'Event' ? 1 : _peopleCount))} VND'),
           const SizedBox(height: 12),
-          _summaryRow('Thuế dịch vụ (10%)', '${_formatPrice(tax)} VND'),
+          _summaryRow(AppStrings.get(context, 'service_tax_label'), '${_formatPrice(tax)} VND'),
           if (_discountAmount > 0) ...[
             const SizedBox(height: 12),
-            _summaryRow('Discount (${_appliedVoucher?['code']})',
+            _summaryRow('${AppStrings.get(context, 'discount_label').replaceAll('{code}', _appliedVoucher?['code'] ?? '')}',
                 '-${_formatPrice(_discountAmount)} VND',
                 isDiscount: true),
           ],
@@ -479,7 +480,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total',
+                AppStrings.get(context, 'total'),
                 style: AppTextStyles.h3
                     .copyWith(fontWeight: FontWeight.bold, color: darkGreen),
               ),
@@ -528,8 +529,8 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
           Expanded(
             child: TextField(
               controller: _promoController,
-              decoration: const InputDecoration(
-                hintText: 'Enter code',
+              decoration: InputDecoration(
+                hintText: AppStrings.get(context, 'enter_code'),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -555,7 +556,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
                     height: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: AppColors.primary))
-                : Text(_appliedVoucher != null ? 'APPLIED' : 'APPLY',
+                : Text(_appliedVoucher != null ? AppStrings.get(context, 'applied') : AppStrings.get(context, 'apply'),
                     style: AppTextStyles.labelSmall
                         .copyWith(fontWeight: FontWeight.bold)),
           ),
@@ -598,7 +599,7 @@ class _ServiceBookingSummaryPageState extends State<ServiceBookingSummaryPage> {
           elevation: 0,
         ),
         child: Text(
-          'CONFIRM BOOKING',
+          AppStrings.get(context, 'confirm_booking_btn'),
           style: AppTextStyles.bodyLarge.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,

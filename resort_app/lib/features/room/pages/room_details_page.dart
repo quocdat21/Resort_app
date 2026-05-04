@@ -1219,7 +1219,7 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                   shadowColor: AppColors.primary.withOpacity(0.3),
                 ),
                 child: Text(
-                  'Continue',
+                  AppStrings.get(context, 'continue'),
                   style: AppTextStyles.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -1246,7 +1246,7 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'GUESTS',
+            AppStrings.get(context, 'guests').toUpperCase(),
             style: AppTextStyles.labelSmall.copyWith(
               color: AppColors.primary,
               letterSpacing: 1.1,
@@ -1254,16 +1254,17 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _guestCounterRow('Adults', _adults, capacityAdults, (val) {
+          _guestCounterRow(AppStrings.get(context, 'adults'), _adults, capacityAdults, (val) {
             setState(() => _adults = val);
           }),
           const SizedBox(height: 16),
-          _guestCounterRow('Children', _children, capacityChildren, (val) {
+          _guestCounterRow(AppStrings.get(context, 'children'), _children, capacityChildren, (val) {
             setState(() {
               _children = val;
               if (_childAges.length < _children) {
                 _childAges.addAll(List.generate(
-                    _children - _childAges.length, (_) => '< 6 years old'));
+                    _children - _childAges.length,
+                    (_) => AppStrings.get(context, 'age_less_6')));
               } else if (_childAges.length > _children) {
                 _childAges = _childAges.sublist(0, _children);
               }
@@ -1290,7 +1291,9 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                 style: AppTextStyles.bodyMedium
                     .copyWith(fontWeight: FontWeight.bold)),
             Text(
-                label == 'Adults' ? 'Above 12 years old' : 'Below 12 years old',
+                label == AppStrings.get(context, 'adults')
+                    ? AppStrings.get(context, 'above_12')
+                    : AppStrings.get(context, 'below_12'),
                 style:
                     AppTextStyles.bodySmall.copyWith(color: AppColors.outline)),
           ],
@@ -1311,7 +1314,9 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                 onChanged(value + 1);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Tối đa $max $label'),
+                    content: Text(AppStrings.get(context, 'max_capacity_reached')
+                        .replaceAll('{max}', max.toString())
+                        .replaceAll('{label}', label)),
                     backgroundColor: AppColors.error));
               }
             }, isPrimary: true),
@@ -1349,7 +1354,9 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('CHILD ${index + 1} AGE',
+              Text(
+                  AppStrings.get(context, 'child_age_label')
+                      .replaceAll('{n}', (index + 1).toString()),
                   style: AppTextStyles.labelSmall
                       .copyWith(fontSize: 10, color: AppColors.outline)),
               const SizedBox(height: 8),
@@ -1364,9 +1371,9 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                     value: _childAges[index],
                     isExpanded: true,
                     items: [
-                      '< 6 years old',
-                      '6 - 12 years old',
-                      '> 12 years old'
+                      AppStrings.get(context, 'age_less_6'),
+                      AppStrings.get(context, 'age_6_12'),
+                      AppStrings.get(context, 'age_more_12')
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                           value: value,

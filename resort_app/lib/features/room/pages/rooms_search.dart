@@ -5,6 +5,7 @@ import 'package:resort_app/core/services/api_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/core/localization/app_strings.dart';
 
 import 'package:resort_app/features/room/pages/rooms_search_results.dart';
 
@@ -113,7 +114,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Vui lòng chọn ngày Check-in, Check-out và số người lớn!',
+            AppStrings.get(context, 'search_error_msg'),
             style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
           ),
           backgroundColor: AppColors.error,
@@ -154,7 +155,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Find Sanctuary',
+          AppStrings.get(context, 'find_sanctuary'),
           style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -162,7 +163,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
           TextButton(
             onPressed: _resetFilters,
             child: Text(
-              'RESET',
+              AppStrings.get(context, 'reset'),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.bold,
@@ -178,24 +179,24 @@ class _RoomsSearchState extends State<RoomsSearch> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('YOUR STAY', 'Check-in & Out'),
+                _buildSectionHeader(AppStrings.get(context, 'your_stay'), AppStrings.get(context, 'checkin_out')),
                 const SizedBox(height: 16),
                 _buildDateDisplay(),
                 const SizedBox(height: 16),
                 _buildCalendar(),
                 const SizedBox(height: 32),
-                _buildSectionHeader('CAPACITY', 'Number of Guests'),
+                _buildSectionHeader(AppStrings.get(context, 'capacity'), AppStrings.get(context, 'num_guests')),
                 const SizedBox(height: 16),
-                _buildGuestCounter('Adults', 'Ages 13 or above', _adults,
+                _buildGuestCounter(AppStrings.get(context, 'adults'), AppStrings.get(context, 'ages_13_above'), _adults,
                     (val) => setState(() => _adults = val)),
                 const SizedBox(height: 16),
-                _buildGuestCounter('Children', 'Ages 2 - 12', _children, (val) {
+                _buildGuestCounter(AppStrings.get(context, 'children'), AppStrings.get(context, 'ages_2_12'), _children, (val) {
                   setState(() {
                     _children = val;
                     if (_childAges.length < _children) {
                       _childAges.addAll(List.generate(
                           _children - _childAges.length,
-                          (_) => '< 6 years old'));
+                          (_) => AppStrings.get(context, 'age_less_6')));
                     } else if (_childAges.length > _children) {
                       _childAges = _childAges.sublist(0, _children);
                     }
@@ -206,13 +207,13 @@ class _RoomsSearchState extends State<RoomsSearch> {
                   _buildChildAgeSelectors(),
                 ],
                 const SizedBox(height: 32),
-                _buildSectionHeader('LOCATION', 'Zone'),
+                _buildSectionHeader(AppStrings.get(context, 'zone').toUpperCase(), AppStrings.get(context, 'zone')),
                 const SizedBox(height: 16),
                 _buildZoneSelector(),
                 const SizedBox(height: 32),
                 _buildSectionHeader(
-                  'INVESTMENT',
-                  'Price Range',
+                  AppStrings.get(context, 'investment'),
+                  AppStrings.get(context, 'price_range'),
                   trailing:
                       '${NumberFormat('#,###').format(_priceRange.start.round())} - ${NumberFormat('#,###').format(_priceRange.end.round())} VND',
                 ),
@@ -274,11 +275,11 @@ class _RoomsSearchState extends State<RoomsSearch> {
     return Row(
       children: [
         Expanded(
-          child: _dateBox('ARRIVAL', _rangeStart != null ? DateFormat('MMM dd, yyyy').format(_rangeStart!) : 'Select Date'),
+          child: _dateBox(AppStrings.get(context, 'arrival'), _rangeStart != null ? DateFormat('MMM dd, yyyy').format(_rangeStart!) : AppStrings.get(context, 'select_date')),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _dateBox('DEPARTURE', _rangeEnd != null ? DateFormat('MMM dd, yyyy').format(_rangeEnd!) : 'Select Date'),
+          child: _dateBox(AppStrings.get(context, 'departure'), _rangeEnd != null ? DateFormat('MMM dd, yyyy').format(_rangeEnd!) : AppStrings.get(context, 'select_date')),
         ),
       ],
     );
@@ -454,7 +455,8 @@ class _RoomsSearchState extends State<RoomsSearch> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CHILD ${index + 1} AGE',
+                  AppStrings.get(context, 'child_age_label')
+                      .replaceAll('{n}', (index + 1).toString()),
                   style: AppTextStyles.labelSmall.copyWith(fontSize: 10, color: AppColors.outline, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -469,8 +471,11 @@ class _RoomsSearchState extends State<RoomsSearch> {
                       value: _childAges[index],
                       isExpanded: true,
                       icon: const Icon(Icons.expand_more, size: 20),
-                      items: ['< 6 years old', '6 - 12 years old', '> 12 years old']
-                          .map((String value) {
+                      items: [
+                        AppStrings.get(context, 'age_less_6'),
+                        AppStrings.get(context, 'age_6_12'),
+                        AppStrings.get(context, 'age_more_12')
+                      ].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold)),
@@ -497,7 +502,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
   Widget _buildZoneSelector() {
     // Add an "All Zones" option at the beginning
     final allOptions = [
-      {'id': null, 'name': 'All Zones'},
+      {'id': null, 'name': AppStrings.get(context, 'all_zones')},
       ..._zones,
     ];
 
@@ -539,7 +544,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'ZONE',
+                        AppStrings.get(context, 'zone').toUpperCase(),
                         style: AppTextStyles.labelSmall.copyWith(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -602,8 +607,8 @@ class _RoomsSearchState extends State<RoomsSearch> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _priceBox('MINIMUM', '${NumberFormat('#,###').format(_priceRange.start.round())}đ'),
-            _priceBox('MAXIMUM', '${NumberFormat('#,###').format(_priceRange.end.round())}đ'),
+            _priceBox(AppStrings.get(context, 'minimum'), '${NumberFormat('#,###').format(_priceRange.start.round())}đ'),
+            _priceBox(AppStrings.get(context, 'maximum'), '${NumberFormat('#,###').format(_priceRange.end.round())}đ'),
           ],
         ),
       ],
@@ -655,7 +660,7 @@ class _RoomsSearchState extends State<RoomsSearch> {
             const Icon(Icons.search, size: 24),
             const SizedBox(width: 12),
             Text(
-              'SEARCH SANCTUARIES',
+              AppStrings.get(context, 'search_sanctuaries'),
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,

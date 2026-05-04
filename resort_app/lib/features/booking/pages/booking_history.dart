@@ -183,19 +183,20 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
   Widget _buildBookingCard(dynamic booking) {
     final status = booking['status'] ?? 'Pending';
     final type = booking['type'] ?? 'room';
-    final itemName = booking['item_name'] ?? (type == 'room' ? 'Resort Room' : 'Resort Service');
+    final itemName = booking['item_name'] ?? (type == 'room' ? AppStrings.get(context, 'resort_room') : AppStrings.get(context, 'resort_service'));
     final imageUrl = booking['image_url'];
     final amount = double.tryParse(booking['total_amount']?.toString() ?? '0') ?? 0;
     
     // Format dates
     String dateRange = '';
+    final locale = Localizations.localeOf(context).languageCode;
     if (type == 'room') {
-      final checkIn = booking['check_in'] != null ? DateFormat('MMM d').format(DateTime.parse(booking['check_in'])) : 'N/A';
-      final checkOut = booking['check_out'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(booking['check_out'])) : 'N/A';
+      final checkIn = booking['check_in'] != null ? DateFormat.MMMd(locale).format(DateTime.parse(booking['check_in'])) : 'N/A';
+      final checkOut = booking['check_out'] != null ? DateFormat.yMMMd(locale).format(DateTime.parse(booking['check_out'])) : 'N/A';
       dateRange = '$checkIn - $checkOut';
     } else {
       dateRange = booking['service_booking_date'] != null 
-          ? DateFormat('MMM d, yyyy').format(DateTime.parse(booking['service_booking_date']))
+          ? DateFormat.yMMMd(locale).format(DateTime.parse(booking['service_booking_date']))
           : 'N/A';
     }
 
@@ -301,7 +302,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total Price',
+                      AppStrings.get(context, 'total_price'),
                       style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
                     ),
                     Text(

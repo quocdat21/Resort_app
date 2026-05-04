@@ -11,6 +11,7 @@ import 'package:resort_app/features/room/pages/room_details_page.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:resort_app/core/widgets/loading.dart';
+import 'package:resort_app/features/profile/pages/profile_page.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -210,15 +211,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(width: 12),
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.surfaceContainerHigh,
-                backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                    ? CachedNetworkImageProvider(
-                        ApiService.fixImageUrl(_avatarUrl!),
-                        headers: ApiService.imageHeaders)
-                    : const AssetImage("assets/icons/profile.png")
-                        as ImageProvider,
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (_, __, ___) => const ProfilePage(),
+                      transitionDuration: Duration.zero,
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.surfaceContainerHigh,
+                  backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                      ? CachedNetworkImageProvider(
+                          ApiService.fixImageUrl(_avatarUrl!),
+                          headers: ApiService.imageHeaders)
+                      : const AssetImage("assets/icons/profile.png")
+                          as ImageProvider,
+                ),
               )
             ],
           )
