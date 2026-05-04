@@ -169,7 +169,7 @@ CREATE TABLE Bookings (
   check_in DATE NULL,
   check_out DATE NULL,
   service_booking_date DATE NULL,
-  adults INT DEFAULT 1,
+  adults INT DEFAULT 0,
   children INT DEFAULT 0,
   total_amount DECIMAL(15,0),
   tax_amount DECIMAL(15,0) DEFAULT 0,
