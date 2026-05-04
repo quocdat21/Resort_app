@@ -12,11 +12,19 @@ const SALT_ROUNDS = 12;
 const formatUser = (user) => {
   if (!user) return null;
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  
+  let avatarUrl = user.avatar_url;
+  if (avatarUrl) {
+    if (avatarUrl.includes('localhost:3000') || avatarUrl.includes('127.0.0.1:3000')) {
+      avatarUrl = avatarUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+    } else if (!avatarUrl.startsWith('http')) {
+      avatarUrl = `${baseUrl}${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
+    }
+  }
+  
   return {
     ...user,
-    avatar_url: user.avatar_url 
-      ? (user.avatar_url.startsWith('http') ? user.avatar_url : `${baseUrl}${user.avatar_url}`)
-      : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.email)}&background=random`
+    avatar_url: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.email)}&background=random`
   };
 };
 

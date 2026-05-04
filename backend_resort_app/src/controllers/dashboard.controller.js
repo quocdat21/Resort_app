@@ -145,7 +145,7 @@ const dashboardController = {
           END as roomOrService
         FROM Bookings b
         LEFT JOIN Users u ON b.user_id = u.id
-        ORDER BY b.created_at DESC
+        ORDER BY b.id ASC
         LIMIT 5
       `);
 
@@ -153,7 +153,7 @@ const dashboardController = {
       const [latestPayments] = await pool.execute(`
         SELECT id, 'SePay' as method, amount, status
         FROM Payments
-        ORDER BY payment_date DESC
+        ORDER BY id ASC
         LIMIT 5
       `);
 

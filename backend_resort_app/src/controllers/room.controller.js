@@ -472,13 +472,22 @@ const roomController = {
 
       // Format image URLs
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      const formatted = rows.map(r => ({
-        ...r,
-        main_image_url: r.main_image_url
-          ? (r.main_image_url.startsWith('http') ? r.main_image_url : `${baseUrl}${r.main_image_url}`)
-          : null,
-        avg_rating: r.avg_rating ? parseFloat(r.avg_rating).toFixed(1) : null,
-      }));
+      const formatted = rows.map(r => {
+        let mainImageUrl = r.main_image_url;
+        if (mainImageUrl) {
+          if (mainImageUrl.includes('localhost:3000') || mainImageUrl.includes('127.0.0.1:3000')) {
+            mainImageUrl = mainImageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+          } else if (!mainImageUrl.startsWith('http')) {
+            mainImageUrl = `${baseUrl}${mainImageUrl.startsWith('/') ? '' : '/'}${mainImageUrl}`;
+          }
+        }
+        
+        return {
+          ...r,
+          main_image_url: mainImageUrl,
+          avg_rating: r.avg_rating ? parseFloat(r.avg_rating).toFixed(1) : null,
+        };
+      });
 
       res.json({
         success: true,
@@ -660,10 +669,20 @@ const roomController = {
       }
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      const formattedImages = images.map(img => ({
-        ...img,
-        image_url: img.image_url.startsWith('http') ? img.image_url : `${baseUrl}${img.image_url}`
-      }));
+      const formattedImages = images.map(img => {
+        let imageUrl = img.image_url;
+        if (imageUrl) {
+          if (imageUrl.includes('localhost:3000') || imageUrl.includes('127.0.0.1:3000')) {
+            imageUrl = imageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+          } else if (!imageUrl.startsWith('http')) {
+            imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+          }
+        }
+        return {
+          ...img,
+          image_url: imageUrl
+        };
+      });
 
       const mainImage = formattedImages.find(img => img.image_url.includes('/pr-')) || formattedImages[0] || null;
       const secondaryImages = formattedImages.filter(img => img !== mainImage);

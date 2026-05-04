@@ -39,7 +39,7 @@ const homeController = {
         LEFT JOIN Reviews rv ON rv.room_number_id = rn.id
         GROUP BY r.id
         ORDER BY avg_rating DESC, review_count DESC
-        LIMIT 10
+        LIMIT 100
       `);
 
       // 3. Banners - active vouchers as promotional banners
@@ -64,30 +64,46 @@ const homeController = {
       // Format response
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
-      const formattedCategories = categories.map(cat => ({
-        id: cat.id,
-        name: cat.name,
-        zone_name: cat.zone_name,
-        icon_url: cat.icon_url
-          ? (cat.icon_url.startsWith('http') ? cat.icon_url : `${baseUrl}${cat.icon_url}`)
-          : null
-      }));
+      const formattedCategories = categories.map(cat => {
+        let iconUrl = cat.icon_url;
+        if (iconUrl) {
+          if (iconUrl.includes('localhost:3000') || iconUrl.includes('127.0.0.1:3000')) {
+            iconUrl = iconUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+          } else if (!iconUrl.startsWith('http')) {
+            iconUrl = `${baseUrl}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+          }
+        }
+        return {
+          id: cat.id,
+          name: cat.name,
+          zone_name: cat.zone_name,
+          icon_url: iconUrl
+        };
+      });
 
-      const formattedRooms = popularRooms.map(room => ({
-        id: room.id,
-        name: room.name,
-        main_image_url: room.main_image_url
-          ? (room.main_image_url.startsWith('http') ? room.main_image_url : `${baseUrl}${room.main_image_url}`)
-          : null,
-        base_price: Number(room.base_price),
-        capacity_adults: room.capacity_adults,
-        capacity_children: room.capacity_children,
-        size_sqm: room.size_sqm,
-        category_name: room.category_name,
-        zone_name: room.zone_name || 'Resort',
-        avg_rating: Number(Number(room.avg_rating).toFixed(1)),
-        review_count: room.review_count
-      }));
+      const formattedRooms = popularRooms.map(room => {
+        let mainImageUrl = room.main_image_url;
+        if (mainImageUrl) {
+          if (mainImageUrl.includes('localhost:3000') || mainImageUrl.includes('127.0.0.1:3000')) {
+            mainImageUrl = mainImageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
+          } else if (!mainImageUrl.startsWith('http')) {
+            mainImageUrl = `${baseUrl}${mainImageUrl.startsWith('/') ? '' : '/'}${mainImageUrl}`;
+          }
+        }
+        return {
+          id: room.id,
+          name: room.name,
+          main_image_url: mainImageUrl,
+          base_price: Number(room.base_price),
+          capacity_adults: room.capacity_adults,
+          capacity_children: room.capacity_children,
+          size_sqm: room.size_sqm,
+          category_name: room.category_name,
+          zone_name: room.zone_name || 'Resort',
+          avg_rating: Number(Number(room.avg_rating).toFixed(1)),
+          review_count: room.review_count
+        };
+      });
 
       const formattedBanners = banners.map(v => {
         let title = '';

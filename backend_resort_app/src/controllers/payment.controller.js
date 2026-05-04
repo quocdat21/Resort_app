@@ -26,7 +26,7 @@ const paymentController = {
         userId, type,
         checkIn, checkOut,
         adults, children,
-        totalAmount, taxAmount, extraFee,
+        totalAmount, taxAmount, tax_amount, extraFee,
         voucherId, appliedVoucher, discountAmount,
         roomNumberIds, selectedRoomNumberIds, // Support both names
         base_price, // Needed for Booking_Rooms
@@ -34,6 +34,10 @@ const paymentController = {
         serviceId, packageInfo,
         serviceDate, date, service, package
       } = req.body;
+
+      const finalTaxAmount = taxAmount || tax_amount || 0;
+      const finalAdults = type === 'service' ? 0 : (adults || 0);
+      const finalChildren = type === 'service' ? 0 : (children || 0);
 
       const finalVoucherId = voucherId || appliedVoucher?.id || null;
       const finalRoomNumberIds = roomNumberIds || selectedRoomNumberIds;
@@ -59,10 +63,10 @@ const paymentController = {
           formatDate(checkIn),
           formatDate(checkOut),
           formatDate(serviceDate || date),
-          adults || 1,
-          children || 0,
+          finalAdults,
+          finalChildren,
           totalAmount,
-          taxAmount || 0,
+          finalTaxAmount,
           extraFee || 0,
           finalVoucherId,
           discountAmount || 0
@@ -107,10 +111,14 @@ const paymentController = {
       // SERVICE
       if (type === 'service') {
         const sId = service?.id || serviceId;
-        const p = packageInfo || package;
-
-        const price = Number(p?.price || 0);
-        const qty = adults || 1;
+        const pkgInfo = packageInfo || req.body.package || package;
+        const sType = service?.type || '';
+        
+        console.log('DEBUG: Creating service booking. Service:', service, 'Package Info:', pkgInfo);
+        
+        const price = Number(pkgInfo?.price || 0);
+        const qty = (sType === 'Hall' || sType === 'Event') ? 1 : (adults || 1);
+        const unit = (sType === 'Hall' || sType === 'Event') ? '' : (pkgInfo?.unit || 'người');
 
         await conn.execute(
           `INSERT INTO Booking_Services 
@@ -119,8 +127,8 @@ const paymentController = {
           [
             bookingId,
             sId,
-            p?.price_type || 'unit',
-            p?.unit || 'người',
+            pkgInfo?.price_type || 'unit',
+            unit,
             qty,
             price,
             price * qty,
@@ -132,13 +140,14 @@ const paymentController = {
       // PAYMENT
       const [paymentResult] = await conn.execute(
         `INSERT INTO Payments 
-        (booking_id, order_code, amount, status, description, expired_at)
-        VALUES (?, ?, ?, 'pending', ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))`,
+        (booking_id, order_code, amount, status, description, payment_method, expired_at)
+        VALUES (?, ?, ?, 'pending', ?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))`,
         [
           bookingId,
           bookingCode,
           totalAmount,
-          `Thanh toán ${bookingCode}`
+          `Thanh toán ${bookingCode}`,
+          req.body.paymentMethod || 'BANK_TRANSFER',
         ]
       );
 

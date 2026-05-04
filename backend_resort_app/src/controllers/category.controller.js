@@ -44,9 +44,18 @@ exports.getAllCategories = async (req, res) => {
       roomCount: cat.room_count,
       createdAt: cat.created_at,
       updatedAt: cat.updated_at,
-      iconUrl: cat.icon_url
-        ? (cat.icon_url.startsWith('http') ? cat.icon_url : `${process.env.BASE_URL || 'http://localhost:3000'}${cat.icon_url}`)
-        : null
+      iconUrl: (() => {
+        let ic = cat.icon_url;
+        if (ic) {
+          if (ic.includes('localhost:3000') || ic.includes('127.0.0.1:3000')) {
+            ic = ic.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, process.env.BASE_URL || 'http://localhost:3000');
+          } else if (!ic.startsWith('http')) {
+            ic = `${process.env.BASE_URL || 'http://localhost:3000'}${ic.startsWith('/') ? '' : '/'}${ic}`;
+          }
+          return ic;
+        }
+        return null;
+      })()
     }));
 
     res.status(200).json({

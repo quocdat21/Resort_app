@@ -90,9 +90,18 @@ exports.getAllUsers = async (req, res) => {
       updatedAt: user.updated_at
         ? new Date(user.updated_at).toISOString().replace('T', ' ').substring(0, 19)
         : '',
-      avatar: user.avatar_url
-        ? (user.avatar_url.startsWith('http') ? user.avatar_url : `${process.env.BASE_URL || 'http://localhost:3000'}${user.avatar_url}`)
-        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=random`
+      avatar: (() => {
+        let av = user.avatar_url;
+        if (av) {
+          if (av.includes('localhost:3000') || av.includes('127.0.0.1:3000')) {
+            av = av.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, process.env.BASE_URL || 'http://localhost:3000');
+          } else if (!av.startsWith('http')) {
+            av = `${process.env.BASE_URL || 'http://localhost:3000'}${av.startsWith('/') ? '' : '/'}${av}`;
+          }
+          return av;
+        }
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=random`;
+      })()
     }));
 
     res.status(200).json({
@@ -262,9 +271,18 @@ exports.updateUser = async (req, res) => {
       loyaltyPoints: u.loyalty_points,
       totalStays: u.total_stays,
       status: u.status,
-      avatar: u.avatar_url
-        ? (u.avatar_url.startsWith('http') ? u.avatar_url : `${process.env.BASE_URL || 'http://localhost:3000'}${u.avatar_url}`)
-        : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name)}&background=random`
+      avatar: (() => {
+        let av = u.avatar_url;
+        if (av) {
+          if (av.includes('localhost:3000') || av.includes('127.0.0.1:3000')) {
+            av = av.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, process.env.BASE_URL || 'http://localhost:3000');
+          } else if (!av.startsWith('http')) {
+            av = `${process.env.BASE_URL || 'http://localhost:3000'}${av.startsWith('/') ? '' : '/'}${av}`;
+          }
+          return av;
+        }
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name)}&background=random`;
+      })()
     };
 
     res.status(200).json({

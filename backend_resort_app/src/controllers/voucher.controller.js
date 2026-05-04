@@ -28,8 +28,18 @@ const voucherController = {
       }
 
       // Count total for pagination
-      let countQuery = query.replace("SELECT *", "SELECT COUNT(*) as total");
-      const [countResult] = await pool.execute(countQuery, values);
+      const countQuery = `
+        SELECT COUNT(*) as total 
+        FROM Vouchers v 
+        WHERE 1=1
+        ${status && status !== 'all' ? "AND status = ?" : ""}
+        ${searchTerm ? "AND code LIKE ?" : ""}
+      `;
+      const countValues = [];
+      if (status && status !== 'all') countValues.push(status);
+      if (searchTerm) countValues.push(`%${searchTerm}%`);
+
+      const [countResult] = await pool.execute(countQuery, countValues);
       const total = countResult[0].total;
 
       // Add ordering and pagination
