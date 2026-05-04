@@ -16,6 +16,7 @@ import {
   Layers,
   Loader2
 } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
 import { apiService } from '../../services/api_service';
 import ViewService from './view_service';
 import AddService from './add_service';
@@ -194,7 +195,7 @@ const ServicesPage: React.FC = () => {
       </div>
 
       {/* Services Table Card */}
-      <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden min-h-[400px] relative">
+      <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden relative">
         {loading && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center gap-3">
             <Loader2 size={32} className="text-green-700 animate-spin" />
@@ -327,48 +328,14 @@ const ServicesPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4 pt-2">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Tag size={12} />
-          Hiển thị {Math.min((currentPage - 1) * pagination.limit + 1, pagination.total)} đến {Math.min(currentPage * pagination.limit, pagination.total)} trong tổng số {pagination.total} mục
-        </p>
-
-        <div className="flex items-center gap-1">
-          <PaginationButton
-            icon={<ChevronFirst size={16} />}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(1)}
-          />
-          <PaginationButton
-            icon={<ChevronLeft size={16} />}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-          />
-
-          <div className="flex items-center">
-            {Array.from({ length: pagination.totalPages }, (_, i) => (
-              <PageNumber
-                key={i + 1}
-                active={currentPage === i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </PageNumber>
-            ))}
-          </div>
-
-          <PaginationButton
-            icon={<ChevronRight size={16} />}
-            disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
-            onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-          />
-          <PaginationButton
-            icon={<ChevronLast size={16} />}
-            disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
-            onClick={() => setCurrentPage(pagination.totalPages)}
-          />
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.total}
+        limit={pagination.limit}
+        onPageChange={(page) => setCurrentPage(page)}
+        itemName={activeTab === 'Hall' ? 'hội trường' : 'dịch vụ'}
+      />
 
       <ViewService
         isOpen={isViewOpen}
@@ -394,30 +361,5 @@ const ServicesPage: React.FC = () => {
     </div>
   );
 };
-
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean; onClick?: () => void }> = ({ icon, disabled, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 transition-all ${disabled
-      ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
-      : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
-      }`}
-    disabled={disabled}
-  >
-    {icon}
-  </button>
-);
-
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean; onClick?: () => void }> = ({ children, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${active
-      ? 'bg-green-700 text-white shadow-lg shadow-green-100'
-      : 'text-slate-500 hover:bg-slate-50'
-      }`}
-  >
-    {children}
-  </button>
-);
 
 export default ServicesPage;

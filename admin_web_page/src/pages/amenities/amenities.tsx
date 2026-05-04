@@ -9,9 +9,9 @@ import {
   ArrowUpDown,
   Home,
   Eye,
-  ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import Pagination from '../../components/common/Pagination';
 import Swal from 'sweetalert2';
 import AddAmenity from './add_amenity';
 import EditAmenity from './edit_amenity';
@@ -101,25 +101,6 @@ const AmenitiesPage: React.FC = () => {
     }
   };
 
-  const PaginationButton: React.FC<{
-    onClick: () => void;
-    disabled?: boolean;
-    active?: boolean;
-    children: React.ReactNode;
-  }> = ({ onClick, disabled, active, children }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-        ? 'bg-green-700 text-white shadow-md'
-        : disabled
-          ? 'text-slate-300 cursor-not-allowed'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-green-700'
-        }`}
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="space-y-6">
@@ -230,39 +211,14 @@ const AmenitiesPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pt-2">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Hiển thị {(currentPage - 1) * limit + 1} đến {Math.min(currentPage * limit, totalItems)} trong {totalItems} tiện nghi
-          </p>
-
-          <div className="flex items-center gap-1">
-            <PaginationButton
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft size={16} />
-            </PaginationButton>
-
-            {[...Array(totalPages)].map((_, i) => (
-              <PaginationButton
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                active={currentPage === i + 1}
-              >
-                {i + 1}
-              </PaginationButton>
-            ))}
-
-            <PaginationButton
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight size={16} />
-            </PaginationButton>
-          </div>
-        </div>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        limit={limit}
+        onPageChange={(page) => setCurrentPage(page)}
+        itemName="tiện nghi"
+      />
 
       <AddAmenity isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onSuccess={fetchAmenities} />
       {selectedAmenity && (

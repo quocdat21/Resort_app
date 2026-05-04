@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 
+import Pagination from '../../components/common/Pagination';
 import ViewUser from './view_user';
 import EditUser from './edit_user';
 import AddUser from './add_user';
@@ -353,59 +354,14 @@ const UsersPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Đang hiển thị {Math.min((currentPage - 1) * pagination.limit + 1, pagination.total)} đến {Math.min(currentPage * pagination.limit, pagination.total)} trong tổng số {pagination.total} người dùng
-        </p>
-
-        <div className="flex items-center gap-1">
-          <PaginationButton
-            icon={<ChevronFirst size={16} />}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(1)}
-          />
-          <PaginationButton
-            icon={<ChevronLeft size={16} />}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          />
-
-          <div className="flex items-center">
-            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-              const pageNum = i + 1;
-              return (
-                <PageNumber
-                  key={pageNum}
-                  active={currentPage === pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                >
-                  {pageNum}
-                </PageNumber>
-              );
-            })}
-            {pagination.totalPages > 5 && <span className="px-2 text-slate-400">...</span>}
-            {pagination.totalPages > 5 && (
-              <PageNumber
-                active={currentPage === pagination.totalPages}
-                onClick={() => setCurrentPage(pagination.totalPages)}
-              >
-                {pagination.totalPages}
-              </PageNumber>
-            )}
-          </div>
-
-          <PaginationButton
-            icon={<ChevronRight size={16} />}
-            disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
-          />
-          <PaginationButton
-            icon={<ChevronLast size={16} />}
-            disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
-            onClick={() => setCurrentPage(pagination.totalPages)}
-          />
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.total}
+        limit={pagination.limit}
+        onPageChange={(page) => setCurrentPage(page)}
+        itemName="người dùng"
+      />
 
       {/* Modals */}
       <AddUser
@@ -436,31 +392,6 @@ const ChevronDownIcon = () => (
   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
     <ChevronRight size={14} className="rotate-90" />
   </div>
-);
-
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean; onClick?: () => void }> = ({ icon, disabled, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 transition-all ${disabled
-      ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-      : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
-      }`}
-    disabled={disabled}
-  >
-    {icon}
-  </button>
-);
-
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean; onClick?: () => void }> = ({ children, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-      ? 'bg-green-50 text-green-700 border border-green-200'
-      : 'text-slate-500 hover:bg-slate-50'
-      }`}
-  >
-    {children}
-  </button>
 );
 
 export default UsersPage;

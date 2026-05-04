@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
+import {
+  Search,
   Calendar,
-  ChevronLeft,
+  Loader2,
   ChevronRight,
-  ChevronFirst,
-  ChevronLast,
-  ArrowUpDown,
-  Loader2
 } from 'lucide-react';
 import { apiService } from '../../services/api_service';
+import Pagination from '../../components/common/Pagination';
 
 interface Payment {
   id: number;
@@ -31,6 +28,8 @@ const PaymentsPage: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 8;
 
   useEffect(() => {
     fetchPayments();
@@ -40,7 +39,7 @@ const PaymentsPage: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await apiService.get('/payments/admin/all');
-      
+
       if (response.success) {
         const mappedData = response.data.map((p: any) => ({
           id: p.id,
@@ -128,11 +127,13 @@ const PaymentsPage: React.FC = () => {
     return statuses[status] || 'Pending';
   };
 
-  const filteredPayments = payments.filter(p => 
+  const filteredPayments = payments.filter(p =>
     p.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.userName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const paginatedPayments = filteredPayments.slice((currentPage - 1) * limit, currentPage * limit);
 
   return (
     <div className="space-y-6">
@@ -154,7 +155,7 @@ const PaymentsPage: React.FC = () => {
             placeholder="Search transactions, codes..."
             className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
       </div>
@@ -188,7 +189,7 @@ const PaymentsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {filteredPayments.map((payment: any) => (
+                {paginatedPayments.map((payment: any) => (
                   <tr key={payment.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4 font-bold text-slate-900">{payment.transactionId}</td>
                     <td className="px-6 py-4 text-slate-500">{payment.bookingCode}</td>
@@ -215,9 +216,9 @@ const PaymentsPage: React.FC = () => {
                         <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="View Detail">
                           <Eye size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleUpdateStatus(payment.id, payment.rawStatus)}
-                          className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" 
+                          className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
                           title="Update Status"
                         >
                           <Edit2 size={16} />
@@ -232,21 +233,15 @@ const PaymentsPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Showing {Math.min(filteredPayments.length, 1)} to {filteredPayments.length} of {payments.length} transactions
-        </p>
-
-        <div className="flex items-center gap-1">
-          <PaginationButton icon={<ChevronFirst size={16} />} disabled />
-          <PaginationButton icon={<ChevronLeft size={16} />} disabled />
-          <div className="flex items-center">
-            <PageNumber active>1</PageNumber>
-          </div>
-          <PaginationButton icon={<ChevronRight size={16} />} />
-          <PaginationButton icon={<ChevronLast size={16} />} />
-        </div>
-      </div>
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={Math.ceil(filteredPayments.length / limit)}
+        totalItems={filteredPayments.length}
+        limit={limit}
+        onPageChange={(page) => setCurrentPage(page)}
+        itemName="giao dịch"
+      />
     </div>
   );
 };
@@ -265,28 +260,5 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     </span>
   );
 };
-
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean }> = ({ icon, disabled }) => (
-  <button
-    className={`w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 transition-all ${disabled
-        ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-        : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
-      }`}
-    disabled={disabled}
-  >
-    {icon}
-  </button>
-);
-
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean }> = ({ children, active }) => (
-  <button
-    className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-        ? 'bg-green-50 text-green-700 border border-green-200' 
-        : 'text-slate-500 hover:bg-slate-50'
-      }`}
-  >
-    {children}
-  </button>
-);
 
 export default PaymentsPage;

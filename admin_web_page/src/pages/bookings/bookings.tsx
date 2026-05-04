@@ -3,16 +3,12 @@ import {
     Search,
     Plus,
     Calendar,
-    ChevronLeft,
     ChevronRight,
-    ChevronFirst,
-    ChevronLast,
-    Eye,
     Edit2,
-    Trash2,
     Loader2
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import Pagination from '../../components/common/Pagination';
 
 import RoomBookingsTable from './rooms_bookings';
 import type { RoomBooking } from './rooms_bookings';
@@ -20,6 +16,7 @@ import type { RoomBooking } from './rooms_bookings';
 import ServiceBookingsTable from './services_bookings';
 import type { ServiceBooking } from './services_bookings';
 import { apiService } from '../../services/api_service';
+import EditBookingModal from './edit_booking';
 
 // --- Main Page ---
 const BookingsPage: React.FC = () => {
@@ -27,21 +24,46 @@ const BookingsPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [roomBookings, setRoomBookings] = useState<RoomBooking[]>([]);
     const [serviceBookings, setServiceBookings] = useState<ServiceBooking[]>([]);
+    const [selectedBooking, setSelectedBooking] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const limit = 8;
 
     useEffect(() => {
         fetchBookings();
     }, []);
 
+    const handleOpenEditModal = async (booking: any) => {
+        try {
+            setIsDetailLoading(true);
+            setIsEditModalOpen(true);
+            const response = await apiService.get(`/bookings/detail/${booking.bookingCode}`);
+            if (response.success) {
+                setSelectedBooking(response.data);
+            } else {
+                Swal.fire('Lỗi', 'Không thể tải chi tiết đơn đặt', 'error');
+                setIsEditModalOpen(false);
+            }
+        } catch (err) {
+            Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
+            setIsEditModalOpen(false);
+        } finally {
+            setIsDetailLoading(false);
+        }
+    };
+
     const fetchBookings = async () => {
         try {
             setIsLoading(true);
             const response = await apiService.get('/bookings/admin/all');
-            
+
             if (response.success) {
                 const allData = response.data;
-                
+
                 // Map Room Bookings
                 const rooms = allData
                     .filter((b: any) => b.type === 'room')
@@ -53,7 +75,8 @@ const BookingsPage: React.FC = () => {
                         checkIn: formatDate(b.check_in),
                         checkOut: formatDate(b.check_out),
                         totalAmount: formatCurrency(b.total_amount),
-                        status: b.status
+                        status: b.status,
+                        originalData: b
                     }));
 
                 // Map Service Bookings
@@ -67,7 +90,8 @@ const BookingsPage: React.FC = () => {
                         bookingDate: formatDate(b.service_booking_date || b.created_at),
                         quantity: b.quantity || 1,
                         totalAmount: formatCurrency(b.total_amount),
-                        status: b.status
+                        status: b.status,
+                        originalData: b
                     }));
 
                 setRoomBookings(rooms);
@@ -83,70 +107,24 @@ const BookingsPage: React.FC = () => {
         }
     };
 
-    const handleUpdateStatus = async (id: number, currentStatus: string) => {
-        const { value: newStatus } = await Swal.fire({
-            title: 'Cập nhật trạng thái',
-            input: 'select',
-            inputOptions: {
-                'Pending': 'Chờ xử lý',
-                'Confirmed': 'Xác nhận',
-                'Cancelled': 'Hủy bỏ',
-                'Completed': 'Hoàn thành'
-            },
-            inputValue: currentStatus,
-            showCancelButton: true,
-            confirmButtonText: 'Cập nhật',
-            cancelButtonText: 'Hủy',
-            inputValidator: (value) => {
-                return new Promise((resolve) => {
-                    if (value) {
-                        resolve(null);
-                    } else {
-                        resolve('Vui lòng chọn trạng thái');
-                    }
+    const handleUpdateStatus = async (id: number, newStatus: string) => {
+        try {
+            const response = await apiService.put(`/bookings/admin/update-status/${id}`, { status: newStatus });
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công',
+                    text: 'Đã cập nhật trạng thái đơn đặt',
+                    timer: 1500,
+                    showConfirmButton: false
                 });
+                fetchBookings();
+                setIsEditModalOpen(false);
+            } else {
+                Swal.fire('Lỗi', response.message || 'Không thể cập nhật', 'error');
             }
-        });
-
-        if (newStatus) {
-            try {
-                const response = await apiService.put(`/bookings/admin/update-status/${id}`, { status: newStatus });
-                if (response.success) {
-                    Swal.fire('Thành công', 'Đã cập nhật trạng thái đơn đặt', 'success');
-                    fetchBookings();
-                } else {
-                    Swal.fire('Lỗi', response.message || 'Không thể cập nhật', 'error');
-                }
-            } catch (error) {
-                Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
-            }
-        }
-    };
-
-    const handleDeleteBooking = async (id: number) => {
-        const result = await Swal.fire({
-            title: 'Xóa đơn đặt?',
-            text: "Hành động này không thể hoàn tác!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Xóa ngay',
-            cancelButtonText: 'Hủy'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                const response = await apiService.delete(`/bookings/${id}`);
-                if (response.success) {
-                    Swal.fire('Đã xóa!', 'Đơn đặt đã được xóa.', 'success');
-                    fetchBookings();
-                } else {
-                    Swal.fire('Lỗi', response.message || 'Không thể xóa', 'error');
-                }
-            } catch (error) {
-                Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
-            }
+        } catch (error) {
+            Swal.fire('Lỗi', 'Lỗi kết nối server', 'error');
         }
     };
 
@@ -160,27 +138,23 @@ const BookingsPage: React.FC = () => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount));
     };
 
-    const ActionButtons = ({ id, status }: { id: number, status: string }) => (
+    const ActionButtons = ({ id, status, booking }: { id: number, status: string, booking: any }) => (
         <div className="flex items-center justify-center gap-3">
-            <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="View">
-                <Eye size={16} />
-            </button>
-            <button 
-                onClick={() => handleUpdateStatus(id, status)}
-                className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" 
-                title="Edit Status"
+            <button
+                onClick={() => handleOpenEditModal(booking)}
+                className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                title="View & Edit"
             >
                 <Edit2 size={16} />
             </button>
-            <button 
-                onClick={() => handleDeleteBooking(id)}
-                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" 
-                title="Delete"
-            >
-                <Trash2 size={16} />
-            </button>
         </div>
     );
+
+    const filteredRooms = roomBookings.filter(b => b.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) || b.user.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredServices = serviceBookings.filter(b => b.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) || b.user.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const paginatedRooms = filteredRooms.slice((currentPage - 1) * limit, currentPage * limit);
+    const paginatedServices = filteredServices.slice((currentPage - 1) * limit, currentPage * limit);
 
     return (
         <div className="space-y-6">
@@ -189,19 +163,19 @@ const BookingsPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                         <button
-                            onClick={() => setActiveTab('rooms')}
+                            onClick={() => { setActiveTab('rooms'); setCurrentPage(1); }}
                             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'rooms'
-                                    ? 'bg-green-600 text-white shadow-md'
-                                    : 'text-slate-500 hover:text-slate-900'
+                                ? 'bg-green-600 text-white shadow-md'
+                                : 'text-slate-500 hover:text-slate-900'
                                 }`}
                         >
                             Room Bookings
                         </button>
                         <button
-                            onClick={() => setActiveTab('services')}
+                            onClick={() => { setActiveTab('services'); setCurrentPage(1); }}
                             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'services'
-                                    ? 'bg-green-600 text-white shadow-md'
-                                    : 'text-slate-500 hover:text-slate-900'
+                                ? 'bg-green-600 text-white shadow-md'
+                                : 'text-slate-500 hover:text-slate-900'
                                 }`}
                         >
                             Service Bookings
@@ -245,7 +219,7 @@ const BookingsPage: React.FC = () => {
                             placeholder={`Search ${activeTab === 'rooms' ? 'bookings' : 'services'}...`}
                             className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all text-slate-900 shadow-sm"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                     </div>
                 </div>
@@ -266,20 +240,38 @@ const BookingsPage: React.FC = () => {
                 </div>
             ) : activeTab === 'rooms' ? (
                 <RoomBookingsTable
-                    data={roomBookings.filter(b => b.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) || b.user.toLowerCase().includes(searchTerm.toLowerCase()))}
+                    data={paginatedRooms}
                     StatusBadge={StatusBadge}
                     ActionButtons={ActionButtons}
                 />
             ) : (
                 <ServiceBookingsTable
-                    data={serviceBookings.filter(b => b.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) || b.user.toLowerCase().includes(searchTerm.toLowerCase()))}
+                    data={paginatedServices}
                     StatusBadge={StatusBadge}
                     ActionButtons={ActionButtons}
                 />
             )}
 
             {/* Pagination */}
-            <Pagination total={activeTab === 'rooms' ? roomBookings.length : serviceBookings.length} />
+            <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil((activeTab === 'rooms' ? filteredRooms.length : filteredServices.length) / limit)}
+                totalItems={activeTab === 'rooms' ? filteredRooms.length : filteredServices.length}
+                limit={limit}
+                onPageChange={(page) => setCurrentPage(page)}
+                itemName="đơn đặt"
+            />
+
+            {/* Edit/View Booking Modal */}
+            <EditBookingModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                booking={selectedBooking}
+                isLoading={isDetailLoading}
+                onUpdateStatus={handleUpdateStatus}
+                formatDate={formatDate}
+                formatCurrency={formatCurrency}
+            />
         </div>
     );
 };
@@ -298,55 +290,5 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
         </span>
     );
 };
-
-
-const Pagination: React.FC<{ total: number }> = ({ total }) => (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Showing {Math.min(total, 1)} to {total} of {total} bookings
-        </p>
-
-        <div className="flex items-center gap-1">
-            <PaginationButton icon={<ChevronFirst size={16} />} disabled />
-            <PaginationButton icon={<ChevronLeft size={16} />} disabled />
-
-            <div className="flex items-center">
-                <PageNumber active>1</PageNumber>
-                <PageNumber>2</PageNumber>
-                <PageNumber>3</PageNumber>
-                <PageNumber>4</PageNumber>
-                <PageNumber>5</PageNumber>
-                <span className="px-2 text-slate-400">...</span>
-                <PageNumber>10</PageNumber>
-            </div>
-
-            <PaginationButton icon={<ChevronRight size={16} />} />
-            <PaginationButton icon={<ChevronLast size={16} />} />
-        </div>
-    </div>
-);
-
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean }> = ({ icon, disabled }) => (
-    <button
-        className={`w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 transition-all ${disabled
-                ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-                : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
-            }`}
-        disabled={disabled}
-    >
-        {icon}
-    </button>
-);
-
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean }> = ({ children, active }) => (
-    <button
-        className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-                ? 'bg-green-50 text-green-700 border border-green-200'
-                : 'text-slate-500 hover:bg-slate-50'
-            }`}
-    >
-        {children}
-    </button>
-);
 
 export default BookingsPage;

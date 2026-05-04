@@ -4,16 +4,14 @@ import {
     Plus,
     Edit2,
     Trash2,
-    ChevronLeft,
-    ChevronRight,
-    ArrowUpDown,
     Eye,
     Layers,
     MapPin,
     Image as ImageIcon,
-    Loader2
+    Loader2,
 } from 'lucide-react';
 import { apiService } from '../../services/api_service';
+import Pagination from '../../components/common/Pagination';
 
 import AddCategory from './add_category';
 import EditCategory from './edit_category';
@@ -320,35 +318,14 @@ const CategoriesPage: React.FC = () => {
             )}
 
             {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    Hiển thị {Math.min((currentPage - 1) * pagination.limit + 1, pagination.total)} đến {Math.min(currentPage * pagination.limit, pagination.total)} trong tổng số {pagination.total} mục
-                </p>
-
-                <div className="flex items-center gap-1">
-                    <PaginationButton
-                        icon={<ChevronLeft size={16} />}
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    />
-                    <div className="flex items-center">
-                        {Array.from({ length: pagination.totalPages }, (_, i) => (
-                            <PageNumber
-                                key={i + 1}
-                                active={currentPage === i + 1}
-                                onClick={() => setCurrentPage(i + 1)}
-                            >
-                                {i + 1}
-                            </PageNumber>
-                        ))}
-                    </div>
-                    <PaginationButton
-                        icon={<ChevronRight size={16} />}
-                        disabled={currentPage === pagination.totalPages || pagination.totalPages === 0}
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
-                    />
-                </div>
-            </div>
+            <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.total}
+                limit={pagination.limit}
+                onPageChange={(page) => setCurrentPage(page)}
+                itemName={activeTab === 'categories' ? 'loại phòng' : 'khu vực'}
+            />
 
             {/* Modals for Categories */}
             <AddCategory
@@ -399,29 +376,5 @@ const CategoriesPage: React.FC = () => {
     );
 };
 
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean; onClick?: () => void }> = ({ icon, disabled, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 transition-all ${disabled
-            ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-            : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
-            }`}
-        disabled={disabled}
-    >
-        {icon}
-    </button>
-);
-
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean; onClick?: () => void }> = ({ children, active, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-            ? 'bg-green-50 text-green-700 border border-green-200'
-            : 'text-slate-500 hover:bg-slate-50'
-            }`}
-    >
-        {children}
-    </button>
-);
 
 export default CategoriesPage;

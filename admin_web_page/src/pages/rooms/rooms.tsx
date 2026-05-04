@@ -5,17 +5,17 @@ import {
   Plus,
   Edit2,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   LayoutGrid,
-  Loader2
+  Loader2,
+  ChevronRight
 } from 'lucide-react';
 import RoomInstances from './room_instances';
 import ViewRoom from './view_room';
 import AddRoom from './add_room';
 import EditRoom from './edit_room';
 import Swal from 'sweetalert2';
+import Pagination from '../../components/common/Pagination';
 
 interface Room {
   id: string;
@@ -323,11 +323,10 @@ const RoomsPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <span className={`font-bold px-2.5 py-1 rounded-lg text-xs border ${
-                        room.available_count > 0 
-                          ? 'text-green-700 bg-green-50 border-green-100' 
+                      <span className={`font-bold px-2.5 py-1 rounded-lg text-xs border ${room.available_count > 0
+                          ? 'text-green-700 bg-green-50 border-green-100'
                           : 'text-red-700 bg-red-50 border-red-100'
-                      }`}>
+                        }`}>
                         {room.available_count} trống
                       </span>
                     </td>
@@ -377,37 +376,14 @@ const RoomsPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Hiển thị {(currentPage - 1) * 6 + 1} đến {Math.min(currentPage * 6, totalRooms)} trong tổng số {totalRooms} phòng
-        </p>
-
-        <div className="flex items-center gap-1">
-          <PaginationButton
-            icon={<ChevronLeft size={16} />}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-          />
-
-          <div className="flex items-center">
-            {[...Array(totalPages)].map((_, i) => (
-              <PageNumber
-                key={i + 1}
-                active={currentPage === i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </PageNumber>
-            ))}
-          </div>
-
-          <PaginationButton
-            icon={<ChevronRight size={16} />}
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-          />
-        </div>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalRooms}
+        limit={6}
+        onPageChange={(page) => setCurrentPage(page)}
+        itemName="phòng"
+      />
       {/* Modals */}
       <AddRoom
         isOpen={isAddOpen}
@@ -439,30 +415,5 @@ const RoomsPage: React.FC = () => {
     </div>
   );
 };
-
-const PaginationButton: React.FC<{ icon: React.ReactNode; disabled?: boolean; onClick?: () => void }> = ({ icon, disabled, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 transition-all ${disabled
-      ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
-      : 'bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:scale-95 shadow-sm'
-      }`}
-    disabled={disabled}
-  >
-    {icon}
-  </button>
-);
-
-const PageNumber: React.FC<{ children: React.ReactNode; active?: boolean; onClick?: () => void }> = ({ children, active, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${active
-      ? 'bg-green-50 text-green-700 border border-green-200'
-      : 'text-slate-500 hover:bg-slate-50'
-      }`}
-  >
-    {children}
-  </button>
-);
 
 export default RoomsPage;
