@@ -100,6 +100,8 @@ const pool = require('./src/config/db');
 // START SERVER
 // ========================
 app.listen(PORT, () => {
+  const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
   console.log(`🌿 Thao Nguyen Resort API running on http://localhost:${PORT}`);
+  console.log(`🌍 Public Base URL: ${baseUrl}`);
   console.log(`📋 Health check: http://localhost:${PORT}/api/health`);
 });
