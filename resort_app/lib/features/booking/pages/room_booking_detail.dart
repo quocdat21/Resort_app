@@ -387,7 +387,7 @@ class RoomBookingDetailPage extends StatelessWidget {
     return Column(
       children: [
         _buildSectionHeader(
-            Icons.groups_outlined, AppStrings.get(context, 'guests')),
+            Icons.groups_outlined, AppStrings.get(context, 'guests_label')),
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
@@ -492,7 +492,7 @@ class RoomBookingDetailPage extends StatelessWidget {
                   currencyFormat.format(roomCharge),
                   isBoldValue: true),
               const SizedBox(height: 12),
-              _buildPriceRow(AppStrings.get(context, 'guests'),
+              _buildPriceRow(AppStrings.get(context, 'guests_label'),
                   '$adults ${AppStrings.get(context, 'adults')}, $children ${AppStrings.get(context, 'children')}',
                   isBoldValue: true),
               const SizedBox(height: 12),
@@ -503,7 +503,7 @@ class RoomBookingDetailPage extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
               if (servicesTotal > 0) ...[
-                _buildPriceRow(AppStrings.get(context, 'services_total_label'),
+                _buildPriceRow(AppStrings.get(context, 'services_total'),
                     currencyFormat.format(servicesTotal),
                     isBoldValue: true),
                 const SizedBox(height: 12),

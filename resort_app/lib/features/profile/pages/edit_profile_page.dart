@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
@@ -189,6 +190,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/localization/app_strings.dart';
@@ -26,6 +27,7 @@ class LocationPage extends StatelessWidget {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
@@ -171,7 +173,8 @@ class LocationPage extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        AppStrings.get(context, 'highland_access'),
+                                        AppStrings.get(
+                                            context, 'highland_access'),
                                         style:
                                             AppTextStyles.bodyMedium.copyWith(
                                           fontWeight: FontWeight.bold,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -109,6 +110,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF2D4733)),
           onPressed: () => Navigator.pop(context),

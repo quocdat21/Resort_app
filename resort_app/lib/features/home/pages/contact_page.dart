@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/localization/app_strings.dart';
@@ -30,6 +31,7 @@ class _ContactPageState extends State<ContactPage> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
@@ -50,7 +52,7 @@ class _ContactPageState extends State<ContactPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                    AppStrings.get(context, 'get_in_touch'),
+                AppStrings.get(context, 'get_in_touch'),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.outline,
                   letterSpacing: 2.0,
@@ -98,7 +100,7 @@ class _ContactPageState extends State<ContactPage> {
                   onPressed: () {},
                   icon: const Icon(Icons.phone, size: 20),
                   label: Text(
-                        AppStrings.get(context, 'call_now'),
+                    AppStrings.get(context, 'call_now'),
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -122,7 +124,7 @@ class _ContactPageState extends State<ContactPage> {
                   onPressed: () {},
                   icon: const Icon(Icons.email_outlined, size: 20),
                   label: Text(
-                        AppStrings.get(context, 'send_email'),
+                    AppStrings.get(context, 'send_email'),
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.onSecondaryContainer,
@@ -165,7 +167,9 @@ class _ContactPageState extends State<ContactPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    AppLabel(text: AppStrings.get(context, 'full_name').toUpperCase()),
+                    AppLabel(
+                        text:
+                            AppStrings.get(context, 'full_name').toUpperCase()),
                     _buildTextField(
                       controller: _nameController,
                       hintText: "Thao Nguyen",
@@ -200,7 +204,7 @@ class _ContactPageState extends State<ContactPage> {
                           // TODO: Submit Inquiry
                         },
                         child: Text(
-                            AppStrings.get(context, 'submit_inquiry'),
+                          AppStrings.get(context, 'submit_inquiry'),
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -256,8 +260,8 @@ class _ContactPageState extends State<ContactPage> {
       style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurface),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: AppTextStyles.bodyMedium
-            .copyWith(color: AppColors.outlineVariant),
+        hintStyle:
+            AppTextStyles.bodyMedium.copyWith(color: AppColors.outlineVariant),
         filled: true,
         fillColor: AppColors.surfaceContainerHigh.withOpacity(0.5),
         border: OutlineInputBorder(
