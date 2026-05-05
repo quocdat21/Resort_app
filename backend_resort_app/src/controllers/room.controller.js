@@ -38,7 +38,7 @@ const roomController = {
 
       let query = `
         SELECT r.id, r.name, r.category_id, r.description, r.size_sqm, 
-               r.capacity_adults, r.capacity_children, r.base_price, r.created_at, r.updated_at,
+               r.capacity_adults, r.capacity_children, r.base_price, r.auto_checkin, r.auto_checkout, r.created_at, r.updated_at,
                c.name as category_name, c.zone_id, z.name as zone_name,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count,
                (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id AND rn.status = 'Available') as available_count,
@@ -145,7 +145,7 @@ const roomController = {
   // Create room template
   createRoom: async (req, res) => {
     try {
-      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice, amenities } = req.body;
+      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice, amenities, autoCheckin, autoCheckout } = req.body;
 
       // Duplicate name check
       const [duplicate] = await pool.execute('SELECT id FROM Rooms WHERE name = ?', [name]);
@@ -158,9 +158,9 @@ const roomController = {
       }
 
       const [result] = await pool.execute(
-        `INSERT INTO Rooms (name, category_id, description, size_sqm, capacity_adults, capacity_children, base_price)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [name, categoryId || null, description, sizeSqm || 0, capacityAdults || 2, capacityChildren || 0, basePrice]
+        `INSERT INTO Rooms (name, category_id, description, size_sqm, capacity_adults, capacity_children, base_price, auto_checkin, auto_checkout)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [name, categoryId || null, description, sizeSqm || 0, capacityAdults || 2, capacityChildren || 0, basePrice, autoCheckin ? 1 : 0, autoCheckout ? 1 : 0]
       );
 
       const roomId = result.insertId;
@@ -203,7 +203,7 @@ const roomController = {
   updateRoom: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice, amenities, existingImages } = req.body;
+      const { name, categoryId, description, sizeSqm, capacityAdults, capacityChildren, basePrice, amenities, existingImages, autoCheckin, autoCheckout } = req.body;
 
       const [existing] = await pool.execute('SELECT * FROM Rooms WHERE id = ?', [id]);
       if (existing.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng' });
@@ -217,6 +217,8 @@ const roomController = {
       if (capacityAdults !== undefined) { updates.push('capacity_adults = ?'); values.push(capacityAdults); }
       if (capacityChildren !== undefined) { updates.push('capacity_children = ?'); values.push(capacityChildren); }
       if (basePrice !== undefined) { updates.push('base_price = ?'); values.push(basePrice); }
+      if (autoCheckin !== undefined) { updates.push('auto_checkin = ?'); values.push(autoCheckin ? 1 : 0); }
+      if (autoCheckout !== undefined) { updates.push('auto_checkout = ?'); values.push(autoCheckout ? 1 : 0); }
 
       if (updates.length > 0) {
         values.push(id);
@@ -234,24 +236,26 @@ const roomController = {
         await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [id, `/uploads/rooms/${req.files.mainImage[0].filename}`]);
       }
 
-      // Secondary images sync
-      let imagesToKeep = [];
-      if (existingImages) {
-        try { imagesToKeep = JSON.parse(existingImages); } catch (e) { }
-      }
-
-      const [currentImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url NOT LIKE "%/pr-%"', [id]);
-      for (const img of currentImages) {
-        if (!imagesToKeep.includes(img.image_url)) {
-          const oldPath = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-          await pool.execute('DELETE FROM Room_Images WHERE id = ?', [img.id]);
+      // Secondary images sync - ONLY if images are provided in request
+      if (existingImages !== undefined || (req.files && req.files.secondaryImages)) {
+        let imagesToKeep = [];
+        if (existingImages) {
+          try { imagesToKeep = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages; } catch (e) { }
         }
-      }
 
-      if (req.files && req.files.secondaryImages) {
-        for (const file of req.files.secondaryImages) {
-          await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [id, `/uploads/rooms/${file.filename}`]);
+        const [currentImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url NOT LIKE "%/pr-%"', [id]);
+        for (const img of currentImages) {
+          if (!imagesToKeep.includes(img.image_url)) {
+            const oldPath = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
+            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            await pool.execute('DELETE FROM Room_Images WHERE id = ?', [img.id]);
+          }
+        }
+
+        if (req.files && req.files.secondaryImages) {
+          for (const file of req.files.secondaryImages) {
+            await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [id, `/uploads/rooms/${file.filename}`]);
+          }
         }
       }
 
@@ -587,6 +591,48 @@ const roomController = {
       )
     `;
     await conn.execute(bookQuery, [currentDate, currentDate]);
+    
+    // 3. Mark 'Booked' rooms as 'Occupied' (Auto Check-in)
+    // Only for rooms with auto_checkin = 1 AND after 14:00
+    if (hour >= 14) {
+      const autoCIQuery = `
+        UPDATE Room_Numbers rn
+        JOIN Rooms r ON rn.room_id = r.id
+        SET rn.status = 'Occupied'
+        WHERE rn.status = 'Booked'
+        AND r.auto_checkin = 1
+        AND rn.id IN (
+          SELECT br.room_number_id
+          FROM Booking_Rooms br
+          JOIN Bookings b ON br.booking_id = b.id
+          WHERE b.status = 'Confirmed'
+          AND b.type = 'room'
+          AND b.check_in <= ? AND b.check_out > ?
+        )
+      `;
+      await conn.execute(autoCIQuery, [currentDate, currentDate]);
+    }
+
+    // 4. Mark 'Occupied' rooms as 'Available' (Auto Check-out)
+    // Only for rooms with auto_checkout = 1 AND after 12:00
+    if (hour >= 12) {
+      const autoCOQuery = `
+        UPDATE Room_Numbers rn
+        JOIN Rooms r ON rn.room_id = r.id
+        SET rn.status = 'Available'
+        WHERE rn.status = 'Occupied'
+        AND r.auto_checkout = 1
+        AND rn.id IN (
+          SELECT br.room_number_id
+          FROM Booking_Rooms br
+          JOIN Bookings b ON br.booking_id = b.id
+          WHERE b.status = 'Confirmed'
+          AND b.type = 'room'
+          AND b.check_out <= ?
+        )
+      `;
+      await conn.execute(autoCOQuery, [currentDate]);
+    }
   },
 
   // Task 2: Update room status based on bookings (Booked is auto, Occupied is manual)

@@ -32,6 +32,8 @@ interface Room {
   instance_count: number;
   available_count: number;
   amenity_count: number;
+  auto_checkin: number;
+  auto_checkout: number;
 }
 
 interface RoomInstance {
@@ -179,6 +181,64 @@ const RoomsPage: React.FC = () => {
     }
   };
 
+  const toggleAutoCheckin = async (room: Room) => {
+    try {
+      const newStatus = room.auto_checkin === 1 ? 0 : 1;
+      const response = await axios.put(`http://localhost:3000/api/rooms/${room.id}`, {
+        autoCheckin: newStatus
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      });
+
+      if (response.data.success) {
+        setRooms(prev => prev.map(r => r.id === room.id ? { ...r, auto_checkin: newStatus } : r));
+        Swal.fire({
+          title: 'Cập nhật thành công',
+          text: `Đã ${newStatus === 1 ? 'bật' : 'tắt'} tự động check-in cho ${room.name}`,
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    } catch (error: any) {
+      console.error('Toggle auto checkin error:', error);
+      Swal.fire('Lỗi!', 'Không thể cập nhật trạng thái tự động check-in', 'error');
+    }
+  };
+
+  const toggleAutoCheckout = async (room: Room) => {
+    try {
+      const newStatus = room.auto_checkout === 1 ? 0 : 1;
+      const response = await axios.put(`http://localhost:3000/api/rooms/${room.id}`, {
+        autoCheckout: newStatus
+      }, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      });
+
+      if (response.data.success) {
+        setRooms(prev => prev.map(r => r.id === room.id ? { ...r, auto_checkout: newStatus } : r));
+        Swal.fire({
+          title: 'Cập nhật thành công',
+          text: `Đã ${newStatus === 1 ? 'bật' : 'tắt'} tự động check-out cho ${room.name}`,
+          icon: 'success',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      }
+    } catch (error: any) {
+      console.error('Toggle auto checkout error:', error);
+      Swal.fire('Lỗi!', 'Không thể cập nhật trạng thái tự động check-out', 'error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Bar: Search, Filters, Add */}
@@ -270,6 +330,8 @@ const RoomsPage: React.FC = () => {
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Sức Chứa</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Số Phòng</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Số Trống</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Auto C.I</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Auto C.O</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Tiện nghi</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Thao Tác</th>
               </tr>
@@ -329,6 +391,30 @@ const RoomsPage: React.FC = () => {
                         }`}>
                         {room.available_count} trống
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <button
+                        onClick={() => toggleAutoCheckin(room)}
+                        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${room.auto_checkin === 1 ? 'bg-green-600' : 'bg-slate-200'
+                          }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${room.auto_checkin === 1 ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <button
+                        onClick={() => toggleAutoCheckout(room)}
+                        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${room.auto_checkout === 1 ? 'bg-orange-600' : 'bg-slate-200'
+                          }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${room.auto_checkout === 1 ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                        />
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <span className="flex items-center justify-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold border border-blue-100">

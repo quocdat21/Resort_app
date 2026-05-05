@@ -19,6 +19,8 @@ interface Room {
     id: string;
     name: string;
     main_image_url: string;
+    auto_checkin: number;
+    auto_checkout: number;
 }
 
 interface RoomInstance {
@@ -276,9 +278,13 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
                                                         value={formData.status}
                                                         onChange={e => setFormData({ ...formData, status: e.target.value as RoomInstance['status'] })}
                                                     >
-                                                        <option value="Available">Đang trống</option>
+                                                        <option value="Available" disabled={room.auto_checkout === 1}>
+                                                            Đang trống {room.auto_checkout === 1 ? '(Tự động)' : ''}
+                                                        </option>
                                                         <option value="Booked" disabled>Đã đặt (Tự động)</option>
-                                                        <option value="Occupied">Có khách (Check-in)</option>
+                                                        <option value="Occupied" disabled={room.auto_checkin === 1}>
+                                                            Có khách {room.auto_checkin === 1 ? '(Tự động)' : '(Check-in)'}
+                                                        </option>
                                                         <option value="Maintenance">Bảo trì</option>
                                                         <option value="Hidden">Đang ẩn</option>
                                                     </select>
