@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import {
     X,
@@ -76,9 +77,9 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
             // Fetch zones
             const fetchZones = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/zones');
-                    if (response.data.success) {
-                        const options = response.data.data.map((zone: any) => ({
+                    const response = await apiService.get('/zones');
+                    if (response.success) {
+                        const options = response.data.map((zone: any) => ({
                             label: zone.name,
                             value: zone.id.toString()
                         }));
@@ -93,9 +94,9 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
             // Fetch categories
             const fetchCategories = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/categories?limit=100'); // limit=100 to get all categories
-                    if (response.data.success) {
-                        setAllCategories(response.data.data);
+                    const response = await apiService.get('/categories?limit=100');
+                    if (response.success) {
+                        setAllCategories(response.data);
                         setCategories([{ label: 'Vui lòng chọn khu vực trước', value: '' }]);
                     }
                 } catch (err) {
@@ -107,9 +108,9 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
             // Fetch amenities
             const fetchAmenities = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/amenities');
-                    if (response.data.success) {
-                        setAllAmenities(response.data.data);
+                    const response = await apiService.get('/amenities');
+                    if (response.success) {
+                        setAllAmenities(response.data);
                     }
                 } catch (err) {
                     console.error('Fetch amenities error:', err);
@@ -223,14 +224,9 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
 
             data.append('amenities', JSON.stringify(selectedAmenities));
 
-            const response = await axios.post('http://localhost:3000/api/rooms', data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
+            const response = await apiService.post('/rooms', data);
 
-            if (response.data.success) {
+            if (response.success) {
                 Swal.fire({
                     title: 'Thành công!',
                     text: 'Đã thêm phòng template mới.',
@@ -438,7 +434,7 @@ const AddRoom: React.FC<AddRoomProps> = ({ isOpen, onClose, onSuccess }) => {
                                                         <div className="w-10 h-10 flex items-center justify-center relative">
                                                             {amenity.icon_url ? (
                                                                 <img
-                                                                    src={`http://localhost:3000${amenity.icon_url}`}
+                                                                    src={resolveImageUrl(amenity.icon_url)}
                                                                     alt={amenity.name}
                                                                     className={`w-8 h-8 object-contain transition-all ${isSelected ? 'scale-110' : 'grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100'}`}
                                                                 />

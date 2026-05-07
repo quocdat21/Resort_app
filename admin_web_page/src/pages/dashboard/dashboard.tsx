@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
 import {
     CalendarCheck,
     Wallet,
@@ -79,12 +79,9 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('admin_token');
-            const response = await axios.get('http://localhost:3000/api/dashboard/overview', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.success) {
-                setData(response.data.data);
+            const response = await apiService.get('/dashboard/overview');
+            if (response.success) {
+                setData(response.data);
             }
         } catch (error) {
             console.error('Fetch dashboard error:', error);

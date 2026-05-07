@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import {
   Search,
   Plus,
@@ -43,20 +44,17 @@ const AmenitiesPage: React.FC = () => {
   const fetchAmenities = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/amenities`, {
+      const response = await apiService.get('/amenities', {
         params: {
           search: searchTerm,
           page: currentPage,
           limit: limit
-        },
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
         }
       });
-      if (response.data.success) {
-        setAmenities(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
-        setTotalItems(response.data.pagination.total);
+      if (response.success) {
+        setAmenities(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotalItems(response.pagination.total);
       }
     } catch (error) {
       console.error('Fetch amenities error:', error);
@@ -88,13 +86,11 @@ const AmenitiesPage: React.FC = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:3000/api/amenities/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-          }
-        });
-        Swal.fire('Đã xóa!', 'Tiện nghi đã được gỡ bỏ.', 'success');
-        fetchAmenities();
+        const response = await apiService.delete(`/amenities/${id}`);
+        if (response.success) {
+          Swal.fire('Đã xóa!', 'Tiện nghi đã được gỡ bỏ.', 'success');
+          fetchAmenities();
+        }
       } catch (error) {
         Swal.fire('Lỗi', 'Không thể xóa tiện nghi này.', 'error');
       }
@@ -156,7 +152,11 @@ const AmenitiesPage: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100 group-hover:bg-white group-hover:scale-110 transition-all">
                         {amenity.icon_url ? (
-                          <img src={`http://localhost:3000${amenity.icon_url}`} alt={amenity.name} className="w-6 h-6 object-contain" />
+                          <img 
+                            src={resolveImageUrl(amenity.icon_url)} 
+                            alt={amenity.name} 
+                            className="w-6 h-6 object-contain" 
+                          />
                         ) : (
                           <Coffee size={20} className="text-slate-300" />
                         )}

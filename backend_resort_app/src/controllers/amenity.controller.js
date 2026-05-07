@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const fs = require('fs');
+const { formatImageUrl } = require('../utils/url.util');
 
 // Get all amenities with room usage count
 exports.getAllAmenities = async (req, res) => {
@@ -34,9 +35,14 @@ exports.getAllAmenities = async (req, res) => {
 
       const [rows] = await pool.execute(query, queryParams);
 
+      const formattedRows = rows.map(row => ({
+        ...row,
+        icon_url: formatImageUrl(row.icon_url, req)
+      }));
+
       return res.json({
         success: true,
-        data: rows,
+        data: formattedRows,
         pagination: {
           total,
           page: p,
@@ -48,7 +54,11 @@ exports.getAllAmenities = async (req, res) => {
 
     // Otherwise return all
     const [rows] = await pool.execute(query, queryParams);
-    res.json({ success: true, data: rows });
+    const formattedRows = rows.map(row => ({
+      ...row,
+      icon_url: formatImageUrl(row.icon_url, req)
+    }));
+    res.json({ success: true, data: formattedRows });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -78,6 +88,7 @@ exports.getAmenityById = async (req, res) => {
       success: true, 
       data: {
         ...rows[0],
+        icon_url: formatImageUrl(rows[0].icon_url, req),
         rooms: rooms
       } 
     });

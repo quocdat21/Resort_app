@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import ViewService from './view_service';
 import AddService from './add_service';
 import EditService from './edit_service';
@@ -235,7 +236,7 @@ const ServicesPage: React.FC = () => {
                       <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-100 group-hover:border-green-200 transition-all">
                         {service.image_url ? (
                           <img
-                            src={service.image_url}
+                            src={resolveImageUrl(service.image_url)}
                             alt={service.name}
                             className="w-full h-full object-cover"
                           />

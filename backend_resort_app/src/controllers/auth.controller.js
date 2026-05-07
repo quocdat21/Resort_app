@@ -9,18 +9,12 @@ require('dotenv').config();
 
 const SALT_ROUNDS = 12;
 
-const formatUser = (user) => {
+const { formatImageUrl } = require('../utils/url.util');
+
+const formatUser = (user, req) => {
   if (!user) return null;
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   
-  let avatarUrl = user.avatar_url;
-  if (avatarUrl) {
-    if (avatarUrl.includes('localhost:3000') || avatarUrl.includes('127.0.0.1:3000')) {
-      avatarUrl = avatarUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
-    } else if (!avatarUrl.startsWith('http')) {
-      avatarUrl = `${baseUrl}${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
-    }
-  }
+  const avatarUrl = formatImageUrl(user.avatar_url, req);
   
   return {
     ...user,
@@ -444,7 +438,7 @@ const login = async (req, res) => {
           avatar_url: user.avatar_url,
           loyalty_points: user.loyalty_points,
           total_stays: user.total_stays,
-        }),
+        }, req),
         token,
       },
     });
@@ -622,7 +616,7 @@ const getMe = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: formatUser(users[0]),
+      data: formatUser(users[0], req),
     });
   } catch (err) {
     console.error('Get me error:', err);
@@ -711,7 +705,7 @@ const updateMe = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Profile updated successfully.',
-      data: formatUser(users[0]),
+      data: formatUser(users[0], req),
     });
   } catch (err) {
     console.error('Update me error:', err);
@@ -801,7 +795,7 @@ const adminLogin = async (req, res) => {
           email: user.email,
           role: user.role,
           avatar_url: user.avatar_url,
-        }),
+        }, req),
         token
       },
     });

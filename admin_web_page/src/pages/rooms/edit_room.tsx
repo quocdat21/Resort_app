@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import {
     X,
@@ -53,7 +54,7 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
     // Main image
     const [mainImage, setMainImage] = useState<File | null>(null);
     const [mainImagePreview, setMainImagePreview] = useState<string | null>(
-        room.main_image_url ? `http://localhost:3000${room.main_image_url}` : null
+        room.main_image_url ? resolveImageUrl(room.main_image_url) : null
     );
 
     // Secondary images
@@ -80,7 +81,7 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
         if (isOpen) {
             // Reset image states before setting new room data
             setMainImage(null);
-            setMainImagePreview(room.main_image_url ? `http://localhost:3000${room.main_image_url}` : null);
+            setMainImagePreview(room.main_image_url ? resolveImageUrl(room.main_image_url) : null);
             setSecondaryImages(Array(5).fill(null));
             setSecondaryPreviews(Array(5).fill(null));
 
@@ -100,7 +101,7 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
                 const newImages = Array(5).fill(null);
                 room.secondary_images.forEach((img, idx) => {
                     if (idx < 5) {
-                        const url = `http://localhost:3000${img.image_url}`;
+                        const url = resolveImageUrl(img.image_url);
                         newPreviews[idx] = url;
                         newImages[idx] = url;
                     }
@@ -114,9 +115,9 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
             // Fetch zones
             const fetchZones = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/zones');
-                    if (response.data.success) {
-                        const options = response.data.data.map((zone: any) => ({
+                    const response = await apiService.get('/zones');
+                    if (response.success) {
+                        const options = response.data.map((zone: any) => ({
                             label: zone.name,
                             value: zone.id.toString()
                         }));
@@ -131,9 +132,9 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
             // Fetch categories
             const fetchCategories = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/categories?limit=100');
-                    if (response.data.success) {
-                        const allCats = response.data.data;
+                    const response = await apiService.get('/categories?limit=100');
+                    if (response.success) {
+                        const allCats = response.data;
                         setAllCategories(allCats);
                         
                         // Initialize filtered categories based on current room's zone
@@ -158,9 +159,9 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
             // Fetch all amenities
             const fetchAmenities = async () => {
                 try {
-                    const response = await axios.get('http://localhost:3000/api/amenities');
-                    if (response.data.success) {
-                        setAllAmenities(response.data.data);
+                    const response = await apiService.get('/amenities');
+                    if (response.success) {
+                        setAllAmenities(response.data);
                     }
                 } catch (err) {
                     console.error('Fetch amenities error:', err);
@@ -268,21 +269,15 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
                 if (img instanceof File) {
                     data.append('secondaryImages', img);
                 } else if (typeof img === 'string') {
-                    // It's an existing URL, we want to keep it
-                    existingImages.push(img.replace('http://localhost:3000', ''));
+                    existingImages.push(img);
                 }
             });
             data.append('existingImages', JSON.stringify(existingImages));
             data.append('amenities', JSON.stringify(selectedAmenities));
 
-            const response = await axios.put(`http://localhost:3000/api/rooms/${room.id}`, data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
+            const response = await apiService.put(`/rooms/${room.id}`, data);
 
-            if (response.data.success) {
+            if (response.success) {
                 Swal.fire({
                     title: 'Đã cập nhật!',
                     text: 'Thông tin phòng đã được lưu thành công.',
@@ -488,7 +483,7 @@ const EditRoom: React.FC<EditRoomProps> = ({ isOpen, onClose, onSuccess, room })
                                                         <div className="w-10 h-10 flex items-center justify-center relative">
                                                             {amenity.icon_url ? (
                                                                 <img 
-                                                                    src={`http://localhost:3000${amenity.icon_url}`} 
+                                                                    src={resolveImageUrl(amenity.icon_url)} 
                                                                     alt={amenity.name} 
                                                                     className={`w-8 h-8 object-contain transition-all ${isSelected ? 'scale-110' : 'grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100'}`} 
                                                                 />

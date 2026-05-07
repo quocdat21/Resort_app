@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
 import Portal from '../../components/common/Portal';
 import { X, Upload, Plus, Smile } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -44,14 +44,9 @@ const AddAmenity: React.FC<AddAmenityProps> = ({ isOpen, onClose, onSuccess }) =
             formData.append('name', name);
             if (icon) formData.append('icon', icon);
 
-            const response = await axios.post('http://localhost:3000/api/amenities', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
+            const response = await apiService.post('/amenities', formData);
 
-            if (response.data.success) {
+            if (response.success) {
                 Swal.fire({
                     title: 'Thành công!',
                     text: 'Đã thêm tiện nghi mới.',

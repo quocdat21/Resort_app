@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const fs = require('fs');
-const path = require('path');
+const { formatImageUrl } = require('../utils/url.util');
 
 // Get all categories with zone name and room count
 exports.getAllCategories = async (req, res) => {
@@ -44,18 +44,7 @@ exports.getAllCategories = async (req, res) => {
       roomCount: cat.room_count,
       createdAt: cat.created_at,
       updatedAt: cat.updated_at,
-      iconUrl: (() => {
-        let ic = cat.icon_url;
-        if (ic) {
-          if (ic.includes('localhost:3000') || ic.includes('127.0.0.1:3000')) {
-            ic = ic.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, process.env.BASE_URL || 'http://localhost:3000');
-          } else if (!ic.startsWith('http')) {
-            ic = `${process.env.BASE_URL || 'http://localhost:3000'}${ic.startsWith('/') ? '' : '/'}${ic}`;
-          }
-          return ic;
-        }
-        return null;
-      })()
+      iconUrl: formatImageUrl(cat.icon_url, req)
     }));
 
     res.status(200).json({

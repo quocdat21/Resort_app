@@ -113,7 +113,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
                                             <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
                                                 {booking.avatar_url ? (
                                                     <img
-                                                        src={booking.avatar_url.startsWith('http') ? booking.avatar_url : `http://localhost:3000${booking.avatar_url}`}
+                                                        src={booking.avatar_url}
                                                         alt="Avatar"
                                                         className="w-full h-full object-cover"
                                                     />

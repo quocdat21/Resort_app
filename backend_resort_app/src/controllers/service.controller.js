@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const fs = require('fs');
+const { formatImageUrl } = require('../utils/url.util');
 
 const serviceController = {
   // Get all services with pagination and filters
@@ -59,14 +60,13 @@ const serviceController = {
       const [countResult] = await pool.execute(countQuery, countValues);
       const total = countResult[0].total;
 
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       const formattedServices = services.map(s => {
         return {
           ...s,
-          image_url: s.image_url ? (s.image_url.startsWith('http') ? s.image_url : `${baseUrl}${s.image_url}`) : null,
+          image_url: formatImageUrl(s.image_url, req),
           secondary_images: s.secondary_images ? s.secondary_images.map(img => ({
             ...img,
-            image_url: img.image_url.startsWith('http') ? img.image_url : `${baseUrl}${img.image_url}`
+            image_url: formatImageUrl(img.image_url, req)
           })) : []
         };
       });
@@ -105,9 +105,18 @@ const serviceController = {
 
       // Get secondary images
       const [images] = await pool.execute("SELECT id, image_url FROM Service_Images WHERE service_id = ?", [id]);
-      service.secondary_images = images;
+      service.secondary_images = images.map(img => ({
+        ...img,
+        image_url: formatImageUrl(img.image_url, req)
+      }));
 
-      res.json({ success: true, data: service });
+      res.json({ 
+        success: true, 
+        data: {
+          ...service,
+          image_url: formatImageUrl(service.image_url, req)
+        } 
+      });
     } catch (error) {
       console.error('Error in getServiceById:', error);
       res.status(500).json({ success: false, message: 'Lỗi server' });

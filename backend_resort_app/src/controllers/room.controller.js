@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const fs = require('fs');
+const { formatImageUrl } = require('../utils/url.util');
 
 const roomController = {
   // --- FILTER METADATA (for mobile search page) ---
@@ -81,7 +82,10 @@ const roomController = {
 
       res.json({
         success: true,
-        data: rows,
+        data: rows.map(row => ({
+          ...row,
+          main_image_url: formatImageUrl(row.main_image_url, req)
+        })),
         pagination: {
           total,
           page,
@@ -130,10 +134,16 @@ const roomController = {
         success: true,
         data: {
           ...room[0],
-          main_image_url: mainImage ? mainImage.image_url : null,
-          secondary_images: secondaryImages,
+          main_image_url: formatImageUrl(mainImage ? mainImage.image_url : null, req),
+          secondary_images: secondaryImages.map(img => ({
+            ...img,
+            image_url: formatImageUrl(img.image_url, req)
+          })),
           instances: instances,
-          amenities: amenities
+          amenities: amenities.map(a => ({
+            ...a,
+            icon_url: formatImageUrl(a.icon_url, req)
+          }))
         }
       });
     } catch (error) {
@@ -475,23 +485,11 @@ const roomController = {
       const total = countResult[0].total;
 
       // Format image URLs
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      const formatted = rows.map(r => {
-        let mainImageUrl = r.main_image_url;
-        if (mainImageUrl) {
-          if (mainImageUrl.includes('localhost:3000') || mainImageUrl.includes('127.0.0.1:3000')) {
-            mainImageUrl = mainImageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
-          } else if (!mainImageUrl.startsWith('http')) {
-            mainImageUrl = `${baseUrl}${mainImageUrl.startsWith('/') ? '' : '/'}${mainImageUrl}`;
-          }
-        }
-        
-        return {
-          ...r,
-          main_image_url: mainImageUrl,
-          avg_rating: r.avg_rating ? parseFloat(r.avg_rating).toFixed(1) : null,
-        };
-      });
+      const formatted = rows.map(r => ({
+        ...r,
+        main_image_url: formatImageUrl(r.main_image_url, req),
+        avg_rating: r.avg_rating ? parseFloat(r.avg_rating).toFixed(1) : null,
+      }));
 
       res.json({
         success: true,
@@ -714,28 +712,17 @@ const roomController = {
         });
       }
 
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      const formattedImages = images.map(img => {
-        let imageUrl = img.image_url;
-        if (imageUrl) {
-          if (imageUrl.includes('localhost:3000') || imageUrl.includes('127.0.0.1:3000')) {
-            imageUrl = imageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
-          } else if (!imageUrl.startsWith('http')) {
-            imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
-          }
-        }
-        return {
-          ...img,
-          image_url: imageUrl
-        };
-      });
+      const formattedImages = images.map(img => ({
+        ...img,
+        image_url: formatImageUrl(img.image_url, req)
+      }));
 
-      const mainImage = formattedImages.find(img => img.image_url.includes('/pr-')) || formattedImages[0] || null;
+      const mainImage = formattedImages.find(img => img.image_url && img.image_url.includes('/pr-')) || formattedImages[0] || null;
       const secondaryImages = formattedImages.filter(img => img !== mainImage);
 
       const formattedAmenities = amenities.map(a => ({
         ...a,
-        icon_url: a.icon_url ? (a.icon_url.startsWith('http') ? a.icon_url : `${baseUrl}${a.icon_url}`) : null
+        icon_url: formatImageUrl(a.icon_url, req)
       }));
 
       res.json({

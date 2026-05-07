@@ -1,11 +1,11 @@
 const pool = require('../config/db');
+const { formatImageUrl } = require('../utils/url.util');
 
 const bookingController = {
   // Get booking history for a user
   getUserBookings: async (req, res) => {
     try {
       const { userId } = req.params;
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
       const query = `
         SELECT 
@@ -72,9 +72,7 @@ const bookingController = {
 
       const formatted = rows.map(row => ({
         ...row,
-        image_url: row.image_url 
-          ? (row.image_url.startsWith('http') ? row.image_url : `${baseUrl}${row.image_url}`)
-          : null
+        image_url: formatImageUrl(row.image_url, req)
       }));
 
       res.json({
@@ -91,7 +89,6 @@ const bookingController = {
   getBookingDetail: async (req, res) => {
     try {
       const { bookingCode } = req.params;
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
       // 1. Get Base Booking Info
       const [bookings] = await pool.execute(`
@@ -117,7 +114,6 @@ const bookingController = {
 
       if (booking.type === 'room') {
         // 2a. Get Room Template Info
-        console.log('DEBUG: Fetching room info for booking ID:', booking.id);
         const [roomInfo] = await pool.execute(`
           SELECT r.*, br.price as booking_price, c.name as category_name
           FROM Rooms r
@@ -127,21 +123,22 @@ const bookingController = {
           WHERE br.booking_id = ?
           LIMIT 1
         `, [booking.id]);
-        console.log('DEBUG: Room Info Result from DB:', roomInfo);
 
         if (roomInfo.length > 0) {
           itemDetails = roomInfo[0];
           // Get Images
           const [imgs] = await pool.execute('SELECT image_url FROM Room_Images WHERE room_id = ?', [itemDetails.id]);
-          images = imgs.map(img => img.image_url.startsWith('http') ? img.image_url : `${baseUrl}${img.image_url}`);
+          images = imgs.map(img => formatImageUrl(img.image_url, req));
           // Get Amenities
           const [amns] = await pool.execute(`
             SELECT a.* FROM Amenities a
             JOIN Room_Amenities ra ON a.id = ra.amenity_id
             WHERE ra.room_id = ?
           `, [itemDetails.id]);
-          amenities = amns;
-          console.log(`DEBUG: Found ${amenities.length} amenities for room ${itemDetails.id}`);
+          amenities = amns.map(a => ({
+            ...a,
+            icon_url: formatImageUrl(a.icon_url, req)
+          }));
         }
 
         // Get Room Numbers assigned
@@ -160,17 +157,10 @@ const bookingController = {
           JOIN Services s ON bs.service_id = s.id
           WHERE bs.booking_id = ?
         `, [booking.id]);
-        console.log(`DEBUG: Found ${services.length} extra services for booking ${booking.id}`);
         selectedServices = services;
 
       } else {
         // 2b. Get Service Info
-        console.log('DEBUG: Fetching service info for booking ID:', booking.id);
-        
-        // Check if there are ANY records in Booking_Services for this booking
-        const [anyServices] = await pool.execute('SELECT * FROM Booking_Services WHERE booking_id = ?', [booking.id]);
-        console.log('DEBUG: All Booking_Services for this ID:', anyServices);
-
         const [serviceInfo] = await pool.execute(`
           SELECT 
             s.id, s.name, s.type, s.capacity, s.description, s.image_url,
@@ -180,17 +170,15 @@ const bookingController = {
           WHERE bs.booking_id = ?
           LIMIT 1
         `, [booking.id]);
-        console.log('DEBUG: Final Service Info Result (with explicit select):', serviceInfo);
 
         if (serviceInfo.length > 0) {
           itemDetails = serviceInfo[0];
           const [imgs] = await pool.execute('SELECT image_url FROM Service_Images WHERE service_id = ?', [itemDetails.id]);
           
           if (imgs.length > 0) {
-            images = imgs.map(img => img.image_url.startsWith('http') ? img.image_url : `${baseUrl}${img.image_url}`);
+            images = imgs.map(img => formatImageUrl(img.image_url, req));
           } else if (itemDetails.image_url) {
-            // Fallback to main service image
-            images = [itemDetails.image_url.startsWith('http') ? itemDetails.image_url : `${baseUrl}${itemDetails.image_url}`];
+            images = [formatImageUrl(itemDetails.image_url, req)];
           }
         }
       }
@@ -207,6 +195,7 @@ const bookingController = {
         success: true,
         data: {
           ...booking,
+          avatar_url: formatImageUrl(booking.avatar_url, req),
           item_details: itemDetails,
           images: images,
           main_image_url: images.length > 0 ? images[0] : null,

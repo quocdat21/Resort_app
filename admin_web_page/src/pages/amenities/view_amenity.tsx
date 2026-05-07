@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import { X, Info, Home, MapPin, Layers, Coffee } from 'lucide-react';
 
@@ -25,13 +26,9 @@ const ViewAmenity: React.FC<ViewAmenityProps> = ({ isOpen, onClose, amenityId })
             const fetchDetails = async () => {
                 try {
                     setLoading(true);
-                    const response = await axios.get(`http://localhost:3000/api/amenities/${amenityId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                        }
-                    });
-                    if (response.data.success) {
-                        setAmenity(response.data.data);
+                    const response = await apiService.get(`/amenities/${amenityId}`);
+                    if (response.success) {
+                        setAmenity(response.data);
                     }
                 } catch (error) {
                     console.error('Fetch amenity details error:', error);
@@ -72,9 +69,13 @@ const ViewAmenity: React.FC<ViewAmenityProps> = ({ isOpen, onClose, amenityId })
                             <>
                                 {/* Header Info */}
                                 <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[24px] border border-slate-100">
-                                    <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center border border-slate-200 shadow-sm">
+                                    <div className="w-20 h-20 bg-white rounded-3xl shadow-lg border border-slate-100 flex items-center justify-center">
                                         {amenity.icon_url ? (
-                                            <img src={`http://localhost:3000${amenity.icon_url}`} alt={amenity.name} className="w-12 h-12 object-contain" />
+                                            <img 
+                                                src={resolveImageUrl(amenity.icon_url)} 
+                                                alt={amenity.name} 
+                                                className="w-12 h-12 object-contain" 
+                                            />
                                         ) : (
                                             <Coffee size={32} className="text-slate-300" />
                                         )}

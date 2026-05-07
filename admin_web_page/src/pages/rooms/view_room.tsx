@@ -1,5 +1,6 @@
 import React from 'react';
 import Portal from '../../components/common/Portal';
+import { resolveImageUrl } from '../../utils/image_util';
 import {
     X,
     Home,
@@ -73,7 +74,7 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                             <div className="lg:col-span-5 space-y-6">
                                 <div className="relative group">
                                     <img
-                                        src={`http://localhost:3000${room.main_image_url}`}
+                                        src={resolveImageUrl(room.main_image_url)}
                                         alt={room.name}
                                         className="w-full aspect-[4/3] object-cover rounded-[24px] shadow-md border border-slate-100"
                                     />
@@ -92,7 +93,7 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                         {room.secondary_images && room.secondary_images.map((img, idx) => (
                                             <div key={img.id} className="aspect-square relative group cursor-pointer">
                                                 <img
-                                                    src={`http://localhost:3000${img.image_url}`}
+                                                    src={resolveImageUrl(img.image_url)}
                                                     alt={`View ${idx + 1}`}
                                                     className="w-full h-full object-cover rounded-xl border border-slate-100 shadow-sm transition-all group-hover:scale-105"
                                                 />
@@ -144,7 +145,11 @@ const ViewRoom: React.FC<ViewRoomProps> = ({ isOpen, onClose, room }) => {
                                                 <div key={amenity.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
                                                     <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-xl shrink-0">
                                                         {amenity.icon_url ? (
-                                                            <img src={`http://localhost:3000${amenity.icon_url}`} alt={amenity.name} className="w-6 h-6 object-contain" />
+                                                            <img 
+                                                                src={resolveImageUrl(amenity.icon_url)} 
+                                                                alt={amenity.name} 
+                                                                className="w-6 h-6 object-contain" 
+                                                            />
                                                         ) : (
                                                             <Layers size={16} className="text-slate-300" />
                                                         )}

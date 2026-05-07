@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import {
   Search,
   Plus,
@@ -79,11 +80,11 @@ const RoomsPage: React.FC = () => {
       if (selectedZone !== 'all') params.append('zoneId', selectedZone);
       if (selectedCategory !== 'all') params.append('categoryId', selectedCategory);
 
-      const response = await axios.get(`http://localhost:3000/api/rooms?${params.toString()}`);
-      if (response.data.success) {
-        setRooms(response.data.data);
-        setTotalPages(response.data.pagination.totalPages);
-        setTotalRooms(response.data.pagination.total);
+      const response = await apiService.get(`/rooms?${params.toString()}`);
+      if (response.success) {
+        setRooms(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotalRooms(response.pagination.total);
       }
     } catch (error) {
       console.error('Fetch rooms error:', error);
@@ -100,12 +101,12 @@ const RoomsPage: React.FC = () => {
     const fetchFilters = async () => {
       try {
         const [zRes, cRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/zones'),
-          axios.get('http://localhost:3000/api/categories?limit=100')
+          apiService.get('/zones'),
+          apiService.get('/categories?limit=100')
         ]);
-        if (zRes.data.success) setZones(zRes.data.data);
-        if (cRes.data.success) {
-          setAllCategories(cRes.data.data);
+        if (zRes.success) setZones(zRes.data);
+        if (cRes.success) {
+          setAllCategories(cRes.data);
           // Don't set categories yet, wait for zone selection
         }
       } catch (error) {
@@ -134,12 +135,8 @@ const RoomsPage: React.FC = () => {
       });
 
       if (result.isConfirmed) {
-        const response = await axios.delete(`http://localhost:3000/api/rooms/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-          }
-        });
-        if (response.data.success) {
+        const response = await apiService.delete(`/rooms/${id}`);
+        if (response.success) {
           Swal.fire({
             title: 'Đã xóa!',
             text: 'Phòng đã được xóa thành công.',
@@ -157,9 +154,9 @@ const RoomsPage: React.FC = () => {
 
   const handleView = async (room: Room) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/rooms/${room.id}`);
-      if (response.data.success) {
-        setSelectedRoom(response.data.data);
+      const response = await apiService.get(`/rooms/${room.id}`);
+      if (response.success) {
+        setSelectedRoom(response.data);
         setIsViewOpen(true);
       }
     } catch (error) {
@@ -170,9 +167,9 @@ const RoomsPage: React.FC = () => {
 
   const handleEdit = async (room: Room) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/rooms/${room.id}`);
-      if (response.data.success) {
-        setSelectedRoom(response.data.data);
+      const response = await apiService.get(`/rooms/${room.id}`);
+      if (response.success) {
+        setSelectedRoom(response.data);
         setIsEditOpen(true);
       }
     } catch (error) {
@@ -184,15 +181,10 @@ const RoomsPage: React.FC = () => {
   const toggleAutoCheckin = async (room: Room) => {
     try {
       const newStatus = room.auto_checkin === 1 ? 0 : 1;
-      const response = await axios.put(`http://localhost:3000/api/rooms/${room.id}`, {
+      const response = await apiService.put(`/rooms/${room.id}`, {
         autoCheckin: newStatus
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
       });
-
-      if (response.data.success) {
+      if (response.success) {
         setRooms(prev => prev.map(r => r.id === room.id ? { ...r, auto_checkin: newStatus } : r));
         Swal.fire({
           title: 'Cập nhật thành công',
@@ -213,15 +205,10 @@ const RoomsPage: React.FC = () => {
   const toggleAutoCheckout = async (room: Room) => {
     try {
       const newStatus = room.auto_checkout === 1 ? 0 : 1;
-      const response = await axios.put(`http://localhost:3000/api/rooms/${room.id}`, {
+      const response = await apiService.put(`/rooms/${room.id}`, {
         autoCheckout: newStatus
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
       });
-
-      if (response.data.success) {
+      if (response.success) {
         setRooms(prev => prev.map(r => r.id === room.id ? { ...r, auto_checkout: newStatus } : r));
         Swal.fire({
           title: 'Cập nhật thành công',
@@ -361,7 +348,7 @@ const RoomsPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap min-w-[400px]">
                       <div className="flex items-center gap-4">
                         <img
-                          src={room.main_image_url ? `http://localhost:3000${room.main_image_url}` : 'https://via.placeholder.com/150'}
+                          src={resolveImageUrl(room.main_image_url) || 'https://via.placeholder.com/150'}
                           alt={room.name}
                           className="w-16 h-12 object-cover rounded-lg shadow-sm border border-slate-100"
                         />

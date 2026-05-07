@@ -177,7 +177,7 @@ CREATE TABLE Bookings (
   extra_fee DECIMAL(15,0) DEFAULT 0,
   voucher_id INT NULL,
   discount_amount DECIMAL(15,0) DEFAULT 0,
-  status ENUM('Pending','Confirmed','Cancelled','Completed') DEFAULT 'Pending',
+  status ENUM('Pending','Confirmed','Cancelled','Completed','Refund_Requested','Refunded') DEFAULT 'Pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
@@ -230,6 +230,28 @@ CREATE TABLE Payments (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE
+);
+-- REFUNDS
+CREATE TABLE Refunds (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  payment_id INT NOT NULL,
+  booking_id INT NOT NULL,
+  user_id INT NOT NULL,
+  refund_amount DECIMAL(15,0) NOT NULL,
+  bank_name VARCHAR(100) NOT NULL,
+  bank_account_number VARCHAR(50) NOT NULL,
+  bank_account_name VARCHAR(100),
+  status ENUM('requested','approved','processing','completed','rejected') DEFAULT 'requested',
+  admin_id INT NULL,
+  admin_note TEXT,
+  sepay_transaction_id VARCHAR(100),
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  processed_at TIMESTAMP NULL,
+  completed_at TIMESTAMP NULL,
+  FOREIGN KEY (payment_id) REFERENCES Payments(id) ON DELETE CASCADE,
+  FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (admin_id) REFERENCES Users(id) ON DELETE SET NULL
 );
 
 -- REVIEWS

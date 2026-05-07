@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import { X, Save, Smile } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -19,12 +20,12 @@ const EditAmenity: React.FC<EditAmenityProps> = ({ isOpen, onClose, onSuccess, a
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState(amenity.name);
     const [icon, setIcon] = useState<File | null>(null);
-    const [preview, setPreview] = useState<string | null>(amenity.icon_url ? `http://localhost:3000${amenity.icon_url}` : null);
+    const [preview, setPreview] = useState<string | null>(resolveImageUrl(amenity.icon_url));
 
     useEffect(() => {
         if (isOpen) {
             setName(amenity.name);
-            setPreview(amenity.icon_url ? `http://localhost:3000${amenity.icon_url}` : null);
+            setPreview(resolveImageUrl(amenity.icon_url));
             setIcon(null);
         }
     }, [isOpen, amenity]);
@@ -49,14 +50,9 @@ const EditAmenity: React.FC<EditAmenityProps> = ({ isOpen, onClose, onSuccess, a
             formData.append('name', name);
             if (icon) formData.append('icon', icon);
 
-            const response = await axios.put(`http://localhost:3000/api/amenities/${amenity.id}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
+            const response = await apiService.put(`/amenities/${amenity.id}`, formData);
 
-            if (response.data.success) {
+            if (response.success) {
                 Swal.fire({
                     title: 'Đã cập nhật!',
                     text: 'Thông tin tiện nghi đã được lưu.',

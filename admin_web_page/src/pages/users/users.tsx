@@ -20,6 +20,7 @@ import ViewUser from './view_user';
 import EditUser from './edit_user';
 import AddUser from './add_user';
 import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 
 interface User {
   id: number;
@@ -279,7 +280,7 @@ const UsersPage: React.FC = () => {
                     <td className="px-6 py-4 font-bold text-slate-900">{user.id}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover shadow-sm border border-slate-100" />
+                        <img src={resolveImageUrl(user.avatar)} alt="" className="w-8 h-8 rounded-full object-cover shadow-sm border border-slate-100" />
                         <span className="min-w-[200px] font-bold text-slate-900">{user.fullName}</span>
                       </div>
                     </td>

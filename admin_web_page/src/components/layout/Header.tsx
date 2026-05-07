@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -105,7 +106,7 @@ const Header: React.FC = () => {
           <div className="h-8 w-[1px] bg-slate-200 mx-2" />
           <div className="flex items-center gap-3 cursor-pointer group">
             <img 
-              src={adminUser?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} 
+              src={resolveImageUrl(adminUser?.avatar_url) || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} 
               alt="Admin" 
               className="w-9 h-9 rounded-full border border-slate-200 group-hover:border-green-500 transition-colors object-cover"
             />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import {
     X,
@@ -45,7 +46,7 @@ const EditCategory: React.FC<EditCategoryProps> = ({ isOpen, onClose, onSuccess,
                 name: category.name,
                 zoneId: category.zoneId?.toString() || ''
             });
-            setIconPreview(category.iconUrl);
+            setIconPreview(resolveImageUrl(category.iconUrl));
             setIconFile(null); // Reset file selection
         }
     }, [isOpen, category]);

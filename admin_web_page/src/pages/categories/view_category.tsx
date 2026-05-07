@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import {
     X,
@@ -57,7 +58,7 @@ const ViewCategory: React.FC<ViewCategoryProps> = ({ isOpen, onClose, category }
                         <div className="flex flex-col items-center mb-8 text-center">
                             <div className="w-24 h-24 rounded-3xl bg-slate-50 flex items-center justify-center border-4 border-white shadow-md mb-4 overflow-hidden">
                                 {category.iconUrl ? (
-                                    <img src={category.iconUrl} alt={category.name} className="w-16 h-16 object-contain" />
+                                    <img src={resolveImageUrl(category.iconUrl)} alt={category.name} className="w-16 h-16 object-contain" />
                                 ) : (
                                     <ImageIcon size={40} className="text-slate-200" />
                                 )}

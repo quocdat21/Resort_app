@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import Portal from '../../components/common/Portal';
 import {
     X,
@@ -51,10 +52,9 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
         if (!room) return;
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:3000/api/rooms/${room.id}`);
-            if (response.data.success) {
-                // The room details API includes instances
-                setInstances(response.data.data.instances || []);
+            const response = await apiService.get(`/rooms/${room.id}`);
+            if (response.success) {
+                setInstances(response.data.instances || []);
             }
         } catch (error) {
             console.error('Fetch instances error:', error);
@@ -76,41 +76,37 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
     const handleAdd = async () => {
         if (!formData.roomNumber) return;
         try {
-            const response = await axios.post('http://localhost:3000/api/rooms/instances', {
+            const response = await apiService.post('/rooms/instances', {
                 roomId: room.id,
                 roomNumber: formData.roomNumber,
                 status: formData.status
-            }, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
             });
 
-            if (response.data.success) {
+            if (response.success) {
                 fetchInstances();
                 setIsAdding(false);
                 setFormData({ roomNumber: '', status: 'Available' });
                 if (onSuccess) onSuccess();
             }
         } catch (error: any) {
-            Swal.fire('Lỗi!', error.response?.data?.message || 'Không thể thêm số phòng', 'error');
+            Swal.fire('Lỗi!', error.message || 'Không thể thêm số phòng', 'error');
         }
     };
 
     const handleUpdate = async (id: string) => {
         try {
-            const response = await axios.put(`http://localhost:3000/api/rooms/instances/${id}`, {
+            const response = await apiService.put(`/rooms/instances/${id}`, {
                 roomNumber: formData.roomNumber,
                 status: formData.status
-            }, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
             });
 
-            if (response.data.success) {
+            if (response.success) {
                 fetchInstances();
                 setIsEditing(null);
                 if (onSuccess) onSuccess();
             }
         } catch (error: any) {
-            Swal.fire('Lỗi!', error.response?.data?.message || 'Không thể cập nhật', 'error');
+            Swal.fire('Lỗi!', error.message || 'Không thể cập nhật', 'error');
         }
     };
 
@@ -128,15 +124,13 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
 
         if (result.isConfirmed) {
             try {
-                const response = await axios.delete(`http://localhost:3000/api/rooms/instances/${id}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
-                });
-                if (response.data.success) {
+                const response = await apiService.delete(`/rooms/instances/${id}`);
+                if (response.success) {
                     fetchInstances();
                     if (onSuccess) onSuccess();
                 }
             } catch (error: any) {
-                Swal.fire('Lỗi!', error.response?.data?.message || 'Không thể xóa', 'error');
+                Swal.fire('Lỗi!', error.message || 'Không thể xóa', 'error');
             }
         }
     };
@@ -154,7 +148,11 @@ const RoomInstances: React.FC<RoomInstancesProps> = ({ isOpen, onClose, onSucces
                     <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
                         <div className="flex items-center gap-4">
                             <div className="relative w-16 h-12 rounded-xl overflow-hidden shadow-sm border border-slate-100">
-                                <img src={`http://localhost:3000${room.main_image_url}`} alt={room.name} className="w-full h-full object-cover" />
+                                <img 
+                                    src={resolveImageUrl(room.main_image_url)} 
+                                    alt={room.name} 
+                                    className="w-full h-full object-cover" 
+                                />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-slate-900">Chi tiết danh sách phòng</h2>

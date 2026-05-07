@@ -11,6 +11,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import { apiService } from '../../services/api_service';
+import { resolveImageUrl } from '../../utils/image_util';
 import Pagination from '../../components/common/Pagination';
 
 import AddCategory from './add_category';
@@ -252,7 +253,7 @@ const CategoriesPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
                                                     {category.iconUrl ? (
-                                                        <img src={category.iconUrl} alt={category.name} className="w-6 h-6 object-contain" />
+                                                        <img src={resolveImageUrl(category.iconUrl)} alt={category.name} className="w-6 h-6 object-contain" />
                                                     ) : (
                                                         <ImageIcon size={18} className="text-slate-300" />
                                                     )}
