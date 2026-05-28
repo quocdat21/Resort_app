@@ -1,5 +1,5 @@
 //const transporter = require('../config/email');
-const resend = require('../config/resend');
+const resend = require('../config/resend_email');
 require('dotenv').config();
 
 /**
