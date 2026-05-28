@@ -295,7 +295,12 @@ class ApiService {
         'Authorization': 'Bearer $token',
       },
     );
-    return jsonDecode(response.body);
+    final data = jsonDecode(response.body);
+    if (data['success'] == true && data['data'] != null) {
+      // Update local session data
+      await updateUserSession(data['data']);
+    }
+    return data;
   }
 
   /// PUT /api/auth/me
@@ -345,6 +350,12 @@ class ApiService {
     await prefs.setString('auth_token', token);
     await prefs.setString('user_data', jsonEncode(user));
     await prefs.setInt('login_timestamp', DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// Cập nhật chỉ thông tin user (không thay đổi token)
+  static Future<void> updateUserSession(Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_data', jsonEncode(user));
   }
 
   /// Kiểm tra và lấy token đã lưu (hết hạn sau 7 ngày)

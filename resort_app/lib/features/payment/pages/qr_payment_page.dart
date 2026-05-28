@@ -6,7 +6,7 @@ import 'package:resort_app/core/constants/app_colors.dart';
 import 'package:resort_app/core/constants/app_text_styles.dart';
 import 'package:resort_app/core/services/api_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -217,16 +217,16 @@ class _QRPaymentPageState extends State<QRPaymentPage> {
       final status = await Permission.photos.request();
       if (status.isGranted || status.isLimited) {
         // Find the boundary
-        final boundary = _qrKey.currentContext?.findRenderObject()
-            as RenderRepaintBoundary?;
+        final boundary =
+            _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
         if (boundary == null) return;
 
         // Capture the widget as image
         final image = await boundary.toImage(pixelRatio: 3.0);
         final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        
+
         if (byteData != null) {
-          final result = await ImageGallerySaver.saveImage(
+          final result = await ImageGallerySaverPlus.saveImage(
             byteData.buffer.asUint8List(),
             quality: 100,
             name: "Payment_Info_${_currentOrderCode}",

@@ -34,10 +34,20 @@ class _SideMenuDrawerPageState extends State<SideMenuDrawerPage> {
 
   Future<void> _fetchUserData() async {
     try {
+      // First show cached data
       final user = await ApiService.getUser();
-      if (mounted) {
+      if (user != null && mounted) {
         setState(() {
           _userData = user;
+          _isLoading = false;
+        });
+      }
+
+      // Then fetch fresh data from server
+      final response = await ApiService.fetchMe();
+      if (response['success'] == true && mounted) {
+        setState(() {
+          _userData = response['data'];
           _isLoading = false;
         });
       }

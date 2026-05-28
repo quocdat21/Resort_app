@@ -59,10 +59,19 @@ class _RoomsSearchResultsState extends State<RoomsSearchResults> {
 
   Future<void> _loadUserData() async {
     try {
+      // Show cached avatar first
       final user = await ApiService.getUser();
-      if (mounted) {
+      if (user != null && mounted) {
         setState(() {
-          _avatarUrl = user?['avatar_url'];
+          _avatarUrl = user['avatar_url'];
+        });
+      }
+
+      // Then fetch fresh data
+      final response = await ApiService.fetchMe();
+      if (response['success'] == true && mounted) {
+        setState(() {
+          _avatarUrl = response['data']?['avatar_url'];
         });
       }
     } catch (e) {

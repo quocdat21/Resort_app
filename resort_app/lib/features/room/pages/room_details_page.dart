@@ -869,15 +869,19 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
         ? _selectedRoomNumberIds.length * 2
         : 2;
 
+    final String ageLess6 = AppStrings.get(context, 'age_less_6');
+    final String age6to12 = AppStrings.get(context, 'age_6_12');
+    final String ageMore12 = AppStrings.get(context, 'age_more_12');
+
     for (var ageStr in _childAges) {
-      if (ageStr == '< 6 years old') {
+      if (ageStr == ageLess6) {
         under6Count++;
         if (under6Count > freeUnder6Limit) {
           extraFeePerNight += 200000;
         }
-      } else if (ageStr == '6 - 12 years old') {
+      } else if (ageStr == age6to12) {
         extraFeePerNight += 200000;
-      } else if (ageStr == '> 12 years old') {
+      } else if (ageStr == ageMore12) {
         extraFeePerNight += 400000;
       }
     }

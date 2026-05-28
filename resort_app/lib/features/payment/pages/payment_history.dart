@@ -106,100 +106,100 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
       body: Stack(
         children: [
           RefreshIndicator(
-              onRefresh: _loadHistory,
-              color: AppColors.primary,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
-                    Text(
-                      AppStrings.get(context, 'portfolio_overview'),
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+            onRefresh: _loadHistory,
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  Text(
+                    AppStrings.get(context, 'portfolio_overview'),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        currencyFormat.format(_totalSpent),
+                        style: AppTextStyles.h2.copyWith(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          currencyFormat.format(_totalSpent),
-                          style: AppTextStyles.h1.copyWith(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
+                      const SizedBox(width: 8),
+                      Text(
+                        AppStrings.get(context, 'total_spent'),
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: Colors.grey.shade400),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Filters
+                  Row(
+                    children: [
+                      _buildFilterTab('all_payments'),
+                      const SizedBox(width: 12),
+                      _buildFilterTab('last_30_days'),
+                      const SizedBox(width: 12),
+                      _buildFilterTab('refunds'),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  if (filtered.isEmpty && !_isLoading)
+                    Center(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 60),
+                          Icon(Icons.payment_outlined,
+                              size: 64, color: Colors.grey.shade200),
+                          const SizedBox(height: 16),
+                          Text(
+                            AppStrings.get(context, 'no_transactions_found'),
+                            style: AppTextStyles.bodyLarge
+                                .copyWith(color: Colors.grey.shade400),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          AppStrings.get(context, 'total_spent'),
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: Colors.grey.shade400),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Filters
-                    Row(
-                      children: [
-                        _buildFilterTab('all_payments'),
-                        const SizedBox(width: 12),
-                        _buildFilterTab('last_30_days'),
-                        const SizedBox(width: 12),
-                        _buildFilterTab('refunds'),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    if (filtered.isEmpty && !_isLoading)
-                      Center(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 60),
-                            Icon(Icons.payment_outlined,
-                                size: 64, color: Colors.grey.shade200),
-                            const SizedBox(height: 16),
-                            Text(
-                              AppStrings.get(context, 'no_transactions_found'),
-                              style: AppTextStyles.bodyLarge
-                                  .copyWith(color: Colors.grey.shade400),
+                        ],
+                      ),
+                    )
+                  else
+                    ...grouped.entries.map((entry) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.key,
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: Colors.grey.shade400,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
                             ),
-                          ],
-                        ),
-                      )
-                    else
-                      ...grouped.entries.map((entry) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.key,
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: Colors.grey.shade400,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ...entry.value.map((p) => _buildPaymentCard(p)),
-                            const SizedBox(height: 24),
-                          ],
-                        );
-                      }),
+                          ),
+                          const SizedBox(height: 16),
+                          ...entry.value.map((p) => _buildPaymentCard(p)),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    }),
 
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
+          ),
           if (_isLoading) const Loading(),
         ],
       ),
@@ -238,8 +238,10 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
     final String dateStr = locale == 'vi'
         ? DateFormat('dd/MM/yyyy, HH:mm').format(date)
         : DateFormat('MMM dd, hh:mm a').format(date).toUpperCase();
-    final String itemName =
-        p['item_name'] ?? (type == 'room' ? AppStrings.get(context, 'accommodation') : AppStrings.get(context, 'services'));
+    final String itemName = p['item_name'] ??
+        (type == 'room'
+            ? AppStrings.get(context, 'accommodation')
+            : AppStrings.get(context, 'services'));
     final String ref = p['booking_code'] ?? 'REF-UNKNOWN';
 
     Color statusColor = Colors.green;

@@ -175,13 +175,18 @@ class _PaymentPageState extends State<PaymentPage> {
     int extraFeePerNight = 0;
     int under6Count = 0;
     final List<dynamic> childAges = data['childAges'] ?? [];
+    int freeUnder6Limit = roomCount * 2;
+    final String ageLess6 = AppStrings.get(context, 'age_less_6');
+    final String age6to12 = AppStrings.get(context, 'age_6_12');
+    final String ageMore12 = AppStrings.get(context, 'age_more_12');
+
     for (var ageStr in childAges) {
-      if (ageStr == '< 6 years old') {
+      if (ageStr == ageLess6) {
         under6Count++;
-        if (under6Count > 2) extraFeePerNight += 200000;
-      } else if (ageStr == '6 - 12 years old') {
+        if (under6Count > freeUnder6Limit) extraFeePerNight += 200000;
+      } else if (ageStr == age6to12) {
         extraFeePerNight += 200000;
-      } else if (ageStr == '> 12 years old') {
+      } else if (ageStr == ageMore12) {
         extraFeePerNight += 400000;
       }
     }
@@ -624,19 +629,34 @@ class _PaymentPageState extends State<PaymentPage> {
                           if (calculatedNights <= 0) calculatedNights = 1;
                         }
 
+                        final List<dynamic> selectedRoomNumberIds =
+                            data['selectedRoomNumberIds'] ?? [];
+                        final int roomCount = selectedRoomNumberIds.isEmpty
+                            ? 1
+                            : selectedRoomNumberIds.length;
+
                         // Recalculate breakdown for DB sync
                         double totalExtraFee = 0;
                         if (!isService) {
                           final List<dynamic> childAges =
                               data['childAges'] ?? [];
                           int under6Count = 0;
+                          int freeUnder6Limit = roomCount * 2;
+                          final String ageLess6 =
+                              AppStrings.get(context, 'age_less_6');
+                          final String age6to12 =
+                              AppStrings.get(context, 'age_6_12');
+                          final String ageMore12 =
+                              AppStrings.get(context, 'age_more_12');
+
                           for (var ageStr in childAges) {
-                            if (ageStr == '< 6 years old') {
+                            if (ageStr == ageLess6) {
                               under6Count++;
-                              if (under6Count > 2) totalExtraFee += 200000;
-                            } else if (ageStr == '6 - 12 years old') {
+                              if (under6Count > freeUnder6Limit)
+                                totalExtraFee += 200000;
+                            } else if (ageStr == age6to12) {
                               totalExtraFee += 200000;
-                            } else if (ageStr == '> 12 years old') {
+                            } else if (ageStr == ageMore12) {
                               totalExtraFee += 400000;
                             }
                           }
@@ -646,11 +666,6 @@ class _PaymentPageState extends State<PaymentPage> {
                         final double basePrice = double.tryParse(
                                 data['base_price']?.toString() ?? '0') ??
                             0;
-                        final List<dynamic> selectedRoomNumberIds =
-                            data['selectedRoomNumberIds'] ?? [];
-                        final int roomCount = selectedRoomNumberIds.isEmpty
-                            ? 1
-                            : selectedRoomNumberIds.length;
                         final double roomCharge =
                             basePrice * calculatedNights * roomCount;
                         final double taxAmount = isService
