@@ -26,6 +26,7 @@
     "mysql2": "^3.14.0",
     "nanoid": "^5.1.11",
     "nodemailer": "^6.10.1",
+    "resend": "^6.12.4",
     "sharp": "^0.34.5"
   },
   "devDependencies": {

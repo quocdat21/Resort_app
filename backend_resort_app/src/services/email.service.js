@@ -1,4 +1,5 @@
-const transporter = require('../config/email');
+//const transporter = require('../config/email');
+const resend = require('../config/resend');
 require('dotenv').config();
 
 /**
@@ -9,8 +10,8 @@ require('dotenv').config();
  */
 const sendWelcomeEmail = async (to, fullName, otp) => {
   const mailOptions = {
-    from: `"Thao Nguyen Resort" <${process.env.EMAIL_USER}>`,
-    to,
+    // from: `"Thao Nguyen Resort" <${process.env.EMAIL_USER}>`,
+    // to,
     subject: '🌿 Welcome to Thao Nguyen Resort — Verify Your Account',
     html: `
       <!DOCTYPE html>
@@ -58,8 +59,20 @@ const sendWelcomeEmail = async (to, fullName, otp) => {
       </html>
     `,
   };
+  //return transporter.sendMail(mailOptions);
 
-  return transporter.sendMail(mailOptions);
+  const { data, error } = await resend.emails.send({
+    from: process.env.RESEND_FROM || 'Thao Nguyen Resort <onboarding@resend.dev>',
+    to: [to],
+    subject: mailOptions.subject,
+    html: mailOptions.html,
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Failed to send email');
+  }
+
+  return data;
 };
 
 /**
@@ -120,7 +133,19 @@ const sendResetPasswordEmail = async (to, fullName, otp) => {
     `,
   };
 
-  return transporter.sendMail(mailOptions);
+  //return transporter.sendMail(mailOptions);
+  const { data, error } = await resend.emails.send({
+    from: process.env.RESEND_FROM || 'Thao Nguyen Resort <onboarding@resend.dev>',
+    to: [to],
+    subject: mailOptions.subject,
+    html: mailOptions.html,
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Failed to send email');
+  }
+
+  return data;
 };
 
 module.exports = { sendWelcomeEmail, sendResetPasswordEmail };
