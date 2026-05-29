@@ -19,8 +19,8 @@ exports.getAllAmenities = async (req, res) => {
 
     // If page and limit are provided, apply pagination
     if (page && limit) {
-      const p = Number(page);
-      const l = Number(limit);
+      const p = Math.max(parseInt(page, 10) || 1, 1);
+      const l = Math.max(parseInt(limit, 10) || 6, 1);
       const offset = (p - 1) * l;
 
       // Count total for pagination
@@ -30,8 +30,9 @@ exports.getAllAmenities = async (req, res) => {
       );
       const total = countRows[0].total;
 
-      query += ' LIMIT ? OFFSET ?';
-      queryParams.push(l, offset);
+      // Không dùng LIMIT ? OFFSET ? với một số MySQL managed DB vì mysql2 execute
+      // có thể lỗi ER_WRONG_ARGUMENTS ở mysqld_stmt_execute.
+      query += ` LIMIT ${l} OFFSET ${offset}`;
 
       const [rows] = await pool.execute(query, queryParams);
 

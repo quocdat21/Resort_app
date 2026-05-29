@@ -6,8 +6,8 @@ const serviceController = {
   // Get all services with pagination and filters
   getAllServices: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 6;
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
       const offset = (page - 1) * limit;
       const { type, excludeType, searchTerm } = req.query;
 
@@ -29,19 +29,23 @@ const serviceController = {
         values.push(`%${searchTerm}%`);
       }
 
-      query += " ORDER BY s.created_at ASC LIMIT ? OFFSET ?";
-      values.push(limit, offset);
+      // Không dùng LIMIT ? OFFSET ? với một số MySQL managed DB vì mysql2 execute
+      // có thể lỗi ER_WRONG_ARGUMENTS ở mysqld_stmt_execute.
+      query += ` ORDER BY s.created_at ASC LIMIT ${limit} OFFSET ${offset}`;
 
       const [services] = await pool.execute(query, values);
 
       // Fetch prices and images for these services and map them
       if (services.length > 0) {
         const serviceIds = services.map(s => s.id);
+        const placeholders = serviceIds.map(() => '?').join(',');
         const [prices] = await pool.query(
-          `SELECT * FROM ServicePrices WHERE service_id IN (${serviceIds.join(',')})`
+          `SELECT * FROM ServicePrices WHERE service_id IN (${placeholders})`,
+          serviceIds
         );
         const [images] = await pool.query(
-          `SELECT id, service_id, image_url FROM Service_Images WHERE service_id IN (${serviceIds.join(',')})`
+          `SELECT id, service_id, image_url FROM Service_Images WHERE service_id IN (${placeholders})`,
+          serviceIds
         );
 
         services.forEach(s => {

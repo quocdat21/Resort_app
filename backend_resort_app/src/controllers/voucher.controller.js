@@ -4,8 +4,8 @@ const voucherController = {
   // Get all vouchers with pagination and filters
   getAllVouchers: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 6;
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
       const offset = (page - 1) * limit;
       const { status, searchTerm } = req.query;
 
@@ -43,8 +43,9 @@ const voucherController = {
       const total = countResult[0].total;
 
       // Add ordering and pagination
-      query += " ORDER BY created_at ASC LIMIT ? OFFSET ?";
-      values.push(limit, offset);
+      // Không dùng LIMIT ? OFFSET ? với một số MySQL managed DB vì mysql2 execute
+      // có thể lỗi ER_WRONG_ARGUMENTS ở mysqld_stmt_execute.
+      query += ` ORDER BY created_at ASC LIMIT ${limit} OFFSET ${offset}`;
 
       const [vouchers] = await pool.execute(query, values);
 
