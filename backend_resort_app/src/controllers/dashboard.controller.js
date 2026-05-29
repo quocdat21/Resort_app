@@ -74,13 +74,18 @@ const dashboardController = {
       // 2. REVENUE CHART (Last 7 days)
       const [revenueChart] = await pool.execute(`
         SELECT 
-          DATE_FORMAT(payment_date, '%b %d') as day,
-          SUM(amount) as revenue
-        FROM Payments
-        WHERE status = 'success' 
-          AND payment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-        GROUP BY DATE(payment_date)
-        ORDER BY payment_date ASC
+          DATE_FORMAT(payment_day, '%b %d') as day,
+          revenue
+        FROM (
+          SELECT 
+            DATE(payment_date) as payment_day,
+            SUM(amount) as revenue
+          FROM Payments
+          WHERE status = 'success'
+            AND payment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+          GROUP BY DATE(payment_date)
+        ) t
+        ORDER BY payment_day ASC
       `);
 
       // 3. BOOKING STATUS DISTRIBUTION

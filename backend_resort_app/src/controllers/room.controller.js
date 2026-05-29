@@ -32,50 +32,74 @@ const roomController = {
       // Auto update status
       await roomController._internalUpdateRoomStatuses();
 
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 6;
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
       const offset = (page - 1) * limit;
+
       const { categoryId, zoneId, searchTerm } = req.query;
 
       let query = `
-        SELECT r.id, r.name, r.category_id, r.description, r.size_sqm, 
-               r.capacity_adults, r.capacity_children, r.base_price, r.auto_checkin, r.auto_checkout, r.created_at, r.updated_at,
-               c.name as category_name, c.zone_id, z.name as zone_name,
-               (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count,
-               (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id AND rn.status = 'Available') as available_count,
-               (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.room_id = r.id) as amenity_count,
-               (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id AND ri.image_url LIKE '%/pr-%' LIMIT 1) as main_image_url
-        FROM Rooms r
-        LEFT JOIN Categories c ON r.category_id = c.id
-        LEFT JOIN Zones z ON c.zone_id = z.id
-        WHERE 1=1
-      `;
+      SELECT r.id, r.name, r.category_id, r.description, r.size_sqm, 
+             r.capacity_adults, r.capacity_children, r.base_price, 
+             r.auto_checkin, r.auto_checkout, r.created_at, r.updated_at,
+             c.name as category_name, c.zone_id, z.name as zone_name,
+             (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count,
+             (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id AND rn.status = 'Available') as available_count,
+             (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.room_id = r.id) as amenity_count,
+             (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id AND ri.image_url LIKE '%/pr-%' LIMIT 1) as main_image_url
+      FROM Rooms r
+      LEFT JOIN Categories c ON r.category_id = c.id
+      LEFT JOIN Zones z ON c.zone_id = z.id
+      WHERE 1=1
+    `;
+
       const values = [];
 
       if (categoryId) {
         query += " AND r.category_id = ?";
-        values.push(categoryId);
+        values.push(Number(categoryId));
       }
+
       if (zoneId) {
         query += " AND c.zone_id = ?";
-        values.push(zoneId);
+        values.push(Number(zoneId));
       }
+
       if (searchTerm) {
         query += " AND r.name LIKE ?";
         values.push(`%${searchTerm}%`);
       }
 
-      query += " ORDER BY r.created_at ASC LIMIT ? OFFSET ?";
-      values.push(limit, offset);
+      // Không dùng LIMIT ? OFFSET ? với Aiven MySQL
+      // Vì mysql2 execute có thể lỗi Incorrect arguments to mysqld_stmt_execute
+      query += ` ORDER BY r.created_at ASC LIMIT ${limit} OFFSET ${offset}`;
 
       const [rows] = await pool.execute(query, values);
 
       // Get total count for pagination
-      let countQuery = "SELECT COUNT(*) as total FROM Rooms r LEFT JOIN Categories c ON r.category_id = c.id WHERE 1=1";
+      let countQuery = `
+      SELECT COUNT(*) as total 
+      FROM Rooms r 
+      LEFT JOIN Categories c ON r.category_id = c.id 
+      WHERE 1=1
+    `;
+
       const countValues = [];
-      if (categoryId) { countQuery += " AND r.category_id = ?"; countValues.push(categoryId); }
-      if (zoneId) { countQuery += " AND c.zone_id = ?"; countValues.push(zoneId); }
-      if (searchTerm) { countQuery += " AND r.name LIKE ?"; countValues.push(`%${searchTerm}%`); }
+
+      if (categoryId) {
+        countQuery += " AND r.category_id = ?";
+        countValues.push(Number(categoryId));
+      }
+
+      if (zoneId) {
+        countQuery += " AND c.zone_id = ?";
+        countValues.push(Number(zoneId));
+      }
+
+      if (searchTerm) {
+        countQuery += " AND r.name LIKE ?";
+        countValues.push(`%${searchTerm}%`);
+      }
 
       const [countResult] = await pool.execute(countQuery, countValues);
       const total = countResult[0].total;
@@ -108,7 +132,7 @@ const roomController = {
       const { id } = req.params;
       const [room] = await pool.execute(`
         SELECT r.*, c.name as category_name, c.zone_id, z.name as zone_name,
-               (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count
+              (SELECT COUNT(*) FROM Room_Numbers rn WHERE rn.room_id = r.id) as instance_count
         FROM Rooms r
         LEFT JOIN Categories c ON r.category_id = c.id
         LEFT JOIN Zones z ON c.zone_id = z.id
@@ -371,46 +395,62 @@ const roomController = {
   searchRooms: async (req, res) => {
     try {
       const {
-        checkIn, checkOut,
-        adults = 2, children = 0,
-        minPrice, maxPrice,
-        categoryId, zoneId,
+        checkIn,
+        checkOut,
+        adults = 2,
+        children = 0,
+        minPrice,
+        maxPrice,
+        categoryId,
+        zoneId,
         searchTerm,
-        page = 1, limit = 20,
-        sortBy = 'base_price', sortOrder = 'ASC'
+        page = 1,
+        limit = 20,
+        sortBy = 'base_price',
+        sortOrder = 'ASC'
       } = req.query;
 
-      const offset = (parseInt(page) - 1) * parseInt(limit);
+      const safePage = Math.max(parseInt(page, 10) || 1, 1);
+      const safeLimit = Math.max(parseInt(limit, 10) || 20, 1);
+      const safeOffset = (safePage - 1) * safeLimit;
 
       let query = `
-        SELECT r.id, r.name, r.description, r.size_sqm,
-               r.capacity_adults, r.capacity_children, r.base_price,
-               c.name as category_name, c.zone_id, z.name as zone_name,
-               (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id LIMIT 1) as main_image_url,
-               (SELECT COUNT(*) FROM Room_Numbers rn 
-                WHERE rn.room_id = r.id 
-                AND rn.status != 'Inactive'
-                AND rn.id NOT IN (
-                  SELECT br.room_number_id 
-                  FROM Booking_Rooms br 
-                  JOIN Bookings b ON br.booking_id = b.id 
-                  WHERE b.status = 'Confirmed' AND b.type = 'room'
-                  AND (
-                    (b.check_in <= ? AND b.check_out > ?) OR
-                    (b.check_in < ? AND b.check_out >= ?) OR
-                    (? <= b.check_in AND ? >= b.check_out)
-                  )
+      SELECT r.id, r.name, r.description, r.size_sqm,
+             r.capacity_adults, r.capacity_children, r.base_price,
+             c.name as category_name, c.zone_id, z.name as zone_name,
+             (SELECT image_url FROM Room_Images ri WHERE ri.room_id = r.id LIMIT 1) as main_image_url,
+             (SELECT COUNT(*) FROM Room_Numbers rn 
+              WHERE rn.room_id = r.id 
+              AND rn.status != 'Inactive'
+              AND rn.id NOT IN (
+                SELECT br.room_number_id 
+                FROM Booking_Rooms br 
+                JOIN Bookings b ON br.booking_id = b.id 
+                WHERE b.status = 'Confirmed' AND b.type = 'room'
+                AND (
+                  (b.check_in <= ? AND b.check_out > ?) OR
+                  (b.check_in < ? AND b.check_out >= ?) OR
+                  (? <= b.check_in AND ? >= b.check_out)
                 )
-               ) as available_count,
-               (SELECT AVG(rv.rating) FROM Reviews rv JOIN Booking_Rooms br ON rv.room_number_id = br.room_number_id JOIN Room_Numbers rn2 ON br.room_number_id = rn2.id WHERE rn2.room_id = r.id) as avg_rating,
-               (SELECT COUNT(*) FROM Reviews rv JOIN Booking_Rooms br ON rv.room_number_id = br.room_number_id JOIN Room_Numbers rn2 ON br.room_number_id = rn2.id WHERE rn2.room_id = r.id) as review_count
-        FROM Rooms r
-        LEFT JOIN Categories c ON r.category_id = c.id
-        LEFT JOIN Zones z ON c.zone_id = z.id
-        WHERE 1=1
-      `;
+              )
+             ) as available_count,
+             (SELECT AVG(rv.rating) 
+              FROM Reviews rv 
+              JOIN Booking_Rooms br ON rv.room_number_id = br.room_number_id 
+              JOIN Room_Numbers rn2 ON br.room_number_id = rn2.id 
+              WHERE rn2.room_id = r.id) as avg_rating,
+             (SELECT COUNT(*) 
+              FROM Reviews rv 
+              JOIN Booking_Rooms br ON rv.room_number_id = br.room_number_id 
+              JOIN Room_Numbers rn2 ON br.room_number_id = rn2.id 
+              WHERE rn2.room_id = r.id) as review_count
+      FROM Rooms r
+      LEFT JOIN Categories c ON r.category_id = c.id
+      LEFT JOIN Zones z ON c.zone_id = z.id
+      WHERE 1=1
+    `;
+
       const values = [];
-      const hasDates = checkIn && checkOut;
 
       // If no dates provided, use today to tomorrow as default for availability check
       const dIn = checkIn || new Date().toISOString().split('T')[0];
@@ -421,31 +461,34 @@ const roomController = {
       // Filter by capacity
       if (adults) {
         query += " AND r.capacity_adults >= ?";
-        values.push(parseInt(adults));
+        values.push(parseInt(adults, 10));
       }
+
       if (children) {
         query += " AND r.capacity_children >= ?";
-        values.push(parseInt(children));
+        values.push(parseInt(children, 10));
       }
 
       // Filter by price
       if (minPrice) {
         query += " AND r.base_price >= ?";
-        values.push(parseInt(minPrice));
+        values.push(parseInt(minPrice, 10));
       }
+
       if (maxPrice) {
         query += " AND r.base_price <= ?";
-        values.push(parseInt(maxPrice));
+        values.push(parseInt(maxPrice, 10));
       }
 
       // Filter by category/zone
       if (categoryId) {
         query += " AND r.category_id = ?";
-        values.push(categoryId);
+        values.push(Number(categoryId));
       }
+
       if (zoneId) {
         query += " AND c.zone_id = ?";
-        values.push(zoneId);
+        values.push(Number(zoneId));
       }
 
       // Search by name or category name
@@ -460,26 +503,57 @@ const roomController = {
       // Sorting
       const allowedSorts = ['base_price', 'name', 'capacity_adults', 'created_at'];
       const safeSort = allowedSorts.includes(sortBy) ? sortBy : 'base_price';
-      const safeOrder = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-      query += ` ORDER BY r.${safeSort} ${safeOrder} LIMIT ? OFFSET ?`;
-      values.push(parseInt(limit), offset);
+      const safeOrder = String(sortOrder).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+      // Không dùng LIMIT ? OFFSET ? với Aiven MySQL
+      query += ` ORDER BY r.${safeSort} ${safeOrder} LIMIT ${safeLimit} OFFSET ${safeOffset}`;
 
       const [rows] = await pool.execute(query, values);
 
       // Count total
       let countQuery = `
-        SELECT COUNT(*) as total FROM Rooms r
-        LEFT JOIN Categories c ON r.category_id = c.id
-        WHERE 1=1
-      `;
+      SELECT COUNT(*) as total 
+      FROM Rooms r
+      LEFT JOIN Categories c ON r.category_id = c.id
+      WHERE 1=1
+    `;
+
       const countValues = [];
-      if (adults) { countQuery += " AND r.capacity_adults >= ?"; countValues.push(parseInt(adults)); }
-      if (children) { countQuery += " AND r.capacity_children >= ?"; countValues.push(parseInt(children)); }
-      if (minPrice) { countQuery += " AND r.base_price >= ?"; countValues.push(parseInt(minPrice)); }
-      if (maxPrice) { countQuery += " AND r.base_price <= ?"; countValues.push(parseInt(maxPrice)); }
-      if (categoryId) { countQuery += " AND r.category_id = ?"; countValues.push(categoryId); }
-      if (zoneId) { countQuery += " AND c.zone_id = ?"; countValues.push(zoneId); }
-      if (searchTerm) { countQuery += " AND (r.name LIKE ? OR c.name LIKE ?)"; countValues.push(`%${searchTerm}%`, `%${searchTerm}%`); }
+
+      if (adults) {
+        countQuery += " AND r.capacity_adults >= ?";
+        countValues.push(parseInt(adults, 10));
+      }
+
+      if (children) {
+        countQuery += " AND r.capacity_children >= ?";
+        countValues.push(parseInt(children, 10));
+      }
+
+      if (minPrice) {
+        countQuery += " AND r.base_price >= ?";
+        countValues.push(parseInt(minPrice, 10));
+      }
+
+      if (maxPrice) {
+        countQuery += " AND r.base_price <= ?";
+        countValues.push(parseInt(maxPrice, 10));
+      }
+
+      if (categoryId) {
+        countQuery += " AND r.category_id = ?";
+        countValues.push(Number(categoryId));
+      }
+
+      if (zoneId) {
+        countQuery += " AND c.zone_id = ?";
+        countValues.push(Number(zoneId));
+      }
+
+      if (searchTerm) {
+        countQuery += " AND (r.name LIKE ? OR c.name LIKE ?)";
+        countValues.push(`%${searchTerm}%`, `%${searchTerm}%`);
+      }
 
       const [countResult] = await pool.execute(countQuery, countValues);
       const total = countResult[0].total;
@@ -496,9 +570,9 @@ const roomController = {
         data: formatted,
         pagination: {
           total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(total / parseInt(limit))
+          page: safePage,
+          limit: safeLimit,
+          totalPages: Math.ceil(total / safeLimit)
         }
       });
     } catch (error) {
@@ -589,7 +663,7 @@ const roomController = {
       )
     `;
     await conn.execute(bookQuery, [currentDate, currentDate]);
-    
+
     // 3. Mark 'Booked' rooms as 'Occupied' (Auto Check-in)
     // Only for rooms with auto_checkin = 1 AND after 14:00
     if (hour >= 14) {
