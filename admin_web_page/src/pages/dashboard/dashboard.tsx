@@ -201,7 +201,7 @@ const Dashboard: React.FC = () => {
                                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <Tooltip
-                                    formatter={(value: number) => [formatPrice(value), 'Doanh thu']}
+                                    formatter={(value) => [formatPrice(Number(value ?? 0)), 'Doanh thu']}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
@@ -265,7 +265,7 @@ const Dashboard: React.FC = () => {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <Tooltip
                                     cursor={{ fill: '#f8fafc' }}
-                                    formatter={(value: number) => [`${value}%`, 'Tỷ lệ']}
+                                    formatter={(value) => [`${Number(value ?? 0)}%`, 'Tỷ lệ']}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                                 />
                                 <Bar dataKey="rate" fill="#10b981" radius={[4, 4, 0, 0]} barSize={15} />
@@ -300,8 +300,8 @@ const Dashboard: React.FC = () => {
                                         <td className="py-4 text-center text-slate-500">{formatDate(booking.checkIn)}</td>
                                         <td className="py-4 text-right">
                                             <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${booking.status === 'Confirmed' ? 'bg-green-50 text-green-600' :
-                                                    booking.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
-                                                        'bg-blue-50 text-blue-600'
+                                                booking.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-blue-50 text-blue-600'
                                                 }`}>
                                                 {booking.status}
                                             </span>
@@ -334,8 +334,8 @@ const Dashboard: React.FC = () => {
                                         <td className="py-4 text-center font-bold text-slate-900">{formatPrice(payment.amount)}</td>
                                         <td className="py-4 text-right">
                                             <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${payment.status === 'success' || payment.status === 'Paid' ? 'bg-green-50 text-green-600' :
-                                                    payment.status === 'pending' || payment.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
-                                                        'bg-red-50 text-red-600'
+                                                payment.status === 'pending' || payment.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-red-50 text-red-600'
                                                 }`}>
                                                 {payment.status}
                                             </span>
