@@ -1,4 +1,3 @@
-const fs = require('fs');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
@@ -9,7 +8,7 @@ require('dotenv').config();
 
 const SALT_ROUNDS = 12;
 
-const { formatImageUrl } = require('../utils/url.util');
+const { formatImageUrl, deleteLocalImageIfExists } = require('../utils/url.util');
 
 const formatUser = (user, req) => {
   if (!user) return null;
@@ -672,10 +671,7 @@ const updateMe = async (req, res) => {
       // Get current user to delete old avatar
       const [currentUser] = await pool.execute('SELECT avatar_url FROM Users WHERE id = ?', [req.user.id]);
       if (currentUser.length > 0 && currentUser[0].avatar_url) {
-        const oldPath = `./${currentUser[0].avatar_url.startsWith('/') ? currentUser[0].avatar_url.substring(1) : currentUser[0].avatar_url}`;
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
+        deleteLocalImageIfExists(currentUser[0].avatar_url);
       }
       updates.push('avatar_url = ?');
       values.push(`/uploads/users/${req.file.filename}`);

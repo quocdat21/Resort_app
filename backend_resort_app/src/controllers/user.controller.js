@@ -1,7 +1,6 @@
 const pool = require('../config/db');
-const fs = require('fs');
 const bcrypt = require('bcrypt');
-const { formatImageUrl } = require('../utils/url.util');
+const { formatImageUrl, deleteLocalImageIfExists } = require('../utils/url.util');
 const SALT_ROUNDS = 12;
 
 exports.getAllUsers = async (req, res) => {
@@ -213,12 +212,7 @@ exports.updateUser = async (req, res) => {
 
     if (req.file) {
       // Delete old avatar if exists
-      if (user[0].avatar_url) {
-        const oldPath = `./${user[0].avatar_url.startsWith('/') ? user[0].avatar_url.substring(1) : user[0].avatar_url}`;
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
+      deleteLocalImageIfExists(user[0].avatar_url);
       updates.push('avatar_url = ?');
       values.push(`/uploads/users/${req.file.filename}`);
     }

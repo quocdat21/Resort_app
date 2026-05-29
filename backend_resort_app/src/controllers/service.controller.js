@@ -1,6 +1,5 @@
 const pool = require('../config/db');
-const fs = require('fs');
-const { formatImageUrl } = require('../utils/url.util');
+const { formatImageUrl, normalizeStoredImagePath, deleteLocalImageIfExists } = require('../utils/url.util');
 
 const serviceController = {
   // Get all services with pagination and filters
@@ -192,10 +191,7 @@ const serviceController = {
       let mainImageUrl = existing[0].image_url;
       if (req.files && req.files.main_image) {
         // Delete old main image
-        if (mainImageUrl) {
-          const oldPath = `./${mainImageUrl.startsWith('/') ? mainImageUrl.substring(1) : mainImageUrl}`;
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
+        deleteLocalImageIfExists(mainImageUrl);
         mainImageUrl = `/uploads/services/${req.files.main_image[0].filename}`;
       }
 
@@ -220,7 +216,9 @@ const serviceController = {
       const { existing_images } = req.body;
       let imagesToKeep = [];
       if (existing_images) {
-        try { imagesToKeep = JSON.parse(existing_images); } catch (e) { }
+        try {
+          imagesToKeep = JSON.parse(existing_images).map(normalizeStoredImagePath);
+        } catch (e) { }
       }
 
       const [currentImages] = await connection.execute('SELECT * FROM Service_Images WHERE service_id = ?', [id]);
@@ -229,8 +227,7 @@ const serviceController = {
       for (const img of currentImages) {
         if (!imagesToKeep.includes(img.image_url)) {
           // Delete file
-          const path = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
-          if (fs.existsSync(path)) fs.unlinkSync(path);
+          deleteLocalImageIfExists(img.image_url);
           // Delete DB record
           await connection.execute('DELETE FROM Service_Images WHERE id = ?', [img.id]);
         }
@@ -274,12 +271,10 @@ const serviceController = {
       if (result.affectedRows > 0) {
         // Delete files
         if (mainImg[0]?.image_url) {
-          const path = `./${mainImg[0].image_url.startsWith('/') ? mainImg[0].image_url.substring(1) : mainImg[0].image_url}`;
-          if (fs.existsSync(path)) fs.unlinkSync(path);
+          deleteLocalImageIfExists(mainImg[0].image_url);
         }
         for (const img of secondaryImgs) {
-          const path = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
-          if (fs.existsSync(path)) fs.unlinkSync(path);
+          deleteLocalImageIfExists(img.image_url);
         }
       }
 

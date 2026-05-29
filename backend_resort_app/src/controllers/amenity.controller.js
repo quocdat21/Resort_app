@@ -1,6 +1,5 @@
 const pool = require('../config/db');
-const fs = require('fs');
-const { formatImageUrl } = require('../utils/url.util');
+const { formatImageUrl, deleteLocalImageIfExists } = require('../utils/url.util');
 
 // Get all amenities with room usage count
 exports.getAllAmenities = async (req, res) => {
@@ -135,10 +134,7 @@ exports.updateAmenity = async (req, res) => {
 
     if (req.file) {
       // Delete old icon
-      if (existing[0].icon_url) {
-        const oldPath = `./${existing[0].icon_url.startsWith('/') ? existing[0].icon_url.substring(1) : existing[0].icon_url}`;
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      }
+      deleteLocalImageIfExists(existing[0].icon_url);
       updates.push('icon_url = ?');
       values.push(`/uploads/amenities/${req.file.filename}`);
     }
@@ -164,10 +160,7 @@ exports.deleteAmenity = async (req, res) => {
     if (existing.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy tiện nghi' });
 
     // Delete icon
-    if (existing[0].icon_url) {
-      const p = `./${existing[0].icon_url.startsWith('/') ? existing[0].icon_url.substring(1) : existing[0].icon_url}`;
-      if (fs.existsSync(p)) fs.unlinkSync(p);
-    }
+    deleteLocalImageIfExists(existing[0].icon_url);
 
     await pool.execute('DELETE FROM Amenities WHERE id = ?', [id]);
     res.json({ success: true, message: 'Đã xóa tiện nghi thành công' });

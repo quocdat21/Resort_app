@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { formatImageUrl } = require('../utils/url.util');
 
 const homeController = {
   /**
@@ -61,39 +62,20 @@ const homeController = {
         LIMIT 5
       `);
 
-      // Format response
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-
       const formattedCategories = categories.map(cat => {
-        let iconUrl = cat.icon_url;
-        if (iconUrl) {
-          if (iconUrl.includes('localhost:3000') || iconUrl.includes('127.0.0.1:3000')) {
-            iconUrl = iconUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
-          } else if (!iconUrl.startsWith('http')) {
-            iconUrl = `${baseUrl}${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
-          }
-        }
         return {
           id: cat.id,
           name: cat.name,
           zone_name: cat.zone_name,
-          icon_url: iconUrl
+          icon_url: formatImageUrl(cat.icon_url, req)
         };
       });
 
       const formattedRooms = popularRooms.map(room => {
-        let mainImageUrl = room.main_image_url;
-        if (mainImageUrl) {
-          if (mainImageUrl.includes('localhost:3000') || mainImageUrl.includes('127.0.0.1:3000')) {
-            mainImageUrl = mainImageUrl.replace(/http:\/\/(localhost|127\.0\.0\.1):3000/, baseUrl);
-          } else if (!mainImageUrl.startsWith('http')) {
-            mainImageUrl = `${baseUrl}${mainImageUrl.startsWith('/') ? '' : '/'}${mainImageUrl}`;
-          }
-        }
         return {
           id: room.id,
           name: room.name,
-          main_image_url: mainImageUrl,
+          main_image_url: formatImageUrl(room.main_image_url, req),
           base_price: Number(room.base_price),
           capacity_adults: room.capacity_adults,
           capacity_children: room.capacity_children,

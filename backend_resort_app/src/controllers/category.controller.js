@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const fs = require('fs');
-const { formatImageUrl } = require('../utils/url.util');
+const { formatImageUrl, deleteLocalImageIfExists } = require('../utils/url.util');
 
 // Get all categories with zone name and room count
 exports.getAllCategories = async (req, res) => {
@@ -162,12 +162,7 @@ exports.updateCategory = async (req, res) => {
 
     if (req.file && req.file.filename) {
       // Delete old icon if it exists
-      if (existing[0].icon_url) {
-        const oldPath = `./${existing[0].icon_url.startsWith('/') ? existing[0].icon_url.substring(1) : existing[0].icon_url}`;
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
+      deleteLocalImageIfExists(existing[0].icon_url);
       updates.push('icon_url = ?');
       values.push(`/uploads/categories/${req.file.filename}`);
     }

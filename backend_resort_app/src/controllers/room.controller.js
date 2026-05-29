@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const fs = require('fs');
-const { formatImageUrl } = require('../utils/url.util');
+const { formatImageUrl, normalizeStoredImagePath, deleteLocalImageIfExists } = require('../utils/url.util');
 
 const roomController = {
   // --- FILTER METADATA (for mobile search page) ---
@@ -263,8 +263,7 @@ const roomController = {
       if (req.files && req.files.mainImage) {
         const [oldImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url LIKE "%/pr-%"', [id]);
         if (oldImages.length > 0) {
-          const oldPath = `./${oldImages[0].image_url.startsWith('/') ? oldImages[0].image_url.substring(1) : oldImages[0].image_url}`;
-          if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+          deleteLocalImageIfExists(oldImages[0].image_url);
           await pool.execute('DELETE FROM Room_Images WHERE id = ?', [oldImages[0].id]);
         }
         await pool.execute('INSERT INTO Room_Images (room_id, image_url) VALUES (?, ?)', [id, `/uploads/rooms/${req.files.mainImage[0].filename}`]);
@@ -274,14 +273,16 @@ const roomController = {
       if (existingImages !== undefined || (req.files && req.files.secondaryImages)) {
         let imagesToKeep = [];
         if (existingImages) {
-          try { imagesToKeep = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages; } catch (e) { }
+          try {
+            const parsedImages = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+            imagesToKeep = Array.isArray(parsedImages) ? parsedImages.map(normalizeStoredImagePath) : [];
+          } catch (e) { }
         }
 
         const [currentImages] = await pool.execute('SELECT * FROM Room_Images WHERE room_id = ? AND image_url NOT LIKE "%/pr-%"', [id]);
         for (const img of currentImages) {
           if (!imagesToKeep.includes(img.image_url)) {
-            const oldPath = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            deleteLocalImageIfExists(img.image_url);
             await pool.execute('DELETE FROM Room_Images WHERE id = ?', [img.id]);
           }
         }
@@ -320,8 +321,7 @@ const roomController = {
       const { id } = req.params;
       const [images] = await pool.execute('SELECT image_url FROM Room_Images WHERE room_id = ?', [id]);
       images.forEach(img => {
-        const p = `./${img.image_url.startsWith('/') ? img.image_url.substring(1) : img.image_url}`;
-        if (fs.existsSync(p)) fs.unlinkSync(p);
+        deleteLocalImageIfExists(img.image_url);
       });
       await pool.execute('DELETE FROM Rooms WHERE id = ?', [id]);
       res.json({ success: true, message: 'Đã xóa phòng template thành công' });
