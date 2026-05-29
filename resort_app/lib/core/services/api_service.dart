@@ -4,8 +4,37 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  static String get baseUrl => dotenv.env['API_URL'] ?? 'http://localhost:3000/api';
-  static String get serverUrl => dotenv.env['SERVER_URL'] ?? 'http://localhost:3000';
+  static String _trimTrailingSlash(String value) {
+    return value.endsWith('/') ? value.substring(0, value.length - 1) : value;
+  }
+
+  static String get serverUrl {
+    final configuredServerUrl = dotenv.env['SERVER_URL'];
+    if (configuredServerUrl != null && configuredServerUrl.trim().isNotEmpty) {
+      return _trimTrailingSlash(configuredServerUrl.trim());
+    }
+
+    final configuredApiUrl = dotenv.env['API_URL'];
+    if (configuredApiUrl != null && configuredApiUrl.trim().isNotEmpty) {
+      return _trimTrailingSlash(
+        configuredApiUrl.trim().replaceFirst(RegExp(r'/api/?$'), ''),
+      );
+    }
+
+    return 'http://localhost:3000';
+  }
+
+  static String get baseUrl {
+    final configuredApiUrl = dotenv.env['API_URL'];
+    if (configuredApiUrl != null && configuredApiUrl.trim().isNotEmpty) {
+      return _trimTrailingSlash(configuredApiUrl.trim());
+    }
+
+    return '$serverUrl/api';
+  }
+
+  static String get cloudinaryBaseUrl =>
+      _trimTrailingSlash(dotenv.env['CLOUDINARY_BASE_URL']?.trim() ?? '');
 
   static const Map<String, String> _headers = {
     'Content-Type': 'application/json',
@@ -21,7 +50,12 @@ class ApiService {
   /// Replaces localhost URLs from the API with the actual device-accessible server URL
   static String fixImageUrl(String? url) {
     if (url == null || url.isEmpty) return '';
-    
+
+    final uploadsIndex = url.indexOf('/uploads/');
+    if (cloudinaryBaseUrl.isNotEmpty && uploadsIndex != -1) {
+      return '$cloudinaryBaseUrl${url.substring(uploadsIndex)}';
+    }
+
     // Aggressive replacement for any localhost/127.0.0.1 variation
     String fixedUrl = url;
     final List<String> localHosts = [

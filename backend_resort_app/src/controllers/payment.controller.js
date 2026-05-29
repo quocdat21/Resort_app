@@ -191,7 +191,7 @@ const paymentController = {
 
       // 1. FIND PAYMENT (Tìm trong nội dung chuyển khoản có chứa mã đơn hàng)
       const [payments] = await pool.execute(
-        'SELECT p.*, b.user_id FROM Payments p JOIN Bookings b ON p.booking_id = b.id WHERE ? LIKE CONCAT("%", p.order_code, "%") AND p.status = "pending" LIMIT 1',
+        "SELECT p.*, b.user_id FROM Payments p JOIN Bookings b ON p.booking_id = b.id WHERE ? LIKE CONCAT('%', p.order_code, '%') AND p.status = 'pending' LIMIT 1",
         [content]
       );
 
@@ -308,12 +308,12 @@ const paymentController = {
       if (!p) throw new Error('Not found');
 
       await conn.execute(
-        'UPDATE Payments SET status = "expired" WHERE id = ?',
+        "UPDATE Payments SET status = 'expired' WHERE id = ?",
         [paymentId]
       );
 
       await conn.execute(
-        'UPDATE Bookings SET status = "Cancelled" WHERE id = ?',
+        "UPDATE Bookings SET status = 'Cancelled' WHERE id = ?",
         [p.booking_id]
       );
 
@@ -377,8 +377,11 @@ const paymentController = {
 
       // Calculate total spent (successful payments only)
       const [[{ totalSpent }]] = await pool.execute(
-        'SELECT COALESCE(SUM(amount), 0) as totalSpent FROM Payments p JOIN Bookings b ON p.booking_id = b.id WHERE b.user_id = ? AND p.status = "success"',
-        [userId]
+        `SELECT COALESCE(SUM(p.amount), 0) as totalSpent
+         FROM Payments p
+         JOIN Bookings b ON p.booking_id = b.id
+         WHERE b.user_id = ? AND p.status = ?`,
+        [userId, 'success']
       );
 
       res.json({ 
@@ -458,7 +461,7 @@ const paymentController = {
         await conn.execute('UPDATE Payments SET status = ?, payment_date = NOW() WHERE id = ?', [status, id]);
         
         // Update booking to Confirmed
-        await conn.execute('UPDATE Bookings SET status = "Confirmed" WHERE id = ?', [payment.booking_id]);
+        await conn.execute("UPDATE Bookings SET status = 'Confirmed' WHERE id = ?", [payment.booking_id]);
 
         // Update room statuses immediately
         await roomController._internalUpdateRoomStatuses(conn);
@@ -496,7 +499,7 @@ const paymentController = {
         
         // If changed to failed/expired/cancelled, update booking too
         if (['failed', 'expired', 'cancelled'].includes(status)) {
-          await conn.execute('UPDATE Bookings SET status = "Cancelled" WHERE id = ?', [payment.booking_id]);
+          await conn.execute("UPDATE Bookings SET status = 'Cancelled' WHERE id = ?", [payment.booking_id]);
         }
       }
 
