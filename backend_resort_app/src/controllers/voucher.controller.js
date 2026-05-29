@@ -1,9 +1,21 @@
 const pool = require('../config/db');
 
+const syncExpiredVouchers = async () => {
+  await pool.execute(`
+    UPDATE Vouchers
+    SET status = 'expired'
+    WHERE end_date IS NOT NULL
+      AND end_date < NOW()
+      AND status != 'expired'
+  `);
+};
+
 const voucherController = {
   // Get all vouchers with pagination and filters
   getAllVouchers: async (req, res) => {
     try {
+      await syncExpiredVouchers();
+
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
       const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
       const offset = (page - 1) * limit;
@@ -68,6 +80,8 @@ const voucherController = {
   // Get single voucher by ID
   getVoucherById: async (req, res) => {
     try {
+      await syncExpiredVouchers();
+
       const { id } = req.params;
       const [vouchers] = await pool.execute(
         `SELECT v.*, 
@@ -109,11 +123,13 @@ const voucherController = {
         return res.status(400).json({ success: false, message: 'Mã voucher này đã tồn tại' });
       }
 
+      const normalizedStatus = status === 'inactive' ? 'inactive' : 'active';
+
       const query = `
         INSERT INTO Vouchers (
           code, discount_type, discount_value, max_discount, 
           min_order_value, usage_limit, start_date, end_date, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? IS NOT NULL AND ? < NOW() THEN 'expired' ELSE ? END)
       `;
 
       const values = [
@@ -125,7 +141,9 @@ const voucherController = {
         usage_limit || null,
         start_date,
         end_date,
-        status || 'active'
+        end_date,
+        end_date,
+        normalizedStatus
       ];
 
       const [result] = await pool.execute(query, values);
@@ -163,10 +181,13 @@ const voucherController = {
         return res.status(400).json({ success: false, message: 'Mã voucher này đã được sử dụng' });
       }
 
+      const normalizedStatus = status === 'inactive' ? 'inactive' : 'active';
+
       const query = `
         UPDATE Vouchers SET 
           code = ?, discount_type = ?, discount_value = ?, max_discount = ?, 
-          min_order_value = ?, usage_limit = ?, start_date = ?, end_date = ?, status = ?
+          min_order_value = ?, usage_limit = ?, start_date = ?, end_date = ?,
+          status = CASE WHEN ? IS NOT NULL AND ? < NOW() THEN 'expired' ELSE ? END
         WHERE id = ?
       `;
 
@@ -179,7 +200,9 @@ const voucherController = {
         usage_limit || null,
         start_date,
         end_date,
-        status,
+        end_date,
+        end_date,
+        normalizedStatus,
         id
       ];
 
@@ -216,6 +239,8 @@ const voucherController = {
   // Validate voucher code
   validateVoucher: async (req, res) => {
     try {
+      await syncExpiredVouchers();
+
       const { code, orderValue, userId } = req.body;
       if (!code) {
         return res.status(400).json({ success: false, message: 'Vui lòng nhập mã giảm giá' });

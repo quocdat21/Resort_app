@@ -62,7 +62,7 @@ const EditVoucher: React.FC<EditVoucherProps> = ({ isOpen, onClose, voucher, onS
                 usage_limit: voucher.usage_limit ? voucher.usage_limit.toString() : '',
                 start_date: voucher.start_date.substring(0, 16),
                 end_date: voucher.end_date.substring(0, 16),
-                status: voucher.status
+                status: voucher.status === 'expired' ? 'active' : voucher.status
             });
         }
     }, [voucher, isOpen]);
@@ -190,7 +190,6 @@ const EditVoucher: React.FC<EditVoucherProps> = ({ isOpen, onClose, voucher, onS
                                         >
                                             <option value="active">Đang hoạt động</option>
                                             <option value="inactive">Tạm dừng</option>
-                                            <option value="expired">Đã hết hạn</option>
                                         </select>
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                     </div>
