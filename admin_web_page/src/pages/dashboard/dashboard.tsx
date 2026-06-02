@@ -6,15 +6,13 @@ import {
     Users,
     Bed,
     ConciergeBell,
-    Star,
     TrendingUp,
     TrendingDown,
-    ChevronRight,
     Loader2
 } from 'lucide-react';
 import {
-    AreaChart,
-    Area,
+    LineChart,
+    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -26,6 +24,19 @@ import {
     BarChart,
     Bar,
 } from 'recharts';
+
+type ChartPeriod = 'week' | 'month' | 'year';
+
+const chartPeriods: { value: ChartPeriod; label: string }[] = [
+    { value: 'week', label: 'Tuần' },
+    { value: 'month', label: 'Tháng' },
+    { value: 'year', label: 'Năm' }
+];
+
+const monthOptions = Array.from({ length: 12 }, (_, index) => ({
+    value: index + 1,
+    label: `Tháng ${index + 1}`
+}));
 
 interface DashboardData {
     stats: {
@@ -47,7 +58,15 @@ interface DashboardData {
             payments: number;
         };
     };
-    revenueChart: { day: string; revenue: number }[];
+    availableYears?: number[];
+    chartFilter?: {
+        period: ChartPeriod;
+        year: number;
+        month: number;
+        startDate: string;
+        endDate: string;
+    };
+    revenueChart: { label: string; day: string; date: string; revenue: number }[];
     bookingStatusData: { name: string; value: number; color: string }[];
     occupancyChart: { name: string; rate: number; date: string }[];
     latestBookings: {
@@ -75,11 +94,19 @@ const recentNotifications = [
 const Dashboard: React.FC = () => {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
+    const now = new Date();
+    const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('week');
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
 
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const response = await apiService.get('/dashboard/overview');
+            const response = await apiService.get('/dashboard/overview', {
+                period: chartPeriod,
+                year: selectedYear,
+                month: selectedMonth
+            });
             if (response.success) {
                 setData(response.data);
             }
@@ -92,7 +119,18 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         fetchDashboardData();
-    }, []);
+    }, [chartPeriod, selectedYear, selectedMonth]);
+
+    useEffect(() => {
+        if (!data?.chartFilter) return;
+
+        if (data.chartFilter.year !== selectedYear) {
+            setSelectedYear(data.chartFilter.year);
+        }
+        if (data.chartFilter.month !== selectedMonth) {
+            setSelectedMonth(data.chartFilter.month);
+        }
+    }, [data?.chartFilter?.year, data?.chartFilter?.month]);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -115,16 +153,66 @@ const Dashboard: React.FC = () => {
 
     if (!data) return null;
 
+    const chartTotalBookings = data.bookingStatusData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+    const chartPeriodLabel = chartPeriod === 'week'
+        ? '7 ngày gần nhất'
+        : chartPeriod === 'month'
+            ? `Tháng ${selectedMonth}/${selectedYear}`
+            : `Năm ${selectedYear}`;
+    const yearOptions = data.availableYears && data.availableYears.length > 0
+        ? data.availableYears
+        : [selectedYear];
+
     return (
         <>
             {/* Date Selector */}
-            <div className="flex justify-end mb-6">
-                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium cursor-pointer hover:bg-slate-50 transition-colors">
-                    <CalendarCheck size={16} className="text-slate-400" />
-                    <span className="text-slate-900">
-                        {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </span>
-                    <ChevronRight size={16} className="text-slate-400 rotate-90" />
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+                <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bộ lọc biểu đồ</p>
+                    <h2 className="text-lg font-black text-slate-900">{chartPeriodLabel}</h2>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+                        {chartPeriods.map((period) => (
+                            <button
+                                key={period.value}
+                                type="button"
+                                onClick={() => setChartPeriod(period.value)}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${chartPeriod === period.value
+                                    ? 'bg-green-700 text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                    }`}
+                            >
+                                {period.label}
+                            </button>
+                        ))}
+                    </div>
+                    {chartPeriod !== 'week' && (
+                        <select
+                            value={selectedYear}
+                            onChange={(event) => setSelectedYear(Number(event.target.value))}
+                            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                        >
+                            {yearOptions.map((year) => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    )}
+                    {chartPeriod === 'month' && (
+                        <select
+                            value={selectedMonth}
+                            onChange={(event) => setSelectedMonth(Number(event.target.value))}
+                            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                        >
+                            {monthOptions.map((month) => (
+                                <option key={month.value} value={month.value}>{month.label}</option>
+                            ))}
+                        </select>
+                    )}
+                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 shadow-sm">
+                        <CalendarCheck size={16} className="text-slate-400" />
+                        <span>{new Date().toLocaleDateString('vi-VN')}</span>
+                    </div>
                 </div>
             </div>
 
@@ -183,29 +271,31 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
                 <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-slate-900 text-sm">Doanh thu (7 ngày)</h3>
-                        <select className="bg-slate-50 border-none text-[10px] font-bold rounded-lg px-2 py-1 focus:ring-0 text-slate-600">
-                            <option>Tuần này</option>
-                        </select>
+                        <div>
+                            <h3 className="font-bold text-slate-900 text-sm">Biểu đồ doanh thu</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{chartPeriodLabel}</p>
+                        </div>
                     </div>
                     <div className="h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data.revenueChart}>
-                                <defs>
-                                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
+                            <LineChart data={data.revenueChart}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                                 <Tooltip
                                     formatter={(value) => [formatPrice(Number(value ?? 0)), 'Doanh thu']}
+                                    labelFormatter={(_, payload) => payload?.[0]?.payload?.day || ''}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                                 />
-                                <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                            </AreaChart>
+                                <Line
+                                    type="monotone"
+                                    dataKey="revenue"
+                                    stroke="#10b981"
+                                    strokeWidth={3}
+                                    dot={{ r: 3, strokeWidth: 2, fill: '#ffffff', stroke: '#10b981' }}
+                                    activeDot={{ r: 5, strokeWidth: 2, fill: '#10b981', stroke: '#ffffff' }}
+                                />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
@@ -213,6 +303,7 @@ const Dashboard: React.FC = () => {
                 <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-slate-900 text-sm">Trạng thái đơn</h3>
+                        <div className="text-[10px] font-bold text-slate-400">{chartPeriodLabel}</div>
                     </div>
                     <div className="flex flex-col items-center">
                         <div className="h-[180px] w-full relative">
@@ -234,8 +325,8 @@ const Dashboard: React.FC = () => {
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                                <p className="text-lg font-bold text-slate-900">{data.stats.totalBookings}</p>
-                                <p className="text-[10px] text-slate-400 uppercase font-bold">Tổng đơn</p>
+                                <p className="text-lg font-bold text-slate-900">{chartTotalBookings}</p>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold">Trong kỳ</p>
                             </div>
                         </div>
                         <div className="w-full space-y-2 mt-4">
@@ -244,7 +335,7 @@ const Dashboard: React.FC = () => {
                                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                                     <span className="text-[10px] font-medium text-slate-600">{item.name}</span>
                                     <span className="text-[10px] font-bold ml-auto text-slate-900">
-                                        {item.value} ({data.stats.totalBookings > 0 ? Math.round(item.value / data.stats.totalBookings * 100) : 0}%)
+                                        {item.value} ({chartTotalBookings > 0 ? Math.round(item.value / chartTotalBookings * 100) : 0}%)
                                     </span>
                                 </div>
                             ))}
@@ -255,7 +346,7 @@ const Dashboard: React.FC = () => {
                 <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-slate-900 text-sm">Tỷ lệ lấp đầy</h3>
-                        <div className="text-[10px] font-bold text-slate-400">7 ngày qua</div>
+                        <div className="text-[10px] font-bold text-slate-400">{chartPeriodLabel}</div>
                     </div>
                     <div className="h-[250px]">
                         <ResponsiveContainer width="100%" height="100%">

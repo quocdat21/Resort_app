@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../../services/api_service';
 import logo from '../../assets/icon_resort.png';
@@ -12,6 +12,8 @@ const AdminLogin: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get('sessionExpired') === '1';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,9 +73,9 @@ const AdminLogin: React.FC = () => {
             </div>
           </div>
           <form className="w-full space-y-5" onSubmit={handleLogin}>
-            {error && (
+            {(error || sessionExpired) && (
               <div className="bg-red-50/80 backdrop-blur-sm text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-100 flex items-center justify-center animate-shake">
-                {error}
+                {error || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'}
               </div>
             )}
 
@@ -147,4 +149,3 @@ const AdminLogin: React.FC = () => {
 };
 
 export default AdminLogin;
-

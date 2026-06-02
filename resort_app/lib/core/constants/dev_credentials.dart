@@ -4,5 +4,5 @@ class DevCredentials {
   static const String password = "Adminqd@21";
 
   // Set thành true để kích hoạt tự động điền
-  static const bool useDevCredentials = true;
+  static const bool useDevCredentials = false;
 }
