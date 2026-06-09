@@ -217,12 +217,6 @@ Authorization: Bearer <jwt_token>
 - `CLOUDINARY_BASE_URL` hoặc `VITE_CLOUDINARY_BASE_URL` có thể dùng để rewrite các đường dẫn `/uploads/...` sang Cloudinary delivery URL.
 - Flutter có helper `ApiService.fixImageUrl()` để chuyển `localhost` sang `SERVER_URL` phù hợp thiết bị.
 
-## Lưu ý hiện trạng code
-
-- `backend_resort_app/src/controllers/auth.controller.js` hiện không khớp với `backend_resort_app/src/routes/auth.routes.js`: route đang gọi các handler như `adminLogin`, `verifyOTP`, `resendOTP`, `forgotPassword`, `resetPassword`, `getMe`, `updateMe`, `authorizeAdmin`, nhưng controller hiện tại chỉ export các hàm kiểu `login`, `register`, `me` và còn tham chiếu model KPI/Mongo. Backend có thể không start được cho tới khi đồng bộ lại controller auth.
-- `backend_resort_app/src/routes/room.routes.js` đặt một số route admin sau `/:id`; nên kiểm tra thứ tự route nếu endpoint như `/api/rooms/admin/occupied-rooms` bị Express match nhầm thành `/:id`.
-- Một số màn hình admin như settings/notifications/reviews có phần giao diện hoặc route sẵn, nhưng cần kiểm tra lại mức độ hoàn thiện nghiệp vụ trước khi dùng production.
-
 ## Lệnh hữu ích
 
 Backend:
