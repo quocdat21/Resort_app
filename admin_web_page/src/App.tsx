@@ -13,19 +13,12 @@ import ReviewsPage from './pages/user_reviews/reviews';
 import NotificationsPage from './pages/notifications/notifications';
 import AdminLogin from './pages/admin_login/admin_login';
 import type { JSX } from 'react';
-import { clearAdminSession, getAdminToken, isAdminTokenExpired } from './utils/session';
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const token = getAdminToken();
+  const token = localStorage.getItem('admin_token');
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-
-  if (isAdminTokenExpired(token)) {
-    clearAdminSession(false);
-    return <Navigate to="/login?sessionExpired=1" replace />;
-  }
-
   return children;
 };
 

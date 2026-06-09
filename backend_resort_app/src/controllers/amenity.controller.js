@@ -9,7 +9,7 @@ exports.getAllAmenities = async (req, res) => {
     // Base query
     let query = `
       SELECT a.*, 
-             (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.amenity_id = a.id) as room_count
+            (SELECT COUNT(*) FROM Room_Amenities ra WHERE ra.amenity_id = a.id) as room_count
       FROM Amenities a
       WHERE a.name LIKE ?
       ORDER BY a.id ASC
@@ -69,11 +69,11 @@ exports.getAllAmenities = async (req, res) => {
 exports.getAmenityById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Get amenity info
     const [rows] = await pool.execute('SELECT * FROM Amenities WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy tiện nghi' });
-    
+
     // Get rooms using this amenity
     const [rooms] = await pool.execute(`
       SELECT r.id, r.name, c.name as category_name, z.name as zone_name
@@ -84,13 +84,13 @@ exports.getAmenityById = async (req, res) => {
       WHERE ra.amenity_id = ?
     `, [id]);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: {
         ...rows[0],
         icon_url: formatImageUrl(rows[0].icon_url, req),
         rooms: rooms
-      } 
+      }
     });
   } catch (error) {
     console.error(error);

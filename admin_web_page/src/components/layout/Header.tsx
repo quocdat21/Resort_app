@@ -9,7 +9,6 @@ import {
 import { useEffect, useState } from 'react';
 import { apiService } from '../../services/api_service';
 import { resolveImageUrl } from '../../utils/image_util';
-import { clearAdminSession, onAdminSessionExpired } from '../../utils/session';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -52,19 +51,16 @@ const Header: React.FC = () => {
     // Lắng nghe sự kiện update thông tin người dùng từ edit_user.tsx
     window.addEventListener('userUpdate', loadUser);
     window.addEventListener('storage', loadUser);
-    const removeSessionExpiredListener = onAdminSessionExpired(() => {
-      setAdminUser(null);
-    });
 
     return () => {
       window.removeEventListener('userUpdate', loadUser);
       window.removeEventListener('storage', loadUser);
-      removeSessionExpiredListener();
     };
   }, []);
 
   const handleLogout = () => {
-    clearAdminSession(false);
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
     navigate('/login');
   };
 
