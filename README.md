@@ -90,28 +90,6 @@ Monorepo cho hệ thống đặt phòng và dịch vụ resort, gồm:
 - Một SMTP account nếu muốn gửi OTP/email thật.
 - SePay webhook/API key nếu muốn xác nhận thanh toán tự động.
 
-## Cài đặt database
-
-Tạo database MySQL, ví dụ:
-
-```sql
-CREATE DATABASE resort_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Import schema:
-
-```bash
-mysql -u root -p resort_db < Query_create_DB.sql
-```
-
-Nếu cần dữ liệu mẫu:
-
-```bash
-mysql -u root -p resort_db < data.sql
-```
-
-`Query_create_DB.sql` định nghĩa các bảng chính: `Users`, `OTP_Verifications`, `Zones`, `Categories`, `Rooms`, `Room_Numbers`, `Room_Images`, `Amenities`, `Room_Amenities`, `Services`, `ServicePrices`, `Service_Images`, `Vouchers`, `User_Vouchers`, `Bookings`, `Booking_Rooms`, `Booking_Services`, `Payments`, `Refunds`, `Reviews`, `Service_Reviews`, `Notifications`.
-
 ## Chạy backend
 
 ```bash
