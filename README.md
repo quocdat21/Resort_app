@@ -4,8 +4,8 @@ Monorepo cho hệ thống đặt phòng và dịch vụ resort, gồm:
 
 - `backend_resort_app`: REST API Node.js/Express kết nối MySQL.
 - `resort_app`: ứng dụng Flutter cho khách hàng.
-- `admin_web_page`: trang quản trị React/Vite cho nhân sự/admin.
-- `Query_create_DB.sql`, `Query_DB_advance.sql`, `data.sql`: script khởi tạo và seed dữ liệu MySQL.
+- `admin_web_page`: trang quản trị cho nhân sự/admin.
+- `Query_create_DB.sql`: script khởi tạo MySQL.
 
 ## Tính năng chính
 
