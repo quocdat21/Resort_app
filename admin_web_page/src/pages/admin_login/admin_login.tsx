@@ -29,7 +29,7 @@ const AdminLogin: React.FC = () => {
         setError(data.message || 'Login failed');
       }
     } catch (err) {
-      setError('Connection error. Is the backend running?');
+      setError('Connection error');
     } finally {
       setLoading(false);
     }
