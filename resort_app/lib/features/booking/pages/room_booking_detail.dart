@@ -262,7 +262,7 @@ class RoomBookingDetailPage extends StatelessWidget {
                             : (data['description'] != null &&
                                     data['description'].toString().isNotEmpty)
                                 ? data['description']
-                                : 'Thông tin phòng đang được cập nhật.',
+                                : 'Thông tin phòng đang cập nhật.',
                         style: AppTextStyles.bodySmall
                             .copyWith(color: Colors.grey.shade600, height: 1.5),
                       ),
