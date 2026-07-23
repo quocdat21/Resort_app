@@ -87,7 +87,7 @@ Monorepo cho hệ thống đặt phòng và dịch vụ resort, gồm:
 - Node.js và npm.
 - Flutter SDK `>= 3.5.1`.
 - MySQL server.
-- Một SMTP account nếu muốn gửi OTP/email thật.
+- Một SMTP account nếu muốn gửi OTP/email thật (đăng ký qua google).
 - SePay webhook/API key nếu muốn xác nhận thanh toán tự động.
 
 ## Chạy backend
